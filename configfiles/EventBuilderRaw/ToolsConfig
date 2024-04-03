@@ -1,0 +1,7 @@
+LoadGeometry LoadGeometry ./configfiles/LoadGeometry/LoadGeometryConfig
+LoadRawData LoadRawData ./configfiles/EventBuilderRaw/LoadRawDataConfig
+PMTDataDecoder PMTDataDecoder ./configfiles/EventBuilderRaw/PMTDataDecoderConfig
+TriggerDataDecoder TriggerDataDecoder ./configfiles/EventBuilderRaw/TriggerDataDecoderConfig
+#PhaseIIADCCalibrator PhaseIIADCCalibrator ./configfiles/EventBuilderRaw/PhaseIIADCCalibratorConfig
+#PhaseIIADCHitFinder PhaseIIADCHitFinder ./configfiles/EventBuilderRaw/PhaseIIADCHitFinderConfig
+ANNIEEventBuilder ANNIEEventBuilder ./configfiles/EventBuilderRaw/ANNIEEventBuilderConfig
