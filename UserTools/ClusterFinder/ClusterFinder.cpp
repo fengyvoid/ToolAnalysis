@@ -242,7 +242,6 @@ bool ClusterFinder::Execute(){
                 temp_charges+=hits_2ns_res_charge.at(i_hit);
 		temp_times.push_back(hit1);
               } else new_pulse=true;
-            }
 		  
             if (new_pulse) {
 		// following the DigitBuilder tool --> take median photon hit time as the hit time of the "pulse"
