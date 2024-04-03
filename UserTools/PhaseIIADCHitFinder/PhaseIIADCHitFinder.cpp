@@ -71,6 +71,9 @@ bool PhaseIIADCHitFinder::Initialise(std::string config_filename, DataModel& dat
   // Get the Auxiliary channel types; identifies which channels are SiPM channels
   m_data->CStore.Get("AuxChannelNumToTypeMap",AuxChannelNumToTypeMap);
 
+  // Get the timing offsets
+  m_data->CStore.Get("ChannelNumToTankPMTTimingOffsetMap",ChannelKeyToTimingOffsetMap); 
+
   //Recreate maps that were deleted with ANNIEEvent->Delete() ANNIEEventBuilder tool
   hit_map = new std::map<unsigned long,std::vector<Hit>>;
   aux_hit_map = new std::map<unsigned long,std::vector<Hit>>;
@@ -703,11 +706,21 @@ std::vector<ADCPulse> PhaseIIADCHitFinder::find_pulses_bywindow(
     // Convert the pulse integral to nC
     charge *= NS_PER_ADC_SAMPLE / ADC_IMPEDANCE;
 
+    // PMT Timing offsets
+      double timing_offset=0.0;
+      std::map<unsigned long , double>::const_iterator it = ChannelKeyToTimingOffsetMap.find(channel_key);
+      if(it != ChannelKeyToTimingOffsetMap.end()){ //Timing offset is available
+        timing_offset = ChannelKeyToTimingOffsetMap.at(channel_key);
+      } else {
+        if(verbosity>2){
+          std::cout << "Didn't find Timing offset for channel " << channel_key << std::endl;
+        }
+      }
 
     // Store the freshly made pulse in the vector of found pulses
     pulses.emplace_back(channel_key,
-      ( wmin * NS_PER_SAMPLE ),
-      peak_sample * NS_PER_SAMPLE,
+      ( wmin * NS_PER_SAMPLE )-timing_offset,
+      (peak_sample * NS_PER_SAMPLE)-timing_offset,
       calibrated_minibuffer_data.GetBaseline(),
       calibrated_minibuffer_data.GetSigmaBaseline(),
       raw_area, max_ADC, calibrated_amplitude, charge);
@@ -805,10 +818,21 @@ std::vector<ADCPulse> PhaseIIADCHitFinder::find_pulses_bythreshold(
       // Convert the pulse integral to nC
       charge *= NS_PER_ADC_SAMPLE / ADC_IMPEDANCE;
 
+      // PMT Timing offsets
+      double timing_offset=0.0;
+      std::map<unsigned long , double>::const_iterator it = ChannelKeyToTimingOffsetMap.find(channel_key);
+      if(it != ChannelKeyToTimingOffsetMap.end()){ //Timing offset is available
+        timing_offset = ChannelKeyToTimingOffsetMap.at(channel_key);
+      } else {
+        if(verbosity>2){
+          std::cout << "Didn't find Timing offset for channel " << channel_key << std::endl;
+        }
+      }
+
       // Store the freshly made pulse in the vector of found pulses
       pulses.emplace_back(channel_key,
-        ( pulse_start_sample * NS_PER_SAMPLE ),
-        peak_sample * NS_PER_SAMPLE,
+        ( pulse_start_sample * NS_PER_SAMPLE )-timing_offset,
+        (peak_sample * NS_PER_SAMPLE)-timing_offset,
         calibrated_minibuffer_data.GetBaseline(),
         calibrated_minibuffer_data.GetSigmaBaseline(),
         raw_area, max_ADC, calibrated_amplitude, charge);
@@ -868,10 +892,60 @@ std::vector<ADCPulse> PhaseIIADCHitFinder::find_pulses_bythreshold(
         // very close together (i.e. if the end of one is just a few samples away
         // from the start of another)
 
+	// PMT Timing offsets
+      double timing_offset=0.0;
+      std::map<unsigned long , double>::const_iterator it = ChannelKeyToTimingOffsetMap.find(channel_key);
+      if(it != ChannelKeyToTimingOffsetMap.end()){ //Timing offset is available
+        timing_offset = ChannelKeyToTimingOffsetMap.at(channel_key);
+      } else {
+        if(verbosity>2){
+          std::cout << "Didn't find Timing offset for channel " << channel_key << std::endl;
+        }
+      }
+
+        // New approach to hit timing to avoid 2ns bins - 50% threshold above baseline
+        // Look for where the ADC value crosses 50% of the maximum, assign hit time
+	// TODO: consider using an approach recommended by Bob: get time at 50%, get time at 20%, draw straight line in between and find time to zero threshold
+        const double threshold_percentage = 0.5;
+        unsigned short threshold_value = ((max_ADC - adc_threshold) * threshold_percentage) + adc_threshold;
+        double hit_time = peak_sample;
+        bool hit_time_found = false;
+
+        // Find the first sample where the ADC value is above 50%
+        for (size_t p = peak_sample; p > pulse_start_sample; --p) {
+            if (raw_minibuffer_data.GetSample(p) < threshold_value) {
+              hit_time = p;
+              hit_time_found = true;
+              break;
+              }
+        }
+
+	// Perform simple linear interpolation to find exact crossing point
+      if (hit_time_found) {
+        if(verbosity>4) std::cout << "Interpolating hit time..." << std::endl;
+        if (hit_time > pulse_start_sample && hit_time < pulse_end_sample) {
+            double x1 = hit_time;
+            double x2 = hit_time + 1.0;
+            unsigned short y1 = raw_minibuffer_data.GetSample(static_cast<size_t>(x1));
+            unsigned short y2 = raw_minibuffer_data.GetSample(static_cast<size_t>(x2));
+            hit_time = x1 + (threshold_value - y1) * (x2 - x1) / (y2 - y1);   // linear interpolation
+        }
+      }
+
+      if(verbosity>4) std::cout << "Hit time [ns] " << hit_time * NS_PER_ADC_SAMPLE << std::endl;
+
+      if (hit_time < 0.0) {
+        // If for some reason the interpolation finds a negative time value (if the pulse is extremely early in the buffer),
+        // default to the peak time
+        std::cout << "Hit time is negative! Defaulting to peak time" << std::endl;
+        hit_time = peak_sample;
+      }
+
+
         // Store the freshly made pulse in the vector of found pulses
         pulses.emplace_back(channel_key,
-          ( pulse_start_sample * NS_PER_ADC_SAMPLE ),
-          peak_sample * NS_PER_ADC_SAMPLE,
+          ( pulse_start_sample * NS_PER_ADC_SAMPLE )-timing_offset,
+          (peak_sample * NS_PER_ADC_SAMPLE)-timing_offset,
           calibrated_minibuffer_data.GetBaseline(),
           calibrated_minibuffer_data.GetSigmaBaseline(),
           raw_area, max_ADC, calibrated_amplitude, charge);
