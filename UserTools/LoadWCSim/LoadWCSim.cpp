@@ -418,7 +418,7 @@ bool LoadWCSim::Execute(){
 			int genieentry = firsttrigt->GetHeader()->GetGenieEntryNum();
 			if(verbosity>1) cout<<"Genie file is "<<geniefilename<<", genie event num was "<<genieentry<<endl;
 			m_data->CStore.Set("GenieFile",geniefilename);
-			m_data->CStore.Set("GenieEntry",std::to_string(genieentry));
+			m_data->CStore.Set("GenieEntry",genieentry);
 			
 			for(int trigi=0; trigi<WCSimEntry->wcsimrootevent->GetNumberOfEvents(); trigi++){
 				
