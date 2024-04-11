@@ -49,6 +49,12 @@ class BeamFetcherV2: public Tool {
     // Holder for the devices we're going to look up
     std::vector<std::string> fDevices;
 
+    // Keep the last timestamp around to make sure we don't double count
+    uint64_t fLastTimestamp;
+
+    // Is there new data?
+    bool fNewCTCData;
+
     // For ROOT file
     TFile *fOutFile;
     TTree *fOutTree;
@@ -61,6 +67,7 @@ class BeamFetcherV2: public Tool {
     int verbosity;
     bool fIsBundle;
     bool fSaveROOT;
+    bool fDeleteCTCData;
     std::string fDevicesFile;
     std::string fOutFileName;
     uint64_t fChunkStepMSec;

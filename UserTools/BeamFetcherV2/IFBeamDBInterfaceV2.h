@@ -48,9 +48,9 @@ class IFBeamDBInterfaceV2 {
     /// @param t0 Starting timestamp (milliseconds since the Unix epoch)
     /// @param t1 Starting timestamp (milliseconds since the Unix epoch)
     /// @return A nested map containing the parsed data. Keys of the outer map
-    /// are device names, values are inner maps. Keys of the inner map are
-    /// timestamps (milliseconds since the Unix epoch), values are
-    /// BeamDataPoint structs that hold a numerical value and a unit string.
+    /// are timestamps (milliseconds since the Unix epoch), values are inner maps.
+    /// Keys of the inner map are device names , values are elements of class type 
+    /// BeamDataPoint that hold a numerical value, a unit string, and timestamp.
     /// @note An easy way to get the current milliseconds since the Unix epoch
     /// is to use the terminal utility date like this: @verbatim date +%s%3N
     /// @endverbatim
