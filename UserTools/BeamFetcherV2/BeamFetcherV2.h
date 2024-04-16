@@ -16,6 +16,7 @@
 
 // ToolAnalysis includes
 #include "Tool.h"
+#include "BeamDataPoint.h"
 
 // ROOT includes
 #include "TFile.h"
@@ -40,8 +41,8 @@ class BeamFetcherV2: public Tool {
 
 
     // Holder for the retrieved data and the stuff we'll save
-    std::map<uint64_t, std::map<std::string, BeamDataPoint> > fBeamData;
-    std::map<uint64_t, std::map<std::string, BeamDataPoint> > fBeamDataToSave;
+    std::map<uint64_t, std::map<std::string, BeamDataPoint> > BeamDataQuery;
+    std::map<uint64_t, std::map<std::string, BeamDataPoint> > *BeamDataMap;
 
     // For saving out to a file
     std::map<int, std::pair<uint64_t, uint64_t> > fBeamDBIdx;
