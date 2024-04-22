@@ -167,5 +167,12 @@ if (tool=="NeutronMultiplicity") ret=new NeutronMultiplicity;
 if (tool=="PlotsTrackLengthAndEnergy") ret=new PlotsTrackLengthAndEnergy;
 if (tool=="SaveConfigInfo") ret=new SaveConfigInfo;
 if (tool=="ReadConfigInfo") ret=new ReadConfigInfo;
+if (tool=="LAPPDLoadStore") ret=new LAPPDLoadStore;
+if (tool=="LAPPDTreeMaker") ret=new LAPPDTreeMaker;
+if (tool=="LAPPDPlots") ret=new LAPPDPlots;
+if (tool=="LAPPDThresReco") ret=new LAPPDThresReco;
+if (tool=="LAPPDTimeAlignment") ret=new LAPPDTimeAlignment;
+if (tool=="LAPPDBaseline") ret=new LAPPDBaseline;
+if (tool=="LAPPDStoreReorder") ret=new LAPPDStoreReorder;
 return ret;
 }
