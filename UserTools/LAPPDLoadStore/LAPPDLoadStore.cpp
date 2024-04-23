@@ -133,7 +133,7 @@ bool LAPPDLoadStore::Initialise(std::string configfile, DataModel &data)
 
     if (loadOffsets)
         LoadOffsetsAndCorrections();
-    debugStoreReadIn.open("debugStoreReadIn.txt");
+    if(LAPPDStoreReadInVerbosity>11) debugStoreReadIn.open("debugStoreReadIn.txt");
 
     return true;
 }
@@ -171,6 +171,7 @@ bool LAPPDLoadStore::Execute()
     // decide loading data or not, set to LAPPDana for later tools
     LAPPDana = LoadData();
     m_data->CStore.Set("LAPPDana", LAPPDana);
+    if(LAPPDStoreReadInVerbosity>0) cout<<"LAPPDana for loading was set to "<<LAPPDana<<endl;
     if (!LAPPDana)
     {
         // not loading data, return
@@ -243,7 +244,7 @@ bool LAPPDLoadStore::Execute()
         m_data->Stores["ANNIEEvent"]->Set("TriggerChannelBase", TrigChannel);
 
         m_data->CStore.Set("NewLAPPDDataAvailable",true);
-        debugStoreReadIn<< " Set NewLAPPDDataAvailable to true"<<endl;
+        if(LAPPDStoreReadInVerbosity>11) debugStoreReadIn<< " Set NewLAPPDDataAvailable to true"<<endl;
 
         NonEmptyEvents += 1;
         eventNo++;
@@ -980,7 +981,7 @@ void LAPPDLoadStore::SaveTimeStamps()
     m_data->Stores["ANNIEEvent"]->Set("LAPPDBeamgate_Raw", beamgate_63_0);
     m_data->Stores["ANNIEEvent"]->Set("LAPPDTimestamp_Raw", timestamp_63_0);
 
-debugStoreReadIn<<eventNo<<" LAPPDStoreReadIn, Saving timestamps, beamgate_timestamp: "<<beamgate_63_0<<", lappd_timestamp: "<<timestamp_63_0<<endl;
+    if(LAPPDStoreReadInVerbosity>11) debugStoreReadIn<<eventNo<<" LAPPDStoreReadIn, Saving timestamps, beamgate_timestamp: "<<beamgate_63_0<<", lappd_timestamp: "<<timestamp_63_0<<endl;
 
     if (loadOffsets && runInfoLoaded)
     {
@@ -1075,7 +1076,7 @@ void LAPPDLoadStore::SaveOffsets()
 
     cout<<"LAPPDStoreReadIn, Saving offsets and corrections, key: "<<key<<", LAPPDOffset: "<<LAPPDOffset<<", LAPPDOffset_minus_ps: "<<LAPPDOffset_minus_ps<<", LAPPDBGCorrection: "<<LAPPDBGCorrection<<", LAPPDTSCorrection: "<<LAPPDTSCorrection<<endl;
 
-    debugStoreReadIn<<eventNo<<"+LAPPDStoreReadIn, Saving offsets and corrections, key: "<<key<<", LAPPDOffset: "<<LAPPDOffset<<", LAPPDOffset_minus_ps: "<<LAPPDOffset_minus_ps<<", LAPPDBGCorrection: "<<LAPPDBGCorrection<<", LAPPDTSCorrection: "<<LAPPDTSCorrection<<endl;
+    if(LAPPDStoreReadInVerbosity>11) debugStoreReadIn<<eventNo<<"+LAPPDStoreReadIn, Saving offsets and corrections, key: "<<key<<", LAPPDOffset: "<<LAPPDOffset<<", LAPPDOffset_minus_ps: "<<LAPPDOffset_minus_ps<<", LAPPDBGCorrection: "<<LAPPDBGCorrection<<", LAPPDTSCorrection: "<<LAPPDTSCorrection<<endl;
     }
 
 void LAPPDLoadStore::LoadOffsetsAndCorrections()
