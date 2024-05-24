@@ -51,7 +51,8 @@ class BeamFetcherV2: public Tool {
     std::vector<std::string> fDevices;
 
     // Keep the last timestamp around to make sure we don't double count
-    uint64_t fLastTimestamp;
+    uint64_t fLastTimestampFetched;
+    uint64_t fLastTimestampSaved;
 
     // Is there new data?
     bool fNewCTCData;
