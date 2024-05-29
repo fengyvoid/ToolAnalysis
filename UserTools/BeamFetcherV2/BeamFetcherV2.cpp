@@ -99,7 +99,8 @@ bool BeamFetcherV2::Initialise(std::string config_filename, DataModel& data)
   if (fSaveROOT) this->SetupROOTFile();
 
   // initialize the last timestamp
-  fLastTimestamp = 0;
+  fLastTimestampFetched = 0;
+  fLastTimestampSaved = 0;
   BeamDataMap = new std::map<uint64_t, std::map<std::string, BeamDataPoint> >;
 
   m_data->CStore.Set("NewBeamDataAvailable", false);
@@ -165,9 +166,9 @@ bool BeamFetcherV2::FetchFromTrigger()
   bool got_triggers = m_data->CStore.Get("TimeToTriggerWordMap",TimeToTriggerWordMap);
 
   // Now loop over the CTC timestamps
-  // But start at the fLastTimeStamp to prevent double counting if the timestamp data wasn't deleted
+  // But start at the fLastTimeStampFetched to prevent double counting if the timestamp data wasn't deleted
   if (got_triggers && TimeToTriggerWordMap) {
-    for (auto iterator = TimeToTriggerWordMap->lower_bound(fLastTimestamp);
+    for (auto iterator = TimeToTriggerWordMap->lower_bound(fLastTimestampFetched+1);
 	 iterator != TimeToTriggerWordMap->end(); ++iterator) {
 
       // We only care about beam triggers here
@@ -181,7 +182,7 @@ bool BeamFetcherV2::FetchFromTrigger()
       
       // Grab the timestamp
       uint64_t trigTimestamp = iterator->first;
-      fLastTimestamp = trigTimestamp;
+      fLastTimestampFetched = trigTimestamp;
 
       // Need to drop from ns to ms. This means that some timestamps will
       // already be recorded. We can skip these cases
@@ -292,13 +293,15 @@ void BeamFetcherV2::SetupROOTFile()
 void BeamFetcherV2::WriteTrees()
 {
   // Loop over timestamps
-  // But start at the fLastTimeStamp to prevent double counting if the timestamp data wasn't deleted
-  int devCounter = 0;
-  uint64_t lastTimestamp = fLastTimestamp/1E6;
-  for (auto iterTS = BeamDataMap->lower_bound(lastTimestamp);
+  // But start at the fLastTimeStampSaved to prevent double counting if the timestamp data wasn't deleted
+  int devCounter = 0;  
+  for (auto iterTS = BeamDataMap->lower_bound(fLastTimestampSaved+1);
        iterTS != BeamDataMap->end(); ++iterTS) {
 
     fTimestamp = iterTS->first;
+    fLastTimestampSaved = fTimestamp;
+
+    std::cout << "Timestamp: " << fTimestamp << std::endl;
     
     // Loop over devices
     for (const auto iterDev : iterTS->second) {
