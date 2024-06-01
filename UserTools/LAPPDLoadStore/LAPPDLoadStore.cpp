@@ -299,10 +299,10 @@ bool LAPPDLoadStore::Execute()
 
 bool LAPPDLoadStore::Finalise()
 {
-    cout << "Got pps event in total: " << PPSnumber << endl;
-    cout << "Got error events in total: " << errorEventsNumber << endl;
-    cout << "Got non empty events in total: " << NonEmptyEvents << endl;
-    cout << "Got event in total: " << eventNo << endl;
+    cout << "LAPPDLoadStore: Got pps event in total: " << PPSnumber << endl;
+    cout << "LAPPDLoadStore: Got error events in total: " << errorEventsNumber << endl;
+    cout << "LAPPDLoadStore: Got non empty events in total: " << NonEmptyEvents << endl;
+    cout << "LAPPDLoadStore: Got event in total: " << eventNo << endl;
     return true;
 }
 
