@@ -174,5 +174,11 @@ if (tool=="LAPPDThresReco") ret=new LAPPDThresReco;
 if (tool=="LAPPDTimeAlignment") ret=new LAPPDTimeAlignment;
 if (tool=="LAPPDBaseline") ret=new LAPPDBaseline;
 if (tool=="LAPPDStoreReorder") ret=new LAPPDStoreReorder;
+if (tool=="EBLoadRaw") ret=new EBLoadRaw;
+if (tool=="EBTriggerGrouper") ret=new EBTriggerGrouper;
+if (tool=="EBLAPPD") ret=new EBLAPPD;
+if (tool=="EBPMT") ret=new EBPMT;
+if (tool=="EBMRD") ret=new EBMRD;
+if (tool=="EBSaver") ret=new EBSaver;
 return ret;
 }

@@ -1,0 +1,23 @@
+verbosityEBTG 5
+GroupMode beam
+GroupTolerance 3000000
+GroupTrigWord 14 //undelayed beam
+
+groupBeam 1
+BeamTolerance 25000000
+
+groupCosmic 1
+
+groupLaser 1
+#LaserTolerance 10000
+
+groupLED 1
+#LEDTriggerMain 31
+#LEDTolerance 10000
+
+groupAmBe 0
+
+groupPPS 0
+
+
+

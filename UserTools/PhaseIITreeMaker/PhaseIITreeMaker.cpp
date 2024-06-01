@@ -25,6 +25,7 @@ bool PhaseIITreeMaker::Initialise(std::string configfile, DataModel &data){
   m_variables.Get("TankReco_fill", TankReco_fill);
   m_variables.Get("RecoDebug_fill", RecoDebug_fill);
   m_variables.Get("muonTruthRecoDiff_fill", muonTruthRecoDiff_fill);
+  m_variables.Get("LAPPDData_fill", LAPPDData_fill);
 
   m_variables.Get("SiPMPulseInfo_fill",SiPMPulseInfo_fill);
   m_variables.Get("TankClusterProcessing",TankClusterProcessing);
@@ -101,6 +102,21 @@ bool PhaseIITreeMaker::Initialise(std::string configfile, DataModel &data){
       fPhaseIITankClusterTree->Branch("SiPM1NPulses",&fSiPM1NPulses,"SiPM1NPulses/I");
       fPhaseIITankClusterTree->Branch("SiPM2NPulses",&fSiPM2NPulses,"SiPM2NPulses/I");
     }
+    if(LAPPDData_fill)
+    {
+      fPhaseIITankClusterTree->Branch("LAPPD_ID",&fLAPPD_ID);
+      fPhaseIITankClusterTree->Branch("LAPPD_Beamgate_ns",&fLAPPD_Beamgate_ns);
+      fPhaseIITankClusterTree->Branch("LAPPD_Timestamp_ns",&fLAPPD_Timestamp_ns);
+      fPhaseIITankClusterTree->Branch("LAPPD_Beamgate_Raw",&fLAPPD_Beamgate_Raw);
+      fPhaseIITankClusterTree->Branch("LAPPD_Timestamp_Raw",&fLAPPD_Timestamp_Raw);
+      fPhaseIITankClusterTree->Branch("LAPPD_Offset",&fLAPPD_Offset);
+      fPhaseIITankClusterTree->Branch("LAPPD_TSCorrection",&fLAPPD_TSCorrection);
+      fPhaseIITankClusterTree->Branch("LAPPD_BGCorrection",&fLAPPD_BGCorrection);
+      fPhaseIITankClusterTree->Branch("LAPPD_OSInMinusPS",&fLAPPD_OSInMinusPS);
+
+      fPhaseIITankClusterTree->Branch("fGroupedTriggerTime",&fGroupedTriggerTime);
+      fPhaseIITankClusterTree->Branch("fGroupedTriggerWord",&fGroupedTriggerWord);
+    } 
   } 
 
   if(MRDClusterProcessing){
@@ -156,6 +172,23 @@ bool PhaseIITreeMaker::Initialise(std::string configfile, DataModel &data){
       fPhaseIIMRDClusterTree->Branch("MRDStop",&fMRDStop);
       fPhaseIIMRDClusterTree->Branch("MRDThrough",&fMRDThrough);
     }
+
+    if(LAPPDData_fill)
+    {
+      fPhaseIIMRDClusterTree->Branch("LAPPD_ID",&fLAPPD_ID);
+      fPhaseIIMRDClusterTree->Branch("LAPPD_Beamgate_ns",&fLAPPD_Beamgate_ns);
+      fPhaseIIMRDClusterTree->Branch("LAPPD_Timestamp_ns",&fLAPPD_Timestamp_ns);
+      fPhaseIIMRDClusterTree->Branch("LAPPD_Beamgate_Raw",&fLAPPD_Beamgate_Raw);
+      fPhaseIIMRDClusterTree->Branch("LAPPD_Timestamp_Raw",&fLAPPD_Timestamp_Raw);
+      fPhaseIIMRDClusterTree->Branch("LAPPD_Offset",&fLAPPD_Offset);
+      fPhaseIIMRDClusterTree->Branch("LAPPD_TSCorrection",&fLAPPD_TSCorrection);
+      fPhaseIIMRDClusterTree->Branch("LAPPD_BGCorrection",&fLAPPD_BGCorrection);
+      fPhaseIIMRDClusterTree->Branch("LAPPD_OSInMinusPS",&fLAPPD_OSInMinusPS);
+
+      fPhaseIIMRDClusterTree->Branch("fGroupedTriggerTime",&fGroupedTriggerTime);
+      fPhaseIIMRDClusterTree->Branch("fGroupedTriggerWord",&fGroupedTriggerWord);
+    } 
+
   }
 
   if(TriggerProcessing){
@@ -390,6 +423,22 @@ bool PhaseIITreeMaker::Initialise(std::string configfile, DataModel &data){
       fPhaseIITrigTree->Branch("deltaAzimuth",&fDeltaAzimuth,"deltaAzimuth/D");
       fPhaseIITrigTree->Branch("deltaZenith",&fDeltaZenith,"deltaZenith/D");
       fPhaseIITrigTree->Branch("deltaAngle",&fDeltaAngle,"deltaAngle/D");
+    }
+
+    if(LAPPDData_fill)
+    {
+      fPhaseIITrigTree->Branch("LAPPD_ID",&fLAPPD_ID);
+      fPhaseIITrigTree->Branch("LAPPD_Beamgate_ns",&fLAPPD_Beamgate_ns);
+      fPhaseIITrigTree->Branch("LAPPD_Timestamp_ns",&fLAPPD_Timestamp_ns);
+      fPhaseIITrigTree->Branch("LAPPD_Beamgate_Raw",&fLAPPD_Beamgate_Raw);
+      fPhaseIITrigTree->Branch("LAPPD_Timestamp_Raw",&fLAPPD_Timestamp_Raw);
+      fPhaseIITrigTree->Branch("LAPPD_Offset",&fLAPPD_Offset);
+      fPhaseIITrigTree->Branch("LAPPD_TSCorrection",&fLAPPD_TSCorrection);
+      fPhaseIITrigTree->Branch("LAPPD_BGCorrection",&fLAPPD_BGCorrection);
+      fPhaseIITrigTree->Branch("LAPPD_OSInMinusPS",&fLAPPD_OSInMinusPS);
+
+      fPhaseIITrigTree->Branch("fGroupedTriggerTime",&fGroupedTriggerTime);
+      fPhaseIITrigTree->Branch("fGroupedTriggerWord",&fGroupedTriggerWord);
     } 
   }
   return true;
@@ -399,10 +448,32 @@ bool PhaseIITreeMaker::Execute(){
   Log("===========================================================================================",v_debug,verbosity);
   Log("PhaseIITreeMaker Tool: Executing",v_debug,verbosity);
 
+/*
+  std::map<std::string,bool> checkDataStreams;
+      m_data->Stores.at("ANNIEEvent")->Get("DataStreams",checkDataStreams);
+      //print out the data streams 
+      if(checkDataStreams["LAPPD"]==1){
+        m_data->Stores.at("ANNIEEvent")->Get("LAPPDTimeStamps_ns", LAPPDTimeStamps_ns);
+        m_data->Stores.at("ANNIEEvent")->Get("LAPPDOffsets", LAPPDOffsets);
+        //check they have the same size, if not print in log
+        if(LAPPDTimeStamps_ns.size() != LAPPDOffsets.size()){
+          Log("PhaseIITreeMaker Tool: LAPPD Time Stamps and Offsets are not the same size!",v_message,verbosity);
+        }else{
+          cout<<"LAPPDTimeStamps_ns size is: "<<LAPPDTimeStamps_ns.size()<<endl;
+          cout<<"LAPPDOffsets size is: "<<LAPPDOffsets.size()<<endl;
+          //loop the map LAPPDOffsets, print the value + key
+          for (auto const& x : LAPPDOffsets){
+            cout << x.first << " : " << x.second << " = " << x.first + x.second << endl;
+            gotLAPPDNumber++;
+          }
+        cout<<"gotLAPPDNumber = "<<gotLAPPDNumber<<endl;
+        }
+      }*/
 
   // Reset variables
   this->ResetVariables();
   // Get a pointer to the ANNIEEvent Store
+  if (LAPPDData_fill) this->LoadLAPPDData();
 
   //  If only clean events are built, return true for dirty events
   if(fillCleanEventsOnly){
@@ -462,6 +533,8 @@ bool PhaseIITreeMaker::Execute(){
     //for (std::pair<double,std::vector<Hit>>&& cluster_pair : *m_all_clusters) {
       Log("PhaseIITreeMaker Tool: Resetting variables prior to getting run level info",v_debug,verbosity);
       this->ResetVariables();
+      if (LAPPDData_fill) this->LoadLAPPDData();
+      
       fClusterNumber = cluster_num;
 
       //Standard run level information
@@ -710,6 +783,7 @@ bool PhaseIITreeMaker::Execute(){
         fNumClusterTracks = this->LoadMRDTrackReco(i);
         //Get the track info
       }
+      if (LAPPDData_fill) this->LoadLAPPDData();
 
       fPhaseIIMRDClusterTree->Fill();
       cluster_num += 1;
@@ -793,6 +867,8 @@ bool PhaseIITreeMaker::Execute(){
 
     // FIll tree with all reconstruction information
     if (RecoDebug_fill) this->FillRecoDebugInfo();
+
+    if (LAPPDData_fill) this->LoadLAPPDData();
 
     fPhaseIITrigTree->Fill();
   }
@@ -1023,6 +1099,34 @@ void PhaseIITreeMaker::ResetVariables() {
     fDeltaZenith = -9999;
     fDeltaAngle = -9999;
   }
+
+  if(LAPPDData_fill){
+    LAPPDDataMap.clear();
+    LAPPDBeamgate_ns.clear();
+    LAPPDTimeStamps_ns.clear();
+    LAPPDTimeStampsRaw.clear();
+    LAPPDBeamgatesRaw.clear();
+    LAPPDOffsets.clear();
+    LAPPDTSCorrection.clear();
+    LAPPDBGCorrection.clear();
+    LAPPDOSInMinusPS.clear();
+
+    fLAPPD_ID.clear();
+    fLAPPD_Beamgate_ns.clear();
+    fLAPPD_Timestamp_ns.clear();
+    fLAPPD_Beamgate_Raw.clear();
+    fLAPPD_Timestamp_Raw.clear();
+    fLAPPD_Offset.clear();
+    fLAPPD_TSCorrection.clear();
+    fLAPPD_BGCorrection.clear();
+    fLAPPD_OSInMinusPS.clear();
+
+    GroupedTrigger.clear();
+
+    fGroupedTriggerTime.clear();
+    fGroupedTriggerWord.clear();
+  }
+
 }
 
 bool PhaseIITreeMaker::LoadTankClusterClassifiers(double cluster_time){
@@ -1804,4 +1908,47 @@ void PhaseIITreeMaker::RecoSummary() {
   std::cout << "  FOM = " << fRecoVtxFOM << std::endl;
   std::cout << "  RecoStatus = " << fRecoStatus <<std::endl;
   std::cout << std::endl;
+}
+
+void PhaseIITreeMaker::FillLAPPDData(){
+
+for (std::map<uint64_t, PsecData>::iterator it = LAPPDDataMap.begin(); it != LAPPDDataMap.end(); ++it) {
+    uint64_t key = it->first;
+    PsecData psecData = it->second;
+
+    fLAPPD_ID.push_back(psecData.LAPPD_ID);
+
+    fLAPPD_Beamgate_ns.push_back(LAPPDBeamgate_ns[key]);
+    fLAPPD_Timestamp_ns.push_back(LAPPDTimeStamps_ns[key]);
+    fLAPPD_Beamgate_Raw.push_back(LAPPDBeamgatesRaw[key]);
+    fLAPPD_Timestamp_Raw.push_back(LAPPDTimeStampsRaw[key]);
+    fLAPPD_Offset.push_back(LAPPDOffsets[key]);
+    fLAPPD_TSCorrection.push_back(LAPPDTSCorrection[key]);
+    fLAPPD_BGCorrection.push_back(LAPPDBGCorrection[key]);
+    fLAPPD_OSInMinusPS.push_back(LAPPDOSInMinusPS[key]);
+  }
+
+  for(std::map<uint64_t, uint32_t>::iterator it = GroupedTrigger.begin(); it != GroupedTrigger.end(); ++it) {
+    uint64_t key = it->first;
+    uint32_t value = it->second;
+
+    fGroupedTriggerTime.push_back(key);
+    fGroupedTriggerWord.push_back(value);
+  }
+
+}
+
+void PhaseIITreeMaker::LoadLAPPDData()
+{
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDDataMap", LAPPDDataMap);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTimeStamps_ns", LAPPDTimeStamps_ns);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTimeStampsRaw", LAPPDTimeStampsRaw);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgatesRaw", LAPPDBeamgatesRaw);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDOffsets", LAPPDOffsets);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTSCorrection", LAPPDTSCorrection);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBGCorrection", LAPPDBGCorrection);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDOSInMinusPS", LAPPDOSInMinusPS);
+  if(LAPPDDataMap.size() != 0)
+    FillLAPPDData();
 }
