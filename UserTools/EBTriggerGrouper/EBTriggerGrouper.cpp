@@ -35,6 +35,8 @@ bool EBTriggerGrouper::Initialise(std::string configfile, DataModel &data)
   m_variables.Get("groupAmBe", groupAmBe);
   groupPPS = false;
   m_variables.Get("groupPPS", groupPPS);
+  groupNuMI = true;
+  m_variables.Get("groupNuMI", groupNuMI);
 
   BeamTriggerMain = 14;
   BeamTolerance = 3000000; // use 3 ms here, the spill time difference is 66ms
@@ -56,9 +58,9 @@ bool EBTriggerGrouper::Initialise(std::string configfile, DataModel &data)
   PPSTriggers = {32, 34}; // 32 first, then 34, (~20us in run 4802 data)
   m_data->CStore.Set("PPSTriggersUsedForGroupping", PPSTriggers);
 
-  CosmicTriggerMain = 44; // TODO need to check
+  CosmicTriggerMain = 45; // TODO need to check
   m_variables.Get("CosmicTriggerMain", CosmicTriggerMain);
-  CosmicTolerance = 330000; // 330000ns, TODO
+  CosmicTolerance = 100; // 330000ns, TODO
   m_variables.Get("CosmicTolerance", CosmicTolerance);
   CosmicTriggers = {44, 45, 36, 27, 28, 29, 30, 46}; // TODO: check the trigger words in cosmic run
   m_data->CStore.Set("CosmicTriggersUsedForGroupping", CosmicTriggers);
@@ -70,12 +72,19 @@ bool EBTriggerGrouper::Initialise(std::string configfile, DataModel &data)
   LEDTriggers = {33, 22, 31, 43, 46}; // in run 4792 [[22, 33], [4160001224, 4160001664]]
   m_data->CStore.Set("LEDTriggersUsedForGroupping", LEDTriggers);
 
-  AmBeTriggerMain = 19; // TODO: need to check
+  AmBeTriggerMain = 15; // TODO: need to check
   m_variables.Get("AmBeTriggerMain", AmBeTriggerMain);
   AmBeTolerance = 5000; // 2336 in Ambe run 4707
   m_variables.Get("AmBeTolerance", AmBeTolerance);
   AmBeTriggers = {11, 12, 15, 19}; // in run 4707 [[19, 12, 15, 11], [21275647928, 21275647936, 21275647952, 21275650264]]
   m_data->CStore.Set("AmBeTriggersUsedForGroupping", AmBeTriggers);
+
+  NuMITriggerMain = 42;
+  m_variables.Get("NuMITriggerMain", NuMITriggerMain);
+  NuMITolerance = 100; // 100ns
+  m_variables.Get("NuMITolerance", NuMITolerance);
+  NuMITriggers = {42, 46}; // 
+  m_data->CStore.Set("NuMITriggersUsedForGroupping", NuMITriggers);
 
   StoreTotalEntry = 0;
 
@@ -272,6 +281,19 @@ bool EBTriggerGrouper::Execute()
   else
   {
     m_data->CStore.Set("PPSTriggerGroupped", false);
+  }
+
+  if (groupNuMI)
+  {
+    Log("EBTG: Grouping NuMI Triggers", v_message, verbosityEBTG);
+    int groupNum = GroupByTrigWord(NuMITriggerMain, NuMITriggers, NuMITolerance);
+    int fillNum = FillByTrigWord(NuMITriggerMain, NuMITriggers, NuMITolerance);
+    Log("EBTG: Found NuMI Trigger group: " + std::to_string(groupNum) + ". Fill additional triggers to group: " + std::to_string(fillNum), v_message, verbosityEBTG);
+    m_data->CStore.Set("NuMITriggerGroupped", true);
+  }
+  else
+  {
+    m_data->CStore.Set("NuMITriggerGroupped", false);
   }
 
   Log("EBTG: Grouping for different trigger tracks finishes, save to CStore", v_message, verbosityEBTG);

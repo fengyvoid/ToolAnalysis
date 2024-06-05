@@ -49,26 +49,26 @@ bool EBMRD::Execute()
   {
     uint64_t MTCtime = p.first;
     std::vector<std::pair<unsigned long, int>> WaveMap = p.second;
-    //if find the MTCtime in the PairedMRDTimeStamps, then skip
-      if (PairedMRDTimeStamps.size() > 0)
+    // if find the MTCtime in the PairedMRDTimeStamps, then skip
+    if (PairedMRDTimeStamps.size() > 0)
+    {
+      bool skip = false;
+      for (std::pair<int, std::vector<uint64_t>> pair : PairedMRDTimeStamps)
       {
-        bool skip = false;
-        for (std::pair<int, std::vector<uint64_t>> pair : PairedMRDTimeStamps)
+        for (uint64_t t : pair.second)
         {
-          for (uint64_t t : pair.second)
+          if (t == MTCtime)
           {
-            if (t == MTCtime)
-            {
-              skip = true;
-              break;
-            }
-          }
-          if (skip)
+            skip = true;
             break;
+          }
         }
         if (skip)
-          continue;
+          break;
       }
+      if (skip)
+        continue;
+    }
     if (MRDEventsBuffer.find(MTCtime) == MRDEventsBuffer.end())
     {
       MRDEventsBuffer.emplace(MTCtime, WaveMap);
@@ -95,11 +95,21 @@ bool EBMRD::Execute()
       m_data->CStore.Get("BeamTriggerGroupped", BeamTriggerGroupped);
       bool CosmicTriggerGroupped = false;
       m_data->CStore.Get("CosmicTriggerGroupped", CosmicTriggerGroupped);
+      bool NuMITriggerGroupped = false;
+      m_data->CStore.Get("NuMITriggerGroupped", NuMITriggerGroupped);
+      
+      
       if (BeamTriggerGroupped)
         Matching(matchTargetTrigger, 14);
-      else if (CosmicTriggerGroupped)
+      if (CosmicTriggerGroupped)
+      {
         Matching(36, 36);
-      else
+        Matching(45, 46);
+      }
+      if(NuMITriggerGroupped)
+        Matching(42, 46);
+
+      if(!BeamTriggerGroupped && !CosmicTriggerGroupped && !NuMITriggerGroupped)
         Log("EBMRD: BeamTriggerGroupped and CosmicTriggerGroupped are false, no beam trigger groupped in the grouper, stop matching", v_message, verbosityEBMRD);
     }
   }
@@ -157,7 +167,7 @@ bool EBMRD::Matching(int targetTrigger, int matchToTrack)
         Log("EBMRD: Skipping TrackTriggerWord " + std::to_string(TrackTriggerWord), v_debug, verbosityEBMRD);
         continue;
       }
-      if(matchedNumberInTrack.find(TrackTriggerWord) == matchedNumberInTrack.end())
+      if (matchedNumberInTrack.find(TrackTriggerWord) == matchedNumberInTrack.end())
         matchedNumberInTrack.emplace(TrackTriggerWord, 0);
 
       vector<std::map<uint64_t, uint32_t>> groupedTriggers = pair.second;
@@ -185,7 +195,7 @@ bool EBMRD::Matching(int targetTrigger, int matchToTrack)
               matchedTrigWord = p.second;
               matchedIndex = p.second;
               matchedTrack = TrackTriggerWord;
-              
+
               // if(verbosityEBMRD > 11) cout<<"EBMRD: dt: "<<dt<<" minDT: "<<minDT<<" minDTTrigger: "<<minDTTrigger<<endl;
             }
           }
@@ -215,7 +225,7 @@ bool EBMRD::Matching(int targetTrigger, int matchToTrack)
   }
   Log("EBMRD: After erase, current number of unfinished MRD events after match in MRDEventsBuffer: " + std::to_string(MRDEventsBuffer.size()), v_message, verbosityEBMRD);
 
-//print all elements in matchedNumberInTrack with key and value
+  // print all elements in matchedNumberInTrack with key and value
   for (std::pair<int, int> pair : matchedNumberInTrack)
   {
     Log("EBMRD: Match finished, matched number in Track " + std::to_string(pair.first) + " is " + std::to_string(pair.second), v_message, verbosityEBMRD);

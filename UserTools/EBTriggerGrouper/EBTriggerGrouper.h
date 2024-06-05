@@ -90,6 +90,7 @@ private:
     bool groupLED;
     bool groupAmBe;
     bool groupPPS;
+    bool groupNuMI;
 
     int BeamTriggerMain;
     double BeamTolerance;
@@ -114,6 +115,10 @@ private:
     int PPSTriggerMain;
     double PPSTolerance;
     vector<uint32_t> PPSTriggers;
+
+    int NuMITriggerMain;
+    double NuMITolerance;
+    vector<uint32_t> NuMITriggers;
 };
 
 #endif

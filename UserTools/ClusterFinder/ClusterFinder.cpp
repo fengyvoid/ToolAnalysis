@@ -211,37 +211,82 @@ bool ClusterFinder::Execute(){
         std::vector<double> datalike_hits;
         std::vector<double> datalike_hits_charge;
         for (MCHit &ahit : ThisPMTHits){
-          //std::cout <<"Key: "<<detectorkey<<", charge "<<ahit.GetCharge()<<", time "<<ahit.GetTime()<<std::endl;
-          //if (ahit.GetTime() > 2000.) std::cout <<"Found hit later than 2us! Hit time : "<<ahit.GetTime()<<", chankey: "<<chankey<<std::endl;
           if (ahit.GetTime() < end_of_window_time_cut*AcqTimeWindow) {
             //Make MC more like data --> combine multiple photons if they are within a 10ns range
-            //hit times can only be recorded with 2ns precision --> possible times are 0ns, 2ns, 4ns, ...
-            hits_2ns_res.push_back(2*(int(ahit.GetTime())/2.)+(int(ahit.GetTime())%2));
+            hits_2ns_res.push_back(ahit.GetTime());
             hits_2ns_res_charge.push_back(ahit.GetCharge());
           }
         }
 	//Combine multiple MC hits to one pulse
         std::sort(hits_2ns_res.begin(),hits_2ns_res.end());
-	for (int i_hit=0; i_hit < (int) hits_2ns_res.size(); i_hit++){
-          double hit1 = hits_2ns_res.at(i_hit);
-          if (datalike_hits.size()==0) {
-            datalike_hits.push_back(hit1);
-            datalike_hits_charge.push_back(hits_2ns_res_charge.at(i_hit));
-          }
-          else {
+	std::vector<double> temp_times;
+	double temp_charges = 0.0;
+	double mid_time;
+	if (verbose > 0){
+		std::cout << " " << std::endl;
+		std::cout << hits_2ns_res.size() << " total photon hits(s)" << std::endl;
+	}
+	
+	if (hits_2ns_res.size() > 0){
+          for (int i_hit=0; i_hit < (int) hits_2ns_res.size(); i_hit++){
+            double hit1 = hits_2ns_res.at(i_hit);
+            if (temp_times.size()==0) {
+              temp_times.push_back(hit1);
+              temp_charges += hits_2ns_res_charge.at(i_hit);
+            }
+        
+	else {
             bool new_pulse = false;
-            for (int j_hit=0; j_hit < (int) datalike_hits.size(); j_hit++){
-              if (fabs(datalike_hits.at(j_hit)-hit1)<10.) {
+        	if (fabs(temp_times[0]-hit1)<10.) {
                 new_pulse=false;
-                datalike_hits_charge.at(j_hit)+=hits_2ns_res_charge.at(i_hit);
-                break;
+                temp_charges+=hits_2ns_res_charge.at(i_hit);
+		temp_times.push_back(hit1);
               } else new_pulse=true;
-            }
+		  
             if (new_pulse) {
-              datalike_hits.push_back(hit1);      //Only count as a new pulse if it was 10ns away from every other pulse
-              datalike_hits_charge.push_back(hits_2ns_res_charge.at(i_hit));
+		// following the DigitBuilder tool --> take median photon hit time as the hit time of the "pulse"
+		if (temp_times.size() % 2 == 0){
+                  mid_time = (temp_times.at(temp_times.size()/2 - 1) + temp_times.at(temp_times.size()/2))/2;
+                } else{
+                  mid_time = temp_times.at(temp_times.size()/2);
+                }
+
+              datalike_hits.push_back(mid_time);
+              datalike_hits_charge.push_back(temp_charges);
+              temp_times.clear();
+              temp_charges = 0;
+              temp_times.push_back(hit1);
+              temp_charges += hits_2ns_res_charge.at(i_hit);
+              
             }
           }
+        }
+
+	if (temp_times.size() % 2 == 0){
+            mid_time = (temp_times.at(temp_times.size()/2 - 1) + temp_times.at(temp_times.size()/2))/2;
+        } else{
+            mid_time = temp_times.at(temp_times.size()/2);
+        }
+
+        datalike_hits.push_back(mid_time);
+        datalike_hits_charge.push_back(temp_charges);
+
+        if (verbose > 0){
+          std::cout << " " << std::endl;
+          std::cout << datalike_hits.size() << " MC pulse(s) identified from the raw photon hit(s)" << std::endl;
+          std::cout << "Pulse time(s):" << std::endl;
+          for (int ih=0; ih < (int) datalike_hits.size(); ih++){
+            double junk = datalike_hits.at(ih);
+            std::cout << junk << " ";
+          }
+          std::cout << " " << std::endl;
+          std::cout << "Pulse charge(s):" << std::endl;
+          for (int ih=0; ih < (int) datalike_hits_charge.size(); ih++){
+            double junk2 = datalike_hits_charge.at(ih);
+            std::cout << junk2 << " ";
+          }
+          std::cout << " " << std::endl;
+        }
         }
 
         for (int i_hit = 0; i_hit < (int) datalike_hits.size(); i_hit++){
@@ -295,7 +340,7 @@ bool ClusterFinder::Execute(){
 
   // Now sort the hit time array, fill the highest time in a new array until the old array is empty
   do {
-    double max_time = 0;
+    double max_time = -9999;
     int i_max_time = 0;
     for (std::vector<double>::iterator it = v_hittimes.begin(); it != v_hittimes.end(); ++it) {
       if (*it > max_time) {
@@ -321,12 +366,21 @@ bool ClusterFinder::Execute(){
     }
     thiswindow_Nhits = 0;   
     v_mini_hits.clear();
-    for (double j_time = *it; j_time < *it + ClusterFindingWindow; j_time+=2){  // loops through times in the window and check if there's a hit at this time
+    for (double j_time = *it; j_time < *it + ClusterFindingWindow; j_time+=1){  // loops through times in the window and check if there's a hit at this time
       for(std::vector<double>::iterator it2 = v_hittimes_sorted.begin(); it2 != v_hittimes_sorted.end(); ++it2) {
-        if (*it2 == j_time) {
-          thiswindow_Nhits++;
-          v_mini_hits.push_back(*it2);
+        if(HitStoreName=="MCHits"){
+          if (static_cast<int>(j_time) == static_cast<int>(*it2)) {     // accept all hit times (some may be smeared to negative values)
+            thiswindow_Nhits++;
+            v_mini_hits.push_back(*it2);
+          }
         }
+        if(HitStoreName=="Hits"){
+          if (*it2 > 0 && static_cast<int>(j_time) == static_cast<int>(*it2)) {  // reject hit times in the data that are 0
+            thiswindow_Nhits++;
+            v_mini_hits.push_back(*it2);
+          }
+        }
+
       }
     }
     if (!v_mini_hits.empty()) {

@@ -91,7 +91,7 @@ bool EBLAPPD::Execute()
       bool CosmicTriggerGroupped = false;
       m_data->CStore.Get("CosmicTriggerGroupped", CosmicTriggerGroupped);
       if (CosmicTriggerGroupped)
-        Matching(44, 46);
+        Matching(45, 46);
       else
         Log("EBLAPPD: CosmicTriggerGroupped is false, no cosmic trigger groupped in the grouper, stop matching", v_message, verbosityEBLAPPD);
 
@@ -101,6 +101,13 @@ bool EBLAPPD::Execute()
         Matching(31, 46);
       else
         Log("EBLAPPD: LEDTriggerGroupped is false, no LED trigger groupped in the grouper, stop matching", v_message, verbosityEBLAPPD);
+    
+      bool NuMITriggerGroupped = false;
+      m_data->CStore.Get("NuMITriggerGroupped", NuMITriggerGroupped);
+      if (NuMITriggerGroupped)
+        Matching(42, 46);
+      else
+        Log("EBLAPPD: NuMITriggerGroupped is false, no NuMI trigger groupped in the grouper, stop matching", v_message, verbosityEBLAPPD);
     }
   }
 
