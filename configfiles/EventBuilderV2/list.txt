@@ -1,3 +1,5 @@
-/pnfs/annie/persistent/raw/raw/4877/RAWDataR4877S0p104
-/pnfs/annie/persistent/raw/raw/4877/RAWDataR4877S0p105
-/pnfs/annie/persistent/raw/raw/4877/RAWDataR4877S0p106
+/pnfs/annie/persistent/raw/raw/4890/RAWDataR4890S0p5
+/pnfs/annie/persistent/raw/raw/4890/RAWDataR4890S0p6
+/pnfs/annie/persistent/raw/raw/4890/RAWDataR4890S0p7
+/pnfs/annie/persistent/raw/raw/4890/RAWDataR4890S0p8
+/pnfs/annie/persistent/raw/raw/4890/RAWDataR4890S0p9

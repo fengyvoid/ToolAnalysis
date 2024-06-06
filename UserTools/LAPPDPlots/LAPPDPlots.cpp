@@ -68,6 +68,13 @@ bool LAPPDPlots::Initialise(std::string configfile, DataModel &data)
   BinHistNumber = 100;
   m_variables.Get("BinHistNumber", BinHistNumber);
 
+  printEventWaveform = 0;
+  m_variables.Get("printEventWaveform", printEventWaveform);
+  printLAPPDNumber = 2;
+  m_variables.Get("printLAPPDNumber", printLAPPDNumber);
+  printEventNumber = 10;
+  m_variables.Get("printEventNumber", printEventNumber);
+
   eventNumber = 0;
 
   f = new TFile("LAPPDPlots.root", "RECREATE");
@@ -254,6 +261,81 @@ bool LAPPDPlots::Execute()
   else if (eventNumber < maxDrawEventNumber)
     c->Print("LAPPDPlots.pdf");
 
+  // if printEventNumber was set to be zero, print all events
+  if (printEventWaveform && (eventNumber < printEventNumber || printEventNumber == 0))
+  {
+    vector<map<int, vector<double>>> LAPPDOnSide0;
+    vector<map<int, vector<double>>> LAPPDOnSide1;
+    LAPPDOnSide0.resize(printLAPPDNumber);
+    LAPPDOnSide1.resize(printLAPPDNumber);
+
+    vector<int> savedBoard;
+    for (int i = 0; i < printLAPPDNumber * 2; i++)
+    {
+      savedBoard.push_back(0);
+    }
+
+    for (int i = 0; i < ReadBoards.size(); i++)
+    {
+      // data on board i, in key as channel number
+      std::map<unsigned long, vector<Waveform<double>>> boarddata = GetDataForBoard(ReadBoards[i]);
+      std::map<unsigned long, vector<Waveform<double>>>::iterator it;
+      for (it = boarddata.begin(); it != boarddata.end(); it++)
+      {
+        unsigned long channelNo = it->first;
+        Waveform<double> w = it->second[0];
+        Channel *ch = _geom->GetChannel(channelNo);
+        int stripSide = ch->GetStripSide();
+        int stripNo = ch->GetStripNum();
+        int lappd_id = static_cast<int>((channelNo - 1000) / 60);
+        if (lappd_id < printLAPPDNumber)
+        {
+          vector<double> printW;
+
+          for (int i = 0; i < w.GetSamples()->size(); i++)
+          {
+            printW.push_back(-w.GetSamples()->at(i));
+          }
+          if (LAPPDPlotsVerbosity > 0)
+            cout << "LAPPD ID " << lappd_id << ", strip number " << stripNo << ", waveform size " << printW.size() << endl;
+          if (stripSide == 0)
+            LAPPDOnSide0[lappd_id][stripNo] = printW;
+          else if (stripSide == 1)
+            LAPPDOnSide1[lappd_id][stripNo] = printW;
+          if (LAPPDPlotsVerbosity > 0)
+            cout << "Saved waveform " << endl;
+
+          savedBoard[ReadBoards[i]] = 1;
+        }
+      }
+    }
+
+    // loop savedBoard, if the board was not saved, add empty vector with 256 0 in it.
+    for (int i = 0; i < savedBoard.size(); i++)
+    {
+      if (savedBoard[i] == 0)
+      {
+        int id = static_cast<int>(i / 2);
+
+        vector<double> printW;
+        for (int k = 0; k < 256; k++)
+        {
+          printW.push_back(0);
+        }
+        if (i % 2 == 0)
+          LAPPDOnSide0[id][i] = printW;
+        else
+          LAPPDOnSide1[id][i] = printW;
+      }
+    }
+
+    WaveformToPringSide0.push_back(LAPPDOnSide0);
+    WaveformToPringSide1.push_back(LAPPDOnSide1);
+  }
+
+  if (printEventWaveform && printEventNumber != 0 && eventNumber == printEventNumber)
+    PrintWaveformToTxt();
+
   eventNumber++;
   return true;
 }
@@ -269,6 +351,10 @@ bool LAPPDPlots::Finalise()
   f->cd();
   f->Close();
   delete f;
+
+  if (printEventWaveform && printEventNumber == 0)
+    PrintWaveformToTxt();
+
   return true;
 }
 
@@ -322,4 +408,54 @@ int LAPPDPlots::CheckInBeamgateWindow()
   }
   else
     return -1;
+}
+
+void LAPPDPlots::PrintWaveformToTxt()
+{
+  // print all information in WaveformToPringSide0 and WaveformToPringSide1 to two txt files
+  // print a header of printLAPPDNumber, printEventNumber
+  ofstream LAPPDPlot_side0_eventWaveform;
+  LAPPDPlot_side0_eventWaveform.open("LAPPDPlot_side0_eventWaveform.txt");
+  LAPPDPlot_side0_eventWaveform << "printLAPPDNumber: " << printLAPPDNumber << " printEventNumber: " << printEventNumber << ", there should be " << printLAPPDNumber << " * " << printEventNumber << " * 256 lines" << endl;
+  for (int i = 0; i < WaveformToPringSide0.size(); i++)
+  {
+    // print i_th event
+    for (int j = 0; j < WaveformToPringSide0[i].size(); j++)
+    {
+      // print j_th LAPPD
+      // loop the map, in each line, print i, j, key, and all values in vector
+      for (auto it = WaveformToPringSide0[i][j].begin(); it != WaveformToPringSide0[i][j].end(); it++)
+      {
+        LAPPDPlot_side0_eventWaveform << i << " " << j << " " << it->first << " ";
+        for (int k = 0; k < it->second.size(); k++)
+        {
+          LAPPDPlot_side0_eventWaveform << it->second[k] << " ";
+        }
+        LAPPDPlot_side0_eventWaveform << endl;
+      }
+    }
+  }
+  LAPPDPlot_side0_eventWaveform.close();
+
+  ofstream LAPPDPlot_side1_eventWaveform;
+  LAPPDPlot_side1_eventWaveform.open("LAPPDPlot_side1_eventWaveform.txt");
+  LAPPDPlot_side1_eventWaveform << "printLAPPDNumber: " << printLAPPDNumber << " printEventNumber: " << printEventNumber << ", there should be " << printLAPPDNumber << " * " << printEventNumber << " * 256 lines" << endl;
+  for (int i = 0; i < WaveformToPringSide1.size(); i++)
+  {
+    // print i_th event
+    for (int j = 0; j < WaveformToPringSide1[i].size(); j++)
+    {
+      // print j_th LAPPD
+      // loop the map, in each line, print i, j, key, and all values in vector
+      for (auto it = WaveformToPringSide1[i][j].begin(); it != WaveformToPringSide1[i][j].end(); it++)
+      {
+        LAPPDPlot_side1_eventWaveform << i << " " << j << " " << it->first << " ";
+        for (int k = 0; k < it->second.size(); k++)
+        {
+          LAPPDPlot_side1_eventWaveform << it->second[k] << " ";
+        }
+        LAPPDPlot_side1_eventWaveform << endl;
+      }
+    }
+  }
 }

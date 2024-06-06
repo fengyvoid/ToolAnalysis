@@ -41,6 +41,7 @@ public:
     std::map<unsigned long, vector<Waveform<double>>> GetDataForBoard(int boardID);
     int CheckInBeamgateWindow();
     void CleanObjects();
+    void PrintWaveformToTxt();
 
 private:
     //**************************** This tool, control variables ***************************************************
@@ -100,6 +101,14 @@ private:
     TCanvas *c;
     TFile *f;
     int eventNumber;
+
+    bool printEventWaveform;
+    int printLAPPDNumber;
+    int printEventNumber;
+
+    //event number, lappd_id order, map of strip number and waveform
+    vector<vector<map<int,vector<double>>>> WaveformToPringSide0;
+    vector<vector<map<int,vector<double>>>> WaveformToPringSide1;
 };
 
 #endif

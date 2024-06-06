@@ -9,7 +9,7 @@ BeamTolerance 25000000
 groupCosmic 1
 
 groupLaser 1
-#LaserTolerance 10000
+LaserTolerance 10000
 
 groupLED 1
 #LEDTriggerMain 31
@@ -19,5 +19,7 @@ groupAmBe 0
 
 groupPPS 0
 
+groupNuMI 1
 
+maxNumAllowedInBuffer 30000
 
