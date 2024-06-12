@@ -387,6 +387,14 @@ class PhaseIITreeMaker: public Tool {
   vector<uint64_t> fGroupedTriggerTime;
   vector<uint32_t> fGroupedTriggerWord;
 
+
+    uint64_t beamInfoTime;
+    int64_t timeDiff;
+  double E_TOR860, E_TOR875, THCURR, BTJT2, HP875, VP875, HPTG1, VPTG1, HPTG2, VPTG2, BTH2T2;
+
+
+
+
 };
 
 

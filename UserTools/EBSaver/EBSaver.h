@@ -14,6 +14,8 @@
 #include "ADCPulse.h"
 #include "CalibratedADCWaveform.h"
 #include "BeamStatus.h"
+#include "TFile.h"
+#include "TTree.h"
 
 /**
  * \class EBSaver
@@ -45,6 +47,7 @@ public:
     bool SavePMTData(uint64_t PMTTime);
     bool SaveMRDData(uint64_t MRDTime);
     bool SaveLAPPDData(uint64_t LAPPDTime);
+    bool SaveBeamInfo(uint64_t TriggerTime);
 
     bool SaveOrphan(int runCode);
     bool SaveOrphanPMT(int runCode);
@@ -55,6 +58,8 @@ public:
     void BuildEmptyPMTData();
     void BuildEmptyMRDData();
     void BuildEmptyLAPPDData();
+
+    void LoadBeamInfo();
 
 private:
     int saveRunNumber;
@@ -68,9 +73,12 @@ private:
     bool saveMRD;
     bool saveLAPPD;
     bool saveOrphan;
+    bool saveBeamInfo;
 
     string savePath;
     string saveName;
+
+    string beamInfoFileName;
 
     int verbosityEBSaver;
     int v_message = 1;
@@ -162,6 +170,22 @@ private:
     std::map<int, vector<uint64_t>> PairedLAPPDTriggerTimestamp;
     std::map<int, vector<int>> PairedLAPPD_TriggerIndex;
     std::map<int, vector<uint64_t>> PairedLAPPDTimeStamps;
+
+
+    // beam info related objects
+    vector<uint64_t> BeamInfoTimestamps;
+    std::map<uint64_t, double> E_TOR860_map;
+    std::map<uint64_t, double> E_TOR875_map;
+    std::map<uint64_t, double> THCURR_map;
+    std::map<uint64_t, double> BTJT2_map;
+    std::map<uint64_t, double> HP875_map;
+    std::map<uint64_t, double> VP875_map;
+    std::map<uint64_t, double> HPTG1_map;
+    std::map<uint64_t, double> VPTG1_map;
+    std::map<uint64_t, double> HPTG2_map;
+    std::map<uint64_t, double> VPTG2_map;
+    std::map<uint64_t, double> BTH2T2_map;
+
 };
 
 #endif

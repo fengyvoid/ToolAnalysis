@@ -150,11 +150,12 @@ bool EBLoadRaw::Execute()
   }
 
   // if more MRD events than VME PMT events, jump to next file
+  // this is an old option, why?
   if (MRDTotalEntries > PMTTotalEntries)
   {
-    FileCompleted = true;
+    //FileCompleted = true;
     Log("EBLoadRaw: Jumping to next file due to MRD entry is more than PMT entry.", v_message, verbosityEBLoadRaw);
-    return true;
+    //return true;
   }
 
   if (LoadPMT && PMTEntryNum == PMTTotalEntries)

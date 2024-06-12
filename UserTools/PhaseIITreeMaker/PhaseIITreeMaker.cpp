@@ -114,8 +114,8 @@ bool PhaseIITreeMaker::Initialise(std::string configfile, DataModel &data){
       fPhaseIITankClusterTree->Branch("LAPPD_BGCorrection",&fLAPPD_BGCorrection);
       fPhaseIITankClusterTree->Branch("LAPPD_OSInMinusPS",&fLAPPD_OSInMinusPS);
 
-      fPhaseIITankClusterTree->Branch("fGroupedTriggerTime",&fGroupedTriggerTime);
-      fPhaseIITankClusterTree->Branch("fGroupedTriggerWord",&fGroupedTriggerWord);
+      fPhaseIITankClusterTree->Branch("GroupedTriggerTime",&fGroupedTriggerTime);
+      fPhaseIITankClusterTree->Branch("GroupedTriggerWord",&fGroupedTriggerWord);
     } 
   } 
 
@@ -185,8 +185,8 @@ bool PhaseIITreeMaker::Initialise(std::string configfile, DataModel &data){
       fPhaseIIMRDClusterTree->Branch("LAPPD_BGCorrection",&fLAPPD_BGCorrection);
       fPhaseIIMRDClusterTree->Branch("LAPPD_OSInMinusPS",&fLAPPD_OSInMinusPS);
 
-      fPhaseIIMRDClusterTree->Branch("fGroupedTriggerTime",&fGroupedTriggerTime);
-      fPhaseIIMRDClusterTree->Branch("fGroupedTriggerWord",&fGroupedTriggerWord);
+      fPhaseIIMRDClusterTree->Branch("GroupedTriggerTime",&fGroupedTriggerTime);
+      fPhaseIIMRDClusterTree->Branch("GroupedTriggerWord",&fGroupedTriggerWord);
     } 
 
   }
@@ -437,8 +437,8 @@ bool PhaseIITreeMaker::Initialise(std::string configfile, DataModel &data){
       fPhaseIITrigTree->Branch("LAPPD_BGCorrection",&fLAPPD_BGCorrection);
       fPhaseIITrigTree->Branch("LAPPD_OSInMinusPS",&fLAPPD_OSInMinusPS);
 
-      fPhaseIITrigTree->Branch("fGroupedTriggerTime",&fGroupedTriggerTime);
-      fPhaseIITrigTree->Branch("fGroupedTriggerWord",&fGroupedTriggerWord);
+      fPhaseIITrigTree->Branch("GroupedTriggerTime",&fGroupedTriggerTime);
+      fPhaseIITrigTree->Branch("GroupedTriggerWord",&fGroupedTriggerWord);
     } 
   }
   return true;
@@ -538,11 +538,15 @@ bool PhaseIITreeMaker::Execute(){
       fClusterNumber = cluster_num;
 
       //Standard run level information
-      Log("PhaseIITreeMaker Tool: Getting run level information from ANNIEEvent",v_debug,verbosity);
+      Log("PhaseIITreeMaker Tool: tank cluster, Getting run level information from ANNIEEvent",v_debug,verbosity);
+            // m_data->Stores.at("ANNIEEvent")->Print(false);
+
       m_data->Stores.at("ANNIEEvent")->Get("RunNumber",fRunNumber);
       m_data->Stores.at("ANNIEEvent")->Get("SubrunNumber",fSubrunNumber);
       m_data->Stores.at("ANNIEEvent")->Get("RunType",fRunType);
       m_data->Stores.at("ANNIEEvent")->Get("RunStartTime",fStartTime);
+
+      
   
       fStartTime_Tree = (ULong64_t) fStartTime;
       // ANNIE Event number
@@ -554,10 +558,19 @@ bool PhaseIITreeMaker::Execute(){
       fTriggerword = int(trigword_tmp);
       m_data->Stores["ANNIEEvent"]->Get("TriggerExtended",fExtended);
       BeamStatus beamstat;
-      m_data->Stores["ANNIEEvent"]->Get("BeamStatus",beamstat);
+      bool get_beamstat = m_data->Stores["ANNIEEvent"]->Get("BeamStatus",beamstat);
+
+      if(get_beamstat)
+      {
       if (beamstat.ok()) fBeamok = 1;
       else fBeamok = 0;
       fPot = beamstat.pot();
+      }else{
+      bool gotfBeamok = m_data->Stores["ANNIEEvent"]->Get("beam_good",fBeamok);
+      bool gotpot = m_data->Stores["ANNIEEvent"]->Get("beam_E_TOR875",fPot);
+      if(!gotfBeamok) fBeamok = 0;
+      if(!gotpot) fPot = -99999;
+      }
 
       bool pmtmrdcoinc, noveto;
       m_data->Stores.at("RecoEvent")->Get("PMTMRDCoinc",pmtmrdcoinc);
@@ -687,10 +700,19 @@ bool PhaseIITreeMaker::Execute(){
       fTriggerword = int(trigword_temp);
       m_data->Stores["ANNIEEvent"]->Get("TriggerExtended",fExtended);
       BeamStatus beamstat;
-      m_data->Stores["ANNIEEvent"]->Get("BeamStatus",beamstat);
+      bool get_beamstat = m_data->Stores["ANNIEEvent"]->Get("BeamStatus",beamstat);
+
+      if(get_beamstat)
+      {
       if (beamstat.ok()) fBeamok = 1;
       else fBeamok = 0;
       fPot = beamstat.pot();
+      }else{
+      m_data->Stores["ANNIEEvent"]->Get("beam_good",fBeamok);
+      m_data->Stores["ANNIEEvent"]->Get("beam_E_TOR875",fPot);
+
+      }
+
       bool pmtmrdcoinc, noveto;
       m_data->Stores.at("RecoEvent")->Get("PMTMRDCoinc",pmtmrdcoinc);
       m_data->Stores.at("RecoEvent")->Get("NoVeto",noveto);
@@ -763,7 +785,10 @@ bool PhaseIITreeMaker::Execute(){
       //FIXME: calculate fMRDClusterTime
 
       //Standard run level information
-      Log("PhaseIITreeMaker Tool: Getting run level information from ANNIEEvent",v_debug,verbosity);
+      Log("PhaseIITreeMaker Tool: MRD cluster, Getting run level information from ANNIEEvent",v_debug,verbosity);
+      
+           // // m_data->Stores.at("ANNIEEvent")->Print(false);
+
       m_data->Stores.at("ANNIEEvent")->Get("RunNumber",fRunNumber);
       m_data->Stores.at("ANNIEEvent")->Get("SubrunNumber",fSubrunNumber);
       m_data->Stores.at("ANNIEEvent")->Get("RunType",fRunType);
@@ -792,7 +817,9 @@ bool PhaseIITreeMaker::Execute(){
  
   if(TriggerProcessing) {
 
-    Log("PhaseIITreeMaker Tool: Getting run level information from ANNIEEvent",v_debug,verbosity);
+    Log("PhaseIITreeMaker Tool: trigger, Getting run level information from ANNIEEvent",v_debug,verbosity);
+          // m_data->Stores.at("ANNIEEvent")->Print(false);
+
     this->ResetVariables();
 
     m_data->Stores.at("ANNIEEvent")->Get("RunNumber",fRunNumber);
@@ -812,11 +839,21 @@ bool PhaseIITreeMaker::Execute(){
     m_data->Stores.at("ANNIEEvent")->Get("TriggerWord",trigword_temp);
     fTriggerword = int(trigword_temp);
     m_data->Stores["ANNIEEvent"]->Get("TriggerExtended",fExtended);
-    BeamStatus beamstat;
-    m_data->Stores["ANNIEEvent"]->Get("BeamStatus",beamstat);
-    if (beamstat.ok()) fBeamok = 1;
-    else fBeamok = 0;
-    fPot = beamstat.pot();
+      BeamStatus beamstat;
+      bool get_beamstat = m_data->Stores["ANNIEEvent"]->Get("BeamStatus",beamstat);
+
+      if(get_beamstat)
+      {
+      if (beamstat.ok()) fBeamok = 1;
+      else fBeamok = 0;
+      fPot = beamstat.pot();
+      }else{
+      bool gotfBeamok = m_data->Stores["ANNIEEvent"]->Get("beam_good",fBeamok);
+      bool gotpot = m_data->Stores["ANNIEEvent"]->Get("beam_E_TOR875",fPot);
+      if(!gotfBeamok) fBeamok = 0;
+      if(!gotpot) fPot = -99999;
+
+      }
  
     m_data->Stores.at("ANNIEEvent")->Get("DataStreams",fDataStreams);
     m_data->Stores.at("RecoEvent")->Get("PMTMRDCoinc",pmtmrdcoinc);
@@ -1928,7 +1965,9 @@ for (std::map<uint64_t, PsecData>::iterator it = LAPPDDataMap.begin(); it != LAP
     fLAPPD_OSInMinusPS.push_back(LAPPDOSInMinusPS[key]);
   }
 
+  //cout<<"Grouped Trigger Size: "<<GroupedTrigger.size()<<endl;
   for(std::map<uint64_t, uint32_t>::iterator it = GroupedTrigger.begin(); it != GroupedTrigger.end(); ++it) {
+    //cout<<"Grouped Trigger: "<<it->first<<" "<<it->second<<endl;
     uint64_t key = it->first;
     uint32_t value = it->second;
 
@@ -1949,6 +1988,10 @@ void PhaseIITreeMaker::LoadLAPPDData()
   m_data->Stores["ANNIEEvent"]->Get("LAPPDTSCorrection", LAPPDTSCorrection);
   m_data->Stores["ANNIEEvent"]->Get("LAPPDBGCorrection", LAPPDBGCorrection);
   m_data->Stores["ANNIEEvent"]->Get("LAPPDOSInMinusPS", LAPPDOSInMinusPS);
+  
+  
+  m_data->Stores["ANNIEEvent"]->Get("GroupedTrigger", GroupedTrigger);
   if(LAPPDDataMap.size() != 0)
     FillLAPPDData();
+
 }

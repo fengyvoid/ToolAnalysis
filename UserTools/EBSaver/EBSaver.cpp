@@ -18,6 +18,8 @@ bool EBSaver::Initialise(std::string configfile, DataModel &data)
   m_variables.Get("savePath", savePath);
   saveName = "ProcessedData_";
   m_variables.Get("saveName", saveName);
+  beamInfoFileName = "BeamInfo.root";
+  m_variables.Get("beamInfoFileName", beamInfoFileName);
 
   saveTriggerGroups = true;
   savePMT = true;
@@ -30,6 +32,8 @@ bool EBSaver::Initialise(std::string configfile, DataModel &data)
   m_variables.Get("saveLAPPD", saveLAPPD);
   saveOrphan = true;
   m_variables.Get("saveOrphan", saveOrphan);
+  saveBeamInfo = true;
+  m_variables.Get("saveBeamInfo", saveBeamInfo);
 
   ANNIEEvent = new BoostStore(false, 2);
 
@@ -61,6 +65,12 @@ bool EBSaver::Initialise(std::string configfile, DataModel &data)
   InProgressRecoADCHitsAux = new std::map<uint64_t, std::map<unsigned long, std::vector<std::vector<ADCPulse>>>>;
   InProgressHitsAux = new std::map<uint64_t, std::map<unsigned long, std::vector<Hit>> *>;
   FinishedRawAcqSize = new std::map<uint64_t, std::map<unsigned long, std::vector<int>>>;
+
+  if (saveBeamInfo)
+  {
+    Log("EBSaver: saveBeamInfo is true, loading Beam Info", v_message, verbosityEBSaver);
+    LoadBeamInfo();
+  }
 
   return true;
 }
@@ -125,7 +135,7 @@ bool EBSaver::Execute()
       // if save Everything, in case there might be some mis aligned events not saved to that processed part file correctly and left in buffer, save them to corresponding part file
       if (runCode == savingRunCode)
       {
-          Log("\033[1;34m ****EBSaver: Saving a new event \033[0m", v_message, verbosityEBSaver);
+        Log("\033[1;34m ****EBSaver: Saving a new event \033[0m", v_message, verbosityEBSaver);
 
         std::string saveFileName = savePath + saveName + "_R" + to_string(runCode / 100000) + "S" + to_string((runCode % 100000) / 10000 - 1) + "p" + to_string(runCode % 10000);
         Log("EBSaver: Saving to " + saveFileName + " with run code " + std::to_string(runCode) + " at index " + std::to_string(i), v_message, verbosityEBSaver);
@@ -421,6 +431,7 @@ bool EBSaver::SaveToANNIEEvent(string saveFileName, int runCode, int triggerTrac
   bool PMTSaved = false; // incase of multiple 14 found in one group
   bool MRDSaved = false;
   bool LAPPDSaved = false;
+  bool beamInfoSaved = false;
 
   std::map<uint64_t, uint32_t> GroupedTrigger = GroupedTriggersInTotal[triggerTrack][trackIndex];
   // For each element in GroupedTrigger, find is it appear in PairedPMTTriggerTimestamp[triggerTrack],
@@ -430,7 +441,14 @@ bool EBSaver::SaveToANNIEEvent(string saveFileName, int runCode, int triggerTrac
     uint64_t triggerTime = trigger.first;
     uint32_t triggerType = trigger.second;
     if (triggerType == 14)
+    {
       Log("EBSaver: Found undelayed beam trigger with time " + std::to_string(triggerTime) + " in GroupedTrigger", v_debug, verbosityEBSaver);
+      if (!beamInfoSaved)
+      {
+        SaveBeamInfo(triggerTime);
+        beamInfoSaved = true;
+      }
+    }
 
     if (PairedPMTTriggerTimestamp.find(triggerTrack) != PairedPMTTriggerTimestamp.end())
     {
@@ -453,52 +471,54 @@ bool EBSaver::SaveToANNIEEvent(string saveFileName, int runCode, int triggerTrac
     }
 
     // check if PairedMRDTriggerTimestamp has element with key = triggerTrack
-    if(!MRDSaved){
-            Log("Finding trigger track = " + std::to_string(triggerTrack) + " in PairedMRDTriggerTimestamp", v_debug, verbosityEBSaver);
-    //print PairedMRDTriggerTimestamp with track number and size
-    for (auto const &track : PairedMRDTriggerTimestamp)
-  {
-    Log("EBSaver: in PairedMRDTriggerTimestamp track " + std::to_string(track.first) + ", left trigger number " + std::to_string(track.second.size()), v_message, verbosityEBSaver);
-  }
-   for (auto const &track : PairedMRDTimeStamps)
-  {
-    Log("EBSaver: in PairedMRDTimeStamps track " + std::to_string(track.first) + ", left trigger number " + std::to_string(track.second.size()), v_message, verbosityEBSaver);
-  }
-    if (PairedMRDTriggerTimestamp.find(triggerTrack) != PairedMRDTriggerTimestamp.end())
+    if (!MRDSaved)
     {
-      uint64_t minDiff = 100*60*1e9;
-      Log("Found trigger track = " + std::to_string(triggerTrack) + " in PairedMRDTriggerTimestamp", v_debug, verbosityEBSaver);
-      //print the size of PairedMRDTriggerTimestamp.at(triggerTrack), print the first and the last timestamp
-      Log("EBSaver: PairedMRDTriggerTimestamp size " + std::to_string(PairedMRDTriggerTimestamp.at(triggerTrack).size()), v_debug, verbosityEBSaver);
-      if(PairedMRDTriggerTimestamp.at(triggerTrack).size()>0)
-        Log("EBSaver: PairedMRDTriggerTimestamp first " + std::to_string(PairedMRDTriggerTimestamp.at(triggerTrack).at(0)) + ", last " + std::to_string(PairedMRDTriggerTimestamp.at(triggerTrack).at(PairedMRDTriggerTimestamp.at(triggerTrack).size()-1)), v_debug, verbosityEBSaver);
-        
-      for (int i = 0; i < PairedMRDTriggerTimestamp.at(triggerTrack).size(); i++)
+      Log("Finding trigger track = " + std::to_string(triggerTrack) + " in PairedMRDTriggerTimestamp", v_debug, verbosityEBSaver);
+      // print PairedMRDTriggerTimestamp with track number and size
+      for (auto const &track : PairedMRDTriggerTimestamp)
       {
-        uint64_t diff = (PairedMRDTriggerTimestamp.at(triggerTrack).at(i) > triggerTime) ? PairedMRDTriggerTimestamp.at(triggerTrack).at(i) - triggerTime : triggerTime - PairedMRDTriggerTimestamp.at(triggerTrack).at(i);
-        if(diff < minDiff)
-          minDiff = diff;
+        Log("EBSaver: in PairedMRDTriggerTimestamp track " + std::to_string(track.first) + ", left trigger number " + std::to_string(track.second.size()), v_message, verbosityEBSaver);
+      }
+      for (auto const &track : PairedMRDTimeStamps)
+      {
+        Log("EBSaver: in PairedMRDTimeStamps track " + std::to_string(track.first) + ", left trigger number " + std::to_string(track.second.size()), v_message, verbosityEBSaver);
+      }
+      if (PairedMRDTriggerTimestamp.find(triggerTrack) != PairedMRDTriggerTimestamp.end())
+      {
+        uint64_t minDiff = 100 * 60 * 1e9;
+        Log("Found trigger track = " + std::to_string(triggerTrack) + " in PairedMRDTriggerTimestamp", v_debug, verbosityEBSaver);
+        // print the size of PairedMRDTriggerTimestamp.at(triggerTrack), print the first and the last timestamp
+        Log("EBSaver: PairedMRDTriggerTimestamp size " + std::to_string(PairedMRDTriggerTimestamp.at(triggerTrack).size()), v_debug, verbosityEBSaver);
+        if (PairedMRDTriggerTimestamp.at(triggerTrack).size() > 0)
+          Log("EBSaver: PairedMRDTriggerTimestamp first " + std::to_string(PairedMRDTriggerTimestamp.at(triggerTrack).at(0)) + ", last " + std::to_string(PairedMRDTriggerTimestamp.at(triggerTrack).at(PairedMRDTriggerTimestamp.at(triggerTrack).size() - 1)), v_debug, verbosityEBSaver);
 
-        if (PairedMRDTriggerTimestamp.at(triggerTrack).at(i) == triggerTime || (diff<1e6))
+        for (int i = 0; i < PairedMRDTriggerTimestamp.at(triggerTrack).size(); i++)
         {
-          if(diff<1e6)
-            {Log("EBSaver: diff<1e6, is " + std::to_string(diff), v_debug, verbosityEBSaver);
+          uint64_t diff = (PairedMRDTriggerTimestamp.at(triggerTrack).at(i) > triggerTime) ? PairedMRDTriggerTimestamp.at(triggerTrack).at(i) - triggerTime : triggerTime - PairedMRDTriggerTimestamp.at(triggerTrack).at(i);
+          if (diff < minDiff)
+            minDiff = diff;
+
+          if (PairedMRDTriggerTimestamp.at(triggerTrack).at(i) == triggerTime || (diff < 1e6))
+          {
+            if (diff < 1e6)
+            {
+              Log("EBSaver: diff<1e6, is " + std::to_string(diff), v_debug, verbosityEBSaver);
               TriggerTimeWithoutMRD.emplace(PairedMRDTriggerTimestamp.at(triggerTrack).at(i), static_cast<int>(diff));
             }
-          uint64_t MRDTime = PairedMRDTimeStamps.at(triggerTrack).at(i);
-          bool saved = SaveMRDData(MRDTime);
-          MRDSaved = saved;
-          DataStreams["MRD"] = 1;
-          if (MRDSaved)
-            MRDPairInfoToRemoveTime[triggerTrack].push_back(MRDTime);
-          Log("EBSaver: Saved " + std::to_string(savedMRDNumber) + " MRD data with MRDTime " + std::to_string(MRDTime), v_debug, verbosityEBSaver);
-          Log("EBSaver: Found trigger with time " + std::to_string(triggerTime) + " in PairedMRDTriggerTimestamp " + std::to_string(i) + " match with MRDTime " + std::to_string(MRDTime), v_debug, verbosityEBSaver);
-          // break;
+            uint64_t MRDTime = PairedMRDTimeStamps.at(triggerTrack).at(i);
+            bool saved = SaveMRDData(MRDTime);
+            MRDSaved = saved;
+            DataStreams["MRD"] = 1;
+            if (MRDSaved)
+              MRDPairInfoToRemoveTime[triggerTrack].push_back(MRDTime);
+            Log("EBSaver: Saved " + std::to_string(savedMRDNumber) + " MRD data with MRDTime " + std::to_string(MRDTime), v_debug, verbosityEBSaver);
+            Log("EBSaver: Found trigger with time " + std::to_string(triggerTime) + " in PairedMRDTriggerTimestamp " + std::to_string(i) + " match with MRDTime " + std::to_string(MRDTime), v_debug, verbosityEBSaver);
+            // break;
+          }
         }
+        // Log("EBSaver: MRDData saved", 8, verbosityEBSaver);
+        Log("EBSaver: While saving MRD data, use trigger time " + std::to_string(triggerTime) + " with minDiff " + std::to_string(minDiff), v_debug, verbosityEBSaver);
       }
-      // Log("EBSaver: MRDData saved", 8, verbosityEBSaver);
-      Log("EBSaver: While saving MRD data, use trigger time " + std::to_string(triggerTime) + " with minDiff " + std::to_string(minDiff), v_debug, verbosityEBSaver);
-    }
     }
 
     if (PairedLAPPDTriggerTimestamp.find(triggerTrack) != PairedLAPPDTriggerTimestamp.end())
@@ -690,12 +710,13 @@ bool EBSaver::SavePMTData(uint64_t PMTTime)
 
   Log("EBSaver: Got PMT data, saving", v_debug, verbosityEBSaver);
 
-  //check does the ANNIEEvent already have the key "Hits", if yes, print the size of the vector of each key
-  //also print the size of the vector of each key in new PMTHits
-  //Then Merger the two maps
+  // check does the ANNIEEvent already have the key "Hits", if yes, print the size of the vector of each key
+  // also print the size of the vector of each key in new PMTHits
+  // Then Merger the two maps
   std::map<unsigned long, std::vector<Hit>> *OldPMTHits = new std::map<unsigned long, std::vector<Hit>>;
   bool gotHits = ANNIEEvent->Get("Hits", OldPMTHits);
-  if(gotHits){
+  if (gotHits)
+  {
     Log("EBSaver: ANNIEEvent already has key Hits, size " + std::to_string(OldPMTHits->size()), v_debug, verbosityEBSaver);
     for (auto const &time : *OldPMTHits)
       Log("EBSaver: OldPMTHits old time " + std::to_string(time.first) + " size " + std::to_string(time.second.size()), v_debug, verbosityEBSaver);
@@ -717,7 +738,6 @@ bool EBSaver::SavePMTData(uint64_t PMTTime)
     }
     Log("EBSaver: Merged PMT data, PMTHits size " + std::to_string(PMTHits->size()), v_debug, verbosityEBSaver);
   }
-
 
   ANNIEEvent->Set("Hits", PMTHits, true);
   ANNIEEvent->Set("RecoADCData", PMTRecoADCHits);
@@ -1147,4 +1167,188 @@ void EBSaver::BuildEmptyLAPPDData()
   ANNIEEvent->Set("LAPPDTSCorrection", LAPPDTSCorrection);
   ANNIEEvent->Set("LAPPDBGCorrection", LAPPDBGCorrection);
   ANNIEEvent->Set("LAPPDOSInMinusPS", LAPPDOSInMinusPS);
+}
+
+void EBSaver::LoadBeamInfo()
+{
+  TFile *file = new TFile(beamInfoFileName.c_str(), "READ");
+  TTree *tree;
+  file->GetObject("BeamTree", tree);
+
+  if (!tree)
+  {
+    cout << "EBSaver: Failed to load beam info from file with name: " << beamInfoFileName << endl;
+    return;
+  }
+
+  // copy from IFBeamDBInterfaceV2.cpp
+  //  Here's some documentation for some of the parameters stored in the beam
+  // database. It's taken from the MicroBooNE operations wiki:
+  // http://tinyurl.com/z3c4mxs
+  //
+  // The status page shows the present reading of beamline instrumentation. All
+  // of this data is being stored to IF beam Database. The "IF Beam DB
+  // dashboard":http://dbweb4.fnal.gov:8080/ifbeam/app/BNBDash/index provides
+  // another view of beam data. Some of it is redundant to the status page, but
+  // it verifies that the data is being stored in the database. At present the
+  // page shows following devices:
+  //   * TOR860, TOR875 - two toroids in BNB measuring beam intensity. TOR860 is
+  //     at the beginning of the beamline, and TOR875 is at the end.
+  //   * THCURR - horn current
+  //   * HWTOUT - horn water temperature coming out of the horn.
+  //   * BTJT2 - target temperature
+  //   * HP875, VP875 - beam horizontal and vertical positions at the 875
+  //     location, about 4.5 m upstream of the target center.
+  //   * HPTG1, VPTG1 - beam horizontal and vertical positions immediately
+  //     (about 2.5 m) upstream of the target center.
+  //   * HPTG2, VPTG2 - beam horizontal and vertical positions more immediately
+  //     (about 1.5 m) upstream of the target center.
+  //   * Because there are no optics between H/VP875 and H/VPTG2, the movements
+  //     on these monitors should scale with the difference in distances.
+  //   * BTJT2 - target air cooling temperature. Four RTD measure the return
+  //     temperature of the cooling air. This is the one closest to the target.
+  //   * BTH2T2 - target air cooling temperature. This is the temperature of the
+  //     air going into the horn.
+
+  // additionally, the unit of E_TOR860 and E_TOR875 is E12
+
+  uint64_t timestamp;
+  double E_TOR860, E_TOR875, THCURR, BTJT2, HP875, VP875, HPTG1, VPTG1, HPTG2, VPTG2, BTH2T2;
+
+  tree->SetBranchAddress("Timestamp", &timestamp);
+  tree->SetBranchAddress("E_TOR860", &E_TOR860);
+  tree->SetBranchAddress("E_TOR875", &E_TOR875);
+  tree->SetBranchAddress("E_THCURR", &THCURR);
+  tree->SetBranchAddress("E_BTJT2", &BTJT2);
+  tree->SetBranchAddress("E_HP875", &HP875);
+  tree->SetBranchAddress("E_VP875", &VP875);
+  tree->SetBranchAddress("E_HPTG1", &HPTG1);
+  tree->SetBranchAddress("E_VPTG1", &VPTG1);
+  tree->SetBranchAddress("E_HPTG2", &HPTG2);
+  tree->SetBranchAddress("E_VPTG2", &VPTG2);
+  tree->SetBranchAddress("E_BTH2T2", &BTH2T2);
+
+  Long64_t nentries = tree->GetEntries();
+  Log("EBSaver: Loading beam infor, total entries in beam info file: " + std::to_string(nentries), v_message, verbosityEBSaver);
+  for (Long64_t i = 0; i < nentries; ++i)
+  {
+    tree->GetEntry(i);
+    if (i % (static_cast<int>(nentries / 10)) == 0)
+      Log("EBSaver: Loading beam info, processed " + std::to_string(i) + " entries", v_message, verbosityEBSaver);
+    BeamInfoTimestamps.push_back(timestamp);
+    E_TOR860_map.emplace(timestamp, E_TOR860);
+    E_TOR875_map.emplace(timestamp, E_TOR875);
+    THCURR_map.emplace(timestamp, THCURR);
+    BTJT2_map.emplace(timestamp, BTJT2);
+    HP875_map.emplace(timestamp, HP875);
+    VP875_map.emplace(timestamp, VP875);
+    HPTG1_map.emplace(timestamp, HPTG1);
+    VPTG1_map.emplace(timestamp, VPTG1);
+    HPTG2_map.emplace(timestamp, HPTG2);
+    VPTG2_map.emplace(timestamp, VPTG2);
+    BTH2T2_map.emplace(timestamp, BTH2T2);
+  }
+
+  Log("EBSaver: Loaded number of E_TOR860 entries: " + std::to_string(E_TOR860_map.size()), v_message, verbosityEBSaver);
+
+  Log("EBSaver: Finished loading beam info from " + beamInfoFileName, v_message, verbosityEBSaver);
+
+  return;
+}
+
+bool EBSaver::SaveBeamInfo(uint64_t TriggerTime)
+{
+  double E_TOR860, E_TOR875, THCURR, BTJT2, HP875, VP875, HPTG1, VPTG1, HPTG2, VPTG2, BTH2T2;
+  // find the closest timestamp in vector<uint64_t> BeamInfoTimestamps
+
+  uint64_t closestTimestamp = 0;
+  double minDiff = 5 * 60 * 1e9; // 5 minutes
+  int minIndex = -1;
+
+  for (int i = 0; i < BeamInfoTimestamps.size(); i++)
+  {
+    uint64_t timestamp = BeamInfoTimestamps.at(i) * 1e6;
+    if(i<2 || i>BeamInfoTimestamps.size()-2)
+    {
+      cout<<"BeamInfoTimestamps["<<i<<"]*1e6 = "<<timestamp<<", TriggerTime = "<<TriggerTime<<endl;
+    }
+    double diff = (timestamp > TriggerTime) ? timestamp - TriggerTime : TriggerTime - timestamp;
+    if (diff < minDiff)
+    {
+      minDiff = diff;
+      minIndex = i;
+    }
+  }
+
+  if (minIndex == -1)
+  {
+    Log("EBSaver: Failed to find the closest beam info timestamp to trigger time", v_message, verbosityEBSaver);
+
+    ANNIEEvent->Set("BeamInfoTime", 0);
+    ANNIEEvent->Set("BeamInfoTimeToTriggerDiff", -9999);
+    ANNIEEvent->Set("beam_E_TOR860", -9999);
+    ANNIEEvent->Set("beam_E_TOR875", -9999);
+    ANNIEEvent->Set("beam_THCURR", -9999);
+    ANNIEEvent->Set("beam_BTJT2", -9999);
+    ANNIEEvent->Set("beam_HP875", -9999);
+    ANNIEEvent->Set("beam_VP875", -9999);
+    ANNIEEvent->Set("beam_HPTG1", -9999);
+    ANNIEEvent->Set("beam_VPTG1", -9999);
+    ANNIEEvent->Set("beam_HPTG2", -9999);
+    ANNIEEvent->Set("beam_VPTG2", -9999);
+    ANNIEEvent->Set("beam_BTH2T2", -9999);
+    ANNIEEvent->Set("beam_good", false);
+
+    Log("EBSaver: Saved beam info with time " + std::to_string(0) + ", pot E_TOR860 = " + std::to_string(-9999) + ", beam_good = " + std::to_string(-9999), v_message, verbosityEBSaver);
+  }
+  else
+  {
+    Log("Found the closest beam info timestamp to trigger time at index " + std::to_string(minIndex) + " with time " + std::to_string(BeamInfoTimestamps.at(minIndex)), v_message, verbosityEBSaver);
+
+    // get the precise difference
+    uint64_t beamInfoTime = BeamInfoTimestamps.at(minIndex);
+    int64_t timeDiff = (beamInfoTime > TriggerTime) ? beamInfoTime - TriggerTime : -static_cast<int64_t>(TriggerTime - beamInfoTime);
+
+    // check if the map has the key
+    E_TOR860 = E_TOR860_map.at(beamInfoTime);
+    E_TOR875 = E_TOR875_map.at(beamInfoTime);
+    THCURR = THCURR_map.at(beamInfoTime);
+    BTJT2 = BTJT2_map.at(beamInfoTime);
+    HP875 = HP875_map.at(beamInfoTime);
+    VP875 = VP875_map.at(beamInfoTime);
+    HPTG1 = HPTG1_map.at(beamInfoTime);
+    VPTG1 = VPTG1_map.at(beamInfoTime);
+    HPTG2 = HPTG2_map.at(beamInfoTime);
+    VPTG2 = VPTG2_map.at(beamInfoTime);
+    BTH2T2 = BTH2T2_map.at(beamInfoTime);
+
+    ANNIEEvent->Set("BeamInfoTime", beamInfoTime*1e6);
+    ANNIEEvent->Set("BeamInfoTimeToTriggerDiff", timeDiff);
+
+    ANNIEEvent->Set("beam_E_TOR860", E_TOR860);
+    ANNIEEvent->Set("beam_E_TOR875", E_TOR875);
+    ANNIEEvent->Set("beam_THCURR", THCURR);
+    ANNIEEvent->Set("beam_BTJT2", BTJT2);
+    ANNIEEvent->Set("beam_HP875", HP875);
+    ANNIEEvent->Set("beam_VP875", VP875);
+    ANNIEEvent->Set("beam_HPTG1", HPTG1);
+    ANNIEEvent->Set("beam_VPTG1", VPTG1);
+    ANNIEEvent->Set("beam_HPTG2", HPTG2);
+    ANNIEEvent->Set("beam_VPTG2", VPTG2);
+    ANNIEEvent->Set("beam_BTH2T2", BTH2T2);
+
+    int beam_good = 0;
+
+    if (THCURR > 172 && THCURR < 176)
+    {
+      if (E_TOR860 > 0.5 && E_TOR860 < 8 && E_TOR875 > 0.5 && E_TOR875 < 8 && (E_TOR875 - E_TOR860) / E_TOR860 < 0.05)
+        beam_good = 1;
+    }
+
+    ANNIEEvent->Set("beam_good", beam_good);
+
+    Log("EBSaver: Saved beam info with time " + std::to_string(beamInfoTime) + ", pot E_TOR860 = " + std::to_string(E_TOR860) + ", beam_good = " + std::to_string(beam_good), v_message, verbosityEBSaver);
+  }
+
+  return true;
 }

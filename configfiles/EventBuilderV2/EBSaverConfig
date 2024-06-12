@@ -7,4 +7,4 @@ saveLAPPD 1
 saveRunInfo 1
 saveBeamInfo 1
 
-
+beamInfoFileName BeamInfo.root
