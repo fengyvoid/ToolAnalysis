@@ -615,7 +615,12 @@ bool EBSaver::SaveGroupedTriggers(int triggerTrack, int groupIndex)
   ANNIEEvent->Set("GroupedTrigger", GroupedTrigger);
   int matchTriggerType = triggerTrack;
   ANNIEEvent->Set("PrimaryTriggerWord", matchTriggerType);
-  ANNIEEvent->Set("TriggerWord", matchTriggerType);
+  if(matchTriggerType!=14){
+    ANNIEEvent->Set("TriggerWord", matchTriggerType);
+  }
+  else{
+    ANNIEEvent->Set("TriggerWord", 5);
+  }
 
   // find the triggertrack trigger time in GroupedTrigger
   uint64_t primaryTrigTime = 0;
@@ -1262,17 +1267,18 @@ bool EBSaver::SaveBeamInfo(uint64_t TriggerTime)
   // find the closest timestamp in vector<uint64_t> BeamInfoTimestamps
 
   uint64_t closestTimestamp = 0;
-  double minDiff = 5 * 60 * 1e9; // 5 minutes
+  double minDiff = 60 * 60 * 1e9; // 60 minutes
   int minIndex = -1;
 
   for (int i = 0; i < BeamInfoTimestamps.size(); i++)
   {
     uint64_t timestamp = BeamInfoTimestamps.at(i) * 1e6;
-    if(i<2 || i>BeamInfoTimestamps.size()-2)
-    {
-      cout<<"BeamInfoTimestamps["<<i<<"]*1e6 = "<<timestamp<<", TriggerTime = "<<TriggerTime<<endl;
-    }
     double diff = (timestamp > TriggerTime) ? timestamp - TriggerTime : TriggerTime - timestamp;
+    if (i == 0)
+      Log("EBSaver: First beam info timestamp is " + std::to_string(timestamp) + " with diff = " + std::to_string(diff), v_warning, verbosityEBSaver);
+    else if (i == BeamInfoTimestamps.size() - 1)
+      Log("EBSaver: Last beam info timestamp is " + std::to_string(timestamp) + " with diff = " + std::to_string(diff), v_warning, verbosityEBSaver);
+
     if (diff < minDiff)
     {
       minDiff = diff;
@@ -1307,7 +1313,7 @@ bool EBSaver::SaveBeamInfo(uint64_t TriggerTime)
   }
   else
   {
-    Log("Found the closest beam info timestamp to trigger time at index " + std::to_string(minIndex) + " with time " + std::to_string(BeamInfoTimestamps.at(minIndex)), v_message, verbosityEBSaver);
+    Log("Found the closest beam info timestamp to trigger time at index " + std::to_string(minIndex) + " with time " + std::to_string(BeamInfoTimestamps.at(minIndex)) + " and dt = " + std::to_string(minDiff), v_message, verbosityEBSaver);
 
     // get the precise difference
     uint64_t beamInfoTime = BeamInfoTimestamps.at(minIndex);
@@ -1326,7 +1332,7 @@ bool EBSaver::SaveBeamInfo(uint64_t TriggerTime)
     VPTG2 = VPTG2_map.at(beamInfoTime);
     BTH2T2 = BTH2T2_map.at(beamInfoTime);
 
-    ANNIEEvent->Set("BeamInfoTime", beamInfoTime*1e6);
+    ANNIEEvent->Set("BeamInfoTime", beamInfoTime * 1e6);
     ANNIEEvent->Set("BeamInfoTimeToTriggerDiff", timeDiff);
 
     ANNIEEvent->Set("beam_E_TOR860", E_TOR860);

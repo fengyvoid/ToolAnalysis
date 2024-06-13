@@ -796,6 +796,11 @@ vector<vector<ULong64_t>> fitInPartFile(TTree *lappdTree, TTree *triggerTree, in
     vector<vector<ULong64_t>> ResultTotal;
     if (LAPPDDataTimeStampUL.size() == LAPPDDataBeamgateUL.size())
     {
+        if(LAPPD_PPS0.size() == 0 || LAPPD_PPS1.size() == 0 )
+        {
+            cout<<"Error: PPS0 or PPS1 is empty, return empty result."<<endl;
+            return ResultTotal;
+        }
         vector<vector<ULong64_t>> ResultACDC0 = fitInThisReset(LAPPDDataTimeStampUL, LAPPDDataBeamgateUL, LAPPD_PPS0, fitTargetTriggerWord, CTCTargetTimeStamp, CTCPPSTimeStamp, intervalInSecond * 1E9 * 1000);
         vector<vector<ULong64_t>> ResultACDC1 = fitInThisReset(LAPPDDataTimeStampUL, LAPPDDataBeamgateUL, LAPPD_PPS1, fitTargetTriggerWord, CTCTargetTimeStamp, CTCPPSTimeStamp, intervalInSecond * 1E9 * 1000);
 
@@ -1024,6 +1029,9 @@ void offsetFit_MultipleLAPPD(string fileName, int fitTargetTriggerWord, bool tri
     {
         string key = it->first;
         vector<vector<ULong64_t>> Result = it->second;
+
+        if(Result.size()==0)
+            continue;
 
         runNumber_out = std::stoi(key.substr(0, key.find("_")));
         subRunNumber_out = std::stoi(key.substr(key.find("_") + 1, key.find("_", key.find("_") + 1) - key.find("_") - 1));

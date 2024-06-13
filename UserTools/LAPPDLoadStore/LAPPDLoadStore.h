@@ -75,6 +75,7 @@ private:
     // Variables that you get from the config file
     int stopEntries;      // stop tool chain after loading this number of PSEC data events
     int NonEmptyEvents;   // count how many non empty data events were loaded
+    int NonEmptyDataEvents; // count how many non empty data events were loaded
     bool PsecReceiveMode; // Get PSEC data from CStore or Stores["ANNIEEvent"]. 1: CStore, 0: Stores["ANNIEEvent"]
     string OutputWavLabel;
     string InputWavLabel;
@@ -96,6 +97,15 @@ private:
     // LAPPD tool chain, data variables. (Will be used in multiple LAPPD tools)
     // everything you get or set to Store, which means it may be used in other tools or it's from other tools
     int LAPPD_ID;
+    vector<int> LAPPD_IDs;
+    vector<uint64_t> LAPPDLoadedTimeStamps;
+    vector<uint64_t> LAPPDLoadedTimeStampsRaw;
+    vector<uint64_t> LAPPDLoadedBeamgatesRaw;
+    vector<uint64_t> LAPPDLoadedOffsets;
+    vector<int> LAPPDLoadedTSCorrections;
+    vector<int> LAPPDLoadedBGCorrections;
+    vector<int> LAPPDLoadedOSInMinusPS;
+
     vector<int> ParaBoards; // save the board index for this PsecData
     std::map<unsigned long, vector<Waveform<double>>> LAPPDWaveforms;
 
@@ -111,9 +121,18 @@ private:
     vector<unsigned short> pps;
     vector<int> LAPPD_ID_Channel;     // for each LAPPD, how many channels on it's each board
     vector<int> LAPPD_ID_BoardNumber; // for each LAPPD, how many boards with it
-    std::map<unsigned long, PsecData> LAPPDDataMap;
+    std::map<uint64_t, PsecData> LAPPDDataMap;
+    std::map<uint64_t, uint64_t> LAPPDBeamgate_ns;
+    std::map<uint64_t, uint64_t> LAPPDTimeStamps_ns; // data and key are the same
+    std::map<uint64_t, uint64_t> LAPPDTimeStampsRaw;
+    std::map<uint64_t, uint64_t> LAPPDBeamgatesRaw;
+    std::map<uint64_t, uint64_t> LAPPDOffsets;
+    std::map<uint64_t, int> LAPPDTSCorrection;
+    std::map<uint64_t, int> LAPPDBGCorrection;
+    std::map<uint64_t, int> LAPPDOSInMinusPS;
 
     // data variables don't need to be cleared in each loop
+    // these are loaded offset for event building
     std::map<string, vector<uint64_t>> Offsets;     // Loaded offset, use string = run number + sub run number + partfile number as key.
     std::map<string, vector<int>> Offsets_minus_ps; // offset in ps, use offset - this/1e3 as the real offset
     std::map<string, vector<int>> BGCorrections;    // Loaded BGcorrections, same key as Offsets, but offset saved on event by event basis in that part file, in unit of ticks
@@ -123,6 +142,9 @@ private:
     int partFileNumber;
     int eventNumberInPF;
     std::ofstream debugStoreReadIn;
+
+
+
 };
 
 #endif

@@ -246,6 +246,7 @@ bool LoadANNIEEvent::Execute() {
            std::string input_filename = input_filenames_.at(current_file_);
            std::cout <<"Reading in current file "<<current_file_<<std::endl;
            m_data->Stores["ANNIEEvent"]->Initialise(input_filename);
+           Log("LoadANNIEEvent: Loading new file "+input_filename, 1, verbosity_);
            m_data->Stores["ANNIEEvent"]->Header->Get("TotalEntries",
              total_entries_in_file_);
            global_events.push_back(global_events.at(current_file_-1)+total_entries_in_file_);
@@ -278,7 +279,7 @@ bool LoadANNIEEvent::Execute() {
   Log("ANNIEEvent store has "+std::to_string(total_entries_in_file_)+" entries",v_debug,verbosity_);
   Log("Loading entry " + std::to_string(current_entry_) + " from the"
     " ANNIEEvent input file \"" + input_filenames_.at(current_file_)
-    + '\"', 1, verbosity_);
+    + '\"', 2, verbosity_);
  
   if ((int)current_entry_ != offset_evnum) m_data->Stores["ANNIEEvent"]->Delete();	//ensures that we can access pointers without problems
 

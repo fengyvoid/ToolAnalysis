@@ -1,4 +1,4 @@
-verbose 0
+verbose 1
 
 FileForListOfInputs configfiles/LAPPDProcessedAna/list.txt
 

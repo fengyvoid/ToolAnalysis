@@ -16,13 +16,12 @@ RawDataOutputWavLabel  RawLAPPDData
 BoardIndexLabel BoardIndex #Label of the vector of read out boards
 
 PsecReceiveMode 0
+MultiLAPPDMap 1
 stopEntries 10000000000
 
 DoPedSubtraction 1
 Nboards 6 #Number of pedestal files to be read in
-#PedinputfileTXT ../Pedestals/swapLAPPD/Pedestal
-PedinputfileTXT ../Pedestals/run3xxx/Pedestal
-#PedinputfileTXT ../Pedestals/LAPPD640392/P
+PedinputfileTXT ../Pedestals/LAPPD645839//P
 PSECinputfile /pnfs/annie/persistent/processed/LAPPD40Merged/FinalVersion_withRawTS/FilteredData_PMT_MRDtrack_noveto_15mV_7strips_3xxx_104
 
 
@@ -62,7 +61,7 @@ treeMakerVerbosity 0
 
 treeMakerInputPulseLabel LAPPDPulses
 treeMakerInputHitLabel LAPPDHits
-treeMakerOutputFileName LAPPDTree.root
+treeMakerOutputFileName LAPPDTree_processedAna.root
 LoadTriggerInfo 0
 LoadGroupOption beam
 LoadGroupedTriggerInfo 1
