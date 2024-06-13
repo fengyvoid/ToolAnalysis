@@ -1284,20 +1284,24 @@ bool EBSaver::SaveBeamInfo(uint64_t TriggerTime)
   {
     Log("EBSaver: Failed to find the closest beam info timestamp to trigger time", v_message, verbosityEBSaver);
 
-    ANNIEEvent->Set("BeamInfoTime", 0);
-    ANNIEEvent->Set("BeamInfoTimeToTriggerDiff", -9999);
-    ANNIEEvent->Set("beam_E_TOR860", -9999);
-    ANNIEEvent->Set("beam_E_TOR875", -9999);
-    ANNIEEvent->Set("beam_THCURR", -9999);
-    ANNIEEvent->Set("beam_BTJT2", -9999);
-    ANNIEEvent->Set("beam_HP875", -9999);
-    ANNIEEvent->Set("beam_VP875", -9999);
-    ANNIEEvent->Set("beam_HPTG1", -9999);
-    ANNIEEvent->Set("beam_VPTG1", -9999);
-    ANNIEEvent->Set("beam_HPTG2", -9999);
-    ANNIEEvent->Set("beam_VPTG2", -9999);
-    ANNIEEvent->Set("beam_BTH2T2", -9999);
-    ANNIEEvent->Set("beam_good", false);
+    uint64_t beamInfoTime = 0;
+    int64_t timeDiff = -9999;
+    double defaultVal = -9999.;
+    int beam_good = 0;
+    ANNIEEvent->Set("BeamInfoTime", beamInfoTime);
+    ANNIEEvent->Set("BeamInfoTimeToTriggerDiff", timeDiff);
+    ANNIEEvent->Set("beam_E_TOR860", defaultVal);
+    ANNIEEvent->Set("beam_E_TOR875", defaultVal);
+    ANNIEEvent->Set("beam_THCURR", defaultVal);
+    ANNIEEvent->Set("beam_BTJT2", defaultVal);
+    ANNIEEvent->Set("beam_HP875", defaultVal);
+    ANNIEEvent->Set("beam_VP875", defaultVal);
+    ANNIEEvent->Set("beam_HPTG1", defaultVal);
+    ANNIEEvent->Set("beam_VPTG1", defaultVal);
+    ANNIEEvent->Set("beam_HPTG2", defaultVal);
+    ANNIEEvent->Set("beam_VPTG2", defaultVal);
+    ANNIEEvent->Set("beam_BTH2T2", defaultVal);
+    ANNIEEvent->Set("beam_good", beam_good);
 
     Log("EBSaver: Saved beam info with time " + std::to_string(0) + ", pot E_TOR860 = " + std::to_string(-9999) + ", beam_good = " + std::to_string(-9999), v_message, verbosityEBSaver);
   }

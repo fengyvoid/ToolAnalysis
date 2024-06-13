@@ -708,9 +708,10 @@ bool PhaseIITreeMaker::Execute(){
       else fBeamok = 0;
       fPot = beamstat.pot();
       }else{
-      m_data->Stores["ANNIEEvent"]->Get("beam_good",fBeamok);
-      m_data->Stores["ANNIEEvent"]->Get("beam_E_TOR875",fPot);
-
+      bool gotfBeamok = m_data->Stores["ANNIEEvent"]->Get("beam_good",fBeamok);
+      bool gotpot = m_data->Stores["ANNIEEvent"]->Get("beam_E_TOR875",fPot);
+      if(!gotfBeamok) fBeamok = 0;
+      if(!gotpot) fPot = -99999;
       }
 
       bool pmtmrdcoinc, noveto;
@@ -852,7 +853,6 @@ bool PhaseIITreeMaker::Execute(){
       bool gotpot = m_data->Stores["ANNIEEvent"]->Get("beam_E_TOR875",fPot);
       if(!gotfBeamok) fBeamok = 0;
       if(!gotpot) fPot = -99999;
-
       }
  
     m_data->Stores.at("ANNIEEvent")->Get("DataStreams",fDataStreams);
