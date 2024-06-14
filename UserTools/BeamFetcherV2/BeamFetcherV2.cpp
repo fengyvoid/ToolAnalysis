@@ -172,7 +172,7 @@ bool BeamFetcherV2::FetchFromTrigger()
 	 iterator != TimeToTriggerWordMap->end(); ++iterator) {
 
       // We only care about beam triggers here
-      if (std::find(iterator->second.begin(), iterator->second.end(), 5) == iterator->second.end()) {
+      if (std::find(iterator->second.begin(), iterator->second.end(), 14) == iterator->second.end()) {
 	continue;
       }
       // bool hasBeamTrig = false;
@@ -324,7 +324,8 @@ void BeamFetcherV2::WriteTrees()
     fOutTree->Fill();
   }// end loop over timestamps
 
-
+// clear BeamDataMap after filling Tree
+BeamDataMap->clear();
 
 }
 
