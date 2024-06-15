@@ -383,6 +383,9 @@ bool PhaseIIADCHitFinder::Execute() {
    // std::cout <<"InProgressHits size (calibrator): "<<InProgressHits->size()<<std::endl;
    // std::cout <<"InProgressRecoADCHits size (calibrator): "<<InProgressRecoADCHits->size()<<std::endl;
    // std::cout <<"InProgressHitsAux size (calibrator): "<<InProgressHitsAux->size()<<std::endl;
+          cout<<"InProgressChkey size: "<<InProgressChkey->size()<<endl;
+      cout<<"InProgressHits size: "<<InProgressHits->size()<<endl;
+
     if (new_data){
       //std::cout <<"FinishedHits"<<std::endl;
       //Setting variables into the CStore
@@ -390,6 +393,7 @@ bool PhaseIIADCHitFinder::Execute() {
       //std::cout <<"FinishedRecoADCHits"<<std::endl;
       m_data->CStore.Set("InProgressRecoADCHits",InProgressRecoADCHits);
       m_data->CStore.Set("InProgressChkey",InProgressChkey);
+      cout<<"InProgressChkey size: "<<InProgressChkey->size()<<endl;
       //std::cout <<"FinishedHitsAux"<<std::endl;
       m_data->CStore.Set("InProgressHitsAux",InProgressHitsAux);
      // std::cout <<"FinishedRecoADCHitsAux"<<std::endl;

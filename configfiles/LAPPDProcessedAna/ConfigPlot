@@ -85,7 +85,7 @@ useRange -1   #set this to 0 for using pulse start time as the saved pulse time,
 plusClockBit 0
 
 savePositionOnStrip 1
-
+LoadLAPPDMapInfo 1
 
 #LAPPDStackStrip
 verbosityStackStrip 0
@@ -111,7 +111,6 @@ treeMakerInputHitLabel LAPPDHits
 treeMakerOutputFileName LAPPDTree.root 
 
 
-
 #LAPPDPlots
 LAPPDPlotInputWaveLabel BLsubtractedLAPPDData
 LAPPDPlotsVerbosity 0
@@ -130,6 +129,5 @@ DrawBinHist 1
 printEventNumber 0
 printLAPPDNumber 1
 printEventWaveform 1
-
 
 

@@ -45,6 +45,7 @@ bool LAPPDLoadStore::Initialise(std::string configfile, DataModel &data)
     NonEmptyEvents = 0;
     NonEmptyDataEvents = 0;
     PPSnumber = 0;
+    mergedEvent = false;
     isFiltered = false;
     isBLsub = false;
     isCFD = false;
@@ -71,6 +72,8 @@ bool LAPPDLoadStore::Initialise(std::string configfile, DataModel &data)
     subRunNumber = 0;
     partFileNumber = 0;
     eventNumberInPF = 0;
+
+    ReadStore = 0;
 
     // get data file
     if (ReadStore == 1)
@@ -157,8 +160,17 @@ void LAPPDLoadStore::CleanDataObjects()
     LAPPDWaveforms.clear();
     data.clear();
     Parse_buffer.clear();
-    LAPPDDataMap.clear();
+    // LAPPDDataMap.clear();
+    // DataStreams.clear();
     runInfoLoaded = false;
+
+    LAPPD_IDs.clear();
+    LAPPDLoadedTimeStampsRaw.clear();
+    LAPPDLoadedBeamgatesRaw.clear();
+    LAPPDLoadedOffsets.clear();
+    LAPPDLoadedTSCorrections.clear();
+    LAPPDLoadedBGCorrections.clear();
+    LAPPDLoadedOSInMinusPS.clear();
 }
 
 bool LAPPDLoadStore::Execute()
@@ -169,6 +181,24 @@ bool LAPPDLoadStore::Execute()
 
     CleanDataObjects();
     m_data->CStore.Set("LAPPD_new_event", false);
+
+    if (MultiLAPPDMap)
+    {
+        bool gotDataStream = m_data->Stores.at("ANNIEEvent")->Get("DataStreams", DataStreams);
+        bool getMap = m_data->Stores["ANNIEEvent"]->Get("LAPPDDataMap", LAPPDDataMap);
+        if (getMap)
+        {
+            // cout << "Outside, size of LAPPDDatamap = " << LAPPDDataMap.size() << endl;
+            bool gotBeamgates_ns = m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
+            bool gotTimeStamps_ns = m_data->Stores["ANNIEEvent"]->Get("LAPPDTimeStamps_ns", LAPPDTimeStamps_ns);
+            bool gotTimeStampsRaw = m_data->Stores["ANNIEEvent"]->Get("LAPPDTimeStampsRaw", LAPPDTimeStampsRaw);
+            bool gotBeamgatesRaw = m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgatesRaw", LAPPDBeamgatesRaw);
+            bool gotOffsets = m_data->Stores["ANNIEEvent"]->Get("LAPPDOffsets", LAPPDOffsets);
+            bool gotTSCorrection = m_data->Stores["ANNIEEvent"]->Get("LAPPDTSCorrection", LAPPDTSCorrection);
+            bool gotDBGCorrection = m_data->Stores["ANNIEEvent"]->Get("LAPPDBGCorrection", LAPPDBGCorrection);
+            bool gotOSInMinusPS = m_data->Stores["ANNIEEvent"]->Get("LAPPDOSInMinusPS", LAPPDOSInMinusPS);
+        }
+    }
 
     // decide loading data or not, set to LAPPDana for later tools
     LAPPDana = LoadData();
@@ -281,19 +311,42 @@ bool LAPPDLoadStore::Execute()
 
         // data was already loaded in the LoadData()
 
+        vector<int> ReadedBoards;
+        vector<int> ACDCReadedLAPPDID;
+
         if (LAPPDStoreReadInVerbosity > 0)
             cout << "LAPPDStoreReadIn: LAPPDDataMap has " << LAPPDDataMap.size() << " LAPPD PSEC data " << endl;
         bool ValidDataLoaded = false;
         std::map<unsigned long, PsecData>::iterator it;
         for (it = LAPPDDataMap.begin(); it != LAPPDDataMap.end(); it++)
         {
+            ParaBoards.clear();
             uint64_t time = it->first;
             PsecData dat = it->second;
-            ReadBoards = dat.BoardIndex;
+            ReadBoards = dat.BoardIndex; // From the data, board index is not related to the LAPPD_ID! WHY use this way?
             Raw_buffer = dat.RawWaveform;
             LAPPD_ID = dat.LAPPD_ID;
             if (LAPPD_ID != SelectedLAPPD && SelectSingleLAPPD)
                 continue;
+
+            if (LAPPDStoreReadInVerbosity > 0)
+            {
+                // print ReadBoards
+                cout << "LAPPD ID " << LAPPD_ID << " ReadBoards size is " << ReadBoards.size() << ", data: " << endl;
+                for (auto it = ReadBoards.begin(); it != ReadBoards.end(); it++)
+                {
+                    cout << ", " << *it;
+                }
+                cout << endl;
+            }
+
+            // push all elements in ReadBoards to ReadedBoards
+            for (auto it = ReadBoards.begin(); it != ReadBoards.end(); it++)
+            {
+                ReadedBoards.push_back(*it);
+                ACDCReadedLAPPDID.push_back(LAPPD_ID);
+                //cout << "ReadedBoards loaded with " << *it << endl;
+            }
 
             int frametype = static_cast<int>(Raw_buffer.size() / ReadBoards.size());
             if (frametype != num_vector_data)
@@ -302,18 +355,64 @@ bool LAPPDLoadStore::Execute()
                 continue;
             }
             m_data->CStore.Set("LAPPDanaData", true);
+            if (LAPPDStoreReadInVerbosity > 3)
+            {
+                cout << "Before parsing data, printing size and element in ReadBoards, ReadedBoards, ParaBoards" << endl;
+                cout << "ReadBoards size is " << ReadBoards.size() << endl;
+                for (auto it = ReadBoards.begin(); it != ReadBoards.end(); it++)
+                {
+                    cout << ", " << *it;
+                }
+                cout << endl;
+                cout << "ReadedBoards size is " << ReadedBoards.size() << endl;
+                for (auto it = ReadedBoards.begin(); it != ReadedBoards.end(); it++)
+                {
+                    cout << ", " << *it;
+                }
+                cout << endl;
+                cout << "ParaBoards size is " << ParaBoards.size() << endl;
+                for (auto it = ParaBoards.begin(); it != ParaBoards.end(); it++)
+                {
+                    cout << ", " << *it;
+                }
+                cout << endl;
+            }
             bool parsData = ParsePSECData(); // TODO: now assuming all boards just has 30 channels. Need to be changed for gen 2
             if (parsData)
             {
                 ValidDataLoaded = true;
+                if (LAPPDStoreReadInVerbosity > 2)
+                    cout << "LAPPDLoadStore: Loaded LAPPD data for LAPPD_ID " << LAPPD_ID << " at time " << time << endl;
                 LAPPDLoadedTimeStamps.push_back(time);
                 LAPPD_IDs.push_back(LAPPD_ID);
+                // print the size of LAPPDTimeStampsRaw, print all keys in it
+                if (LAPPDStoreReadInVerbosity > 0)
+                {
+                    cout << "LAPPDTimeStampsRaw size is " << LAPPDTimeStampsRaw.size() << endl;
+                    for (auto it = LAPPDTimeStampsRaw.begin(); it != LAPPDTimeStampsRaw.end(); it++)
+                    {
+                        cout << "LAPPDTimeStampsRaw key is " << it->first << endl;
+                    }
+                }
+                // print the size of LAPPDOffsets, print all keys in it
+                if (LAPPDStoreReadInVerbosity > 0)
+                {
+                    cout << "LAPPDOffsets size is " << LAPPDOffsets.size() << endl;
+                    for (auto it = LAPPDOffsets.begin(); it != LAPPDOffsets.end(); it++)
+                    {
+                        cout << "LAPPDOffsets key is " << it->first << endl;
+                    }
+                }
+
                 LAPPDLoadedTimeStampsRaw.push_back(LAPPDTimeStampsRaw.at(time));
                 LAPPDLoadedBeamgatesRaw.push_back(LAPPDBeamgatesRaw.at(time));
                 LAPPDLoadedOffsets.push_back(LAPPDOffsets.at(time));
                 LAPPDLoadedTSCorrections.push_back(LAPPDTSCorrection.at(time));
                 LAPPDLoadedBGCorrections.push_back(LAPPDBGCorrection.at(time));
                 LAPPDLoadedOSInMinusPS.push_back(LAPPDOSInMinusPS.at(time));
+
+                if (LAPPDStoreReadInVerbosity > 2)
+                    cout << "parsing finished for LAPPD_ID " << LAPPD_ID << " at time " << time << endl;
             }
             NonEmptyEvents += 1;
             NonEmptyDataEvents += 1;
@@ -326,13 +425,31 @@ bool LAPPDLoadStore::Execute()
         m_data->Stores["ANNIEEvent"]->Set("RawLAPPDData", LAPPDWaveforms); // leave this only for the merger tool
         m_data->Stores["ANNIEEvent"]->Set("LAPPD_IDs", LAPPD_IDs);
         m_data->Stores["ANNIEEvent"]->Set("LAPPDLoadedTimeStamps", LAPPDLoadedTimeStamps);
+        m_data->Stores["ANNIEEvent"]->Set("ACDCboards", ReadedBoards);
+        m_data->Stores["ANNIEEvent"]->Set("ACDCReadedLAPPDID", ACDCReadedLAPPDID);
+        m_data->Stores["ANNIEEvent"]->Set("ACDCmetadata", meta);
+
+        m_data->Stores["ANNIEEvent"]->Set("LAPPDDataMap", LAPPDDataMap);
+
+        m_data->Stores["ANNIEEvent"]->Set("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
+        m_data->Stores["ANNIEEvent"]->Set("LAPPDTimeStamps_ns", LAPPDTimeStamps_ns);
+        m_data->Stores["ANNIEEvent"]->Set("LAPPDTimeStampsRaw", LAPPDTimeStampsRaw);
+        m_data->Stores["ANNIEEvent"]->Set("LAPPDBeamgatesRaw", LAPPDBeamgatesRaw);
+        m_data->Stores["ANNIEEvent"]->Set("LAPPDOffsets", LAPPDOffsets);
+        m_data->Stores["ANNIEEvent"]->Set("LAPPDTSCorrection", LAPPDTSCorrection);
+        m_data->Stores["ANNIEEvent"]->Set("LAPPDBGCorrection", LAPPDBGCorrection);
+        m_data->Stores["ANNIEEvent"]->Set("LAPPDOSInMinusPS", LAPPDOSInMinusPS);
+
         // TODO: save other timestamps, variables and metadata for later use
 
-        if (eventNo % 500 == 0)
+        if (eventNo % 100 == 0)
         {
             cout << "LAPPDLoadStore: Loaded " << eventNo << " events, " << NonEmptyDataEvents << " non empty LAPPD PSEC data loaded from all LAPPDs" << endl;
         }
     }
+
+    if(LAPPDStoreReadInVerbosity>0)
+        cout << "LAPPDLoadStore: Finished loading LAPPD data" << endl;
 
     return true;
 }
@@ -595,6 +712,7 @@ int LAPPDLoadStore::getParsedData(std::vector<unsigned short> buffer, int ch_sta
             if (InfoWord.size() == NUM_SAMP)
             {
                 data.insert(pair<int, vector<unsigned short>>(ch_start + channel_count, InfoWord));
+                if(LAPPDStoreReadInVerbosity>5) cout << "inserted data to channel " << ch_start + channel_count << endl;
                 InfoWord.clear();
                 channel_count++;
             }
@@ -617,7 +735,6 @@ bool LAPPDLoadStore::LoadData()
 
     // if loaded enough events, stop the loop and return false
     if (NonEmptyEvents == stopEntries || NonEmptyEvents > stopEntries || NonEmptyDataEvents == stopEntries || NonEmptyDataEvents > stopEntries)
-
     {
         if (LAPPDStoreReadInVerbosity > 0)
             cout << "LAPPDStoreReadIn: NonEmptyEvents is " << NonEmptyEvents << ", NonEmptyDataEvents is " << NonEmptyDataEvents << ", stopEntries is " << stopEntries << ", stop the loop" << endl;
@@ -625,10 +742,22 @@ bool LAPPDLoadStore::LoadData()
         return false;
     }
 
-    std::map<std::string, bool> DataStreams;
-    m_data->Stores["ANNIEEvent"]->Get("DataStreams", DataStreams);
-    if (mergedEvent)
-        DataStreams["LAPPD"] = true;
+    // bool gotDataStream = m_data->Stores.at("ANNIEEvent")->Get("DataStreams", DataStreams);
+    // cout << "Inside, Got DataStreams = " << gotDataStream << ", ";
+    /*for (auto it = DataStreams.begin(); it != DataStreams.end(); ++it)
+    {
+        cout << "DataStream: " << it->first << " " << it->second << ", ";
+    }
+    cout << endl;*/
+
+    // if (mergedEvent)
+    //     DataStreams["LAPPD"] = true;
+
+    // print the load information: DataStreams["LAPPD"] value, PsecReceiveMode, MultiLAPPDMap
+    if (LAPPDStoreReadInVerbosity > 0)
+    {
+        cout << "LAPPDStoreReadIn: DataStreams[LAPPD] is " << DataStreams["LAPPD"] << ", PsecReceiveMode is " << PsecReceiveMode << ", MultiLAPPDMap is " << MultiLAPPDMap << endl;
+    }
 
     if (loadPSEC || loadPPS)
     { // if load any kind of data
@@ -750,21 +879,16 @@ bool LAPPDLoadStore::LoadData()
         }
         else if (DataStreams["LAPPD"] && PsecReceiveMode == 0 && MultiLAPPDMap) // if not receive from cstore, and load multi lappd map
         {
-            bool getMap = m_data->Stores["ANNIEEvent"]->Get("LAPPDDataMap", LAPPDDataMap);
             if (LAPPDStoreReadInVerbosity > 0)
-                cout << "LAPPDStoreReadIn: getting LAPPDDataMap from ANNIEEvent" << endl;
-            if (getMap)
+                cout << "LAPPDLoadStore: Loading multiple LAPPD data from ANNIEEvent" << "Inside, size of LAPPDDatamap = " << LAPPDDataMap.size() << endl;
+
+            if (LAPPDDataMap.size() == 0)
             {
-                bool gotBeamgates_ns = m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
-                bool gotTimeStamps_ns = m_data->Stores["ANNIEEvent"]->Get("LAPPDTimeStamps_ns", LAPPDTimeStamps_ns);
-                bool gotTimeStampsRaw = m_data->Stores["ANNIEEvent"]->Get("LAPPDTimeStampsRaw", LAPPDTimeStampsRaw);
-                bool gotBeamgatesRaw = m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgatesRaw", LAPPDBeamgatesRaw);
-                bool gotOffsets = m_data->Stores["ANNIEEvent"]->Get("LAPPDOffsets", LAPPDOffsets);
-                bool gotTSCorrection = m_data->Stores["ANNIEEvent"]->Get("LAPPDTSCorrection", LAPPDTSCorrection);
-                bool gotDBGCorrection = m_data->Stores["ANNIEEvent"]->Get("LAPPDBGCorrection", LAPPDBGCorrection);
-                bool gotOSInMinusPS = m_data->Stores["ANNIEEvent"]->Get("LAPPDOSInMinusPS", LAPPDOSInMinusPS);
-                return true;
+                cout << "what happened?" << endl;
+                return false;
             }
+
+            return true;
         }
     }
     return false; // if not any of the above, return false
@@ -895,11 +1019,20 @@ bool LAPPDLoadStore::ParsePSECData()
         }
     }
     // loop all boards, 0, 1
-    for (int bi : ParaBoards)
+    if (LAPPDStoreReadInVerbosity > 2)
     {
+        cout << "ParaBoards size is " << ParaBoards.size() << endl;
+        for (int i = 0; i < ParaBoards.size(); i++)
+        {
+            cout << "ParaBoards " << i << " is " << ParaBoards[i] << endl;
+        }
+    }
+    for (int i = 0; i < ParaBoards.size(); i++)
+    {
+        int bi = ParaBoards.at(i) % 2;
         Parse_buffer.clear();
         if (LAPPDStoreReadInVerbosity > 2)
-            std::cout << "Starting with board " << ReadBoards[bi] << std::endl;
+            std::cout << "Parsing board " << ReadBoards[bi] << std::endl;
         // Go over all ACDC board data frames by seperating them
         int frametype = static_cast<int>(Raw_buffer.size() / ReadBoards.size());
         for (int c = bi * frametype; c < (bi + 1) * frametype; c++)
@@ -907,18 +1040,19 @@ bool LAPPDLoadStore::ParsePSECData()
             Parse_buffer.push_back(Raw_buffer[c]);
         }
         if (LAPPDStoreReadInVerbosity > 2)
-            std::cout << "Data for board " << ReadBoards[bi] << " was grabbed!" << std::endl;
+            std::cout << "Data for " << i << "_th board with board number = " << ReadBoards[bi] << " was grabbed!" << std::endl;
 
         // Grab the parsed data and give it to a global variable 'data'
         // insert the data start with channel number 30*ReadBoards[bi]
         // for instance, when bi=0 , LAPPD ID = 2, ReadBoards[bi] = 4, insert to channel number start with 120, to 150
-        retval = getParsedData(Parse_buffer, ReadBoards[bi] * NUM_CH); //(because there are only 2 boards, so it's 0*30 or 1*30). Inserting the channel number start from this then ++ to 30
+        int channelShift = bi * NUM_CH + LAPPD_ID * NUM_CH * 2;
+        retval = getParsedData(Parse_buffer, channelShift); //(because there are only 2 boards, so it's 0*30 or 1*30). Inserting the channel number start from this then ++ to 30
         if (retval == 0)
         {
             if (LAPPDStoreReadInVerbosity > 2)
-                std::cout << "Data for board " << ReadBoards[bi] << " was parsed!" << std::endl;
+                std::cout << "Data for board with number = " << ReadBoards[bi] << " was parsed with channel shift " << channelShift << endl;
             // Grab the parsed metadata and give it to a global variable 'meta'
-            retval = getParsedMeta(Parse_buffer, ReadBoards[bi]);
+            retval = getParsedMeta(Parse_buffer, bi + LAPPD_ID * 2);
             if (retval != 0)
             {
                 std::cout << "Meta parsing went wrong! " << retval << endl;
@@ -936,15 +1070,33 @@ bool LAPPDLoadStore::ParsePSECData()
             return false;
         }
     }
-
+    if (LAPPDStoreReadInVerbosity > 2)
+        cout << "Parsed all boards for this event finished" << endl;
     return true;
 }
 
 bool LAPPDLoadStore::DoPedestalSubtract()
 {
+    if(LAPPDStoreReadInVerbosity>0) cout << "LAPPDLoadStore::DoPedestalSubtract()" << endl;
     Waveform<double> tmpWave;
     vector<Waveform<double>> VecTmpWave;
     int pedval, val;
+    if (LAPPDStoreReadInVerbosity > 3)
+    {
+        // print the size of data and all keys, and the size of PedestalValues and all keys
+        cout << "Size of data is " << data.size() << endl;
+        for (std::map<int, vector<unsigned short>>::iterator it = data.begin(); it != data.end(); ++it) // looping over the data map by channel number, from 0 to 60
+        {
+            cout << it->first << ", ";
+        }
+        cout << endl;
+        cout << "Size of PedestalValues is " << PedestalValues->size() << endl;
+        for (auto it = PedestalValues->begin(); it != PedestalValues->end(); ++it) // looping over the data map by channel number, from 0 to 60
+        {
+            cout << it->first << ", ";
+        }
+        cout << endl;
+    }
     // Loop over data stream
     for (std::map<int, vector<unsigned short>>::iterator it = data.begin(); it != data.end(); ++it) // looping over the data map by channel number, from 0 to 60
     {

@@ -1,4 +1,4 @@
-verbosityEBPMT 3
+verbosityEBPMT 1
 matchTargetTrigger 5
 matchTolerance_ns 100
 matchToAllTriggers 1

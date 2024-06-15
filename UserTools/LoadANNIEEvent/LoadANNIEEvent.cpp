@@ -176,6 +176,7 @@ bool LoadANNIEEvent::Execute() {
       std::string input_filename = input_filenames_.at(current_file_);
       bool filename_valid = false;
       filename_valid = theANNIEEvent->Initialise(input_filename);
+      Log("LoadANNIEEvent: Loading new file "+input_filename, 1, verbosity_);
       if (!filename_valid){
         Log("LoadANNIEEvent: Filename "+input_filename+" not found! Proceed to next file",v_error,verbosity_);
         current_file_++;
@@ -183,6 +184,8 @@ bool LoadANNIEEvent::Execute() {
       }
       m_data->Stores["ANNIEEvent"] = theANNIEEvent;
       m_data->Stores.at("ANNIEEvent")->Header->Get("TotalEntries",total_entries_in_file_);
+            Log("LoadANNIEEvent: total number of entry in this file is "+std::to_string(total_entries_in_file_), 1, verbosity_  );
+
       if (current_file_==0) {
         global_events.push_back(total_entries_in_file_);
         global_events_start.push_back(0);
@@ -246,7 +249,6 @@ bool LoadANNIEEvent::Execute() {
            std::string input_filename = input_filenames_.at(current_file_);
            std::cout <<"Reading in current file "<<current_file_<<std::endl;
            m_data->Stores["ANNIEEvent"]->Initialise(input_filename);
-           Log("LoadANNIEEvent: Loading new file "+input_filename, 1, verbosity_);
            m_data->Stores["ANNIEEvent"]->Header->Get("TotalEntries",
              total_entries_in_file_);
            global_events.push_back(global_events.at(current_file_-1)+total_entries_in_file_);

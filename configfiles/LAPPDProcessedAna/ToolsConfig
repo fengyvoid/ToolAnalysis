@@ -1,5 +1,5 @@
-LoadGeometry LoadGeometry configfiles/LAPPDProcessedAna/ConfigGeo
 LoadANNIEEvent LoadANNIEEvent configfiles/LAPPDProcessedAna/LoadANNIEEventConfig
+LoadGeometry LoadGeometry configfiles/LAPPDProcessedAna/ConfigGeo
 
 myTimeClustering TimeClustering configfiles/LAPPDProcessedAna/TimeClusteringConfig
 myFindMrdTracks FindMrdTracks configfiles/LAPPDProcessedAna/FindMrdTracksConfig

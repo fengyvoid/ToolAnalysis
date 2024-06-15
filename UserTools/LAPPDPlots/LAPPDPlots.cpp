@@ -75,6 +75,9 @@ bool LAPPDPlots::Initialise(std::string configfile, DataModel &data)
   printEventNumber = 10;
   m_variables.Get("printEventNumber", printEventNumber);
 
+  LoadLAPPDMap = false;
+  m_variables.Get("LoadLAPPDMap", LoadLAPPDMap);
+
   eventNumber = 0;
 
   f = new TFile("LAPPDPlots.root", "RECREATE");
@@ -94,6 +97,15 @@ bool LAPPDPlots::Execute()
   inBeamWindow = CheckInBeamgateWindow();
   if (OnlyDrawInBeamWindow && (inBeamWindow == 0 || inBeamWindow == -1))
     return true;
+
+  m_data->Stores["ANNIEEvent"]->Get("ACDCReadedLAPPDID", ACDCReadedLAPPDID);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPD_IDs", LAPPD_IDs);
+
+  if (ACDCReadedLAPPDID.size() > 2)
+  {
+    CanvasXSubPlotNumber = static_cast<int>(ACDCReadedLAPPDID.size());
+    CanvasTotalSubPlotNumber = CanvasXSubPlotNumber * CanvasYSubPlotNumber;
+  }
 
   c->Clear();
   c->Divide(CanvasXSubPlotNumber, CanvasYSubPlotNumber);
@@ -115,6 +127,14 @@ bool LAPPDPlots::Execute()
   if (DrawEventWaveform)
   {
     vector<int> DrawPosition = {Side0EventWaveformDrawPosition, Side1EventWaveformDrawPosition};
+    if (ReadBoards.size() > DrawPosition.size())
+    {
+      DrawPosition.clear();
+      for (int i = 0; i < ReadBoards.size(); i++)
+      {
+        DrawPosition.push_back(ReadBoards.at(i) + 1);
+      }
+    }
     for (int i = 0; i < ReadBoards.size(); i++)
     {
       const int drawPosition = DrawPosition[i];
@@ -145,12 +165,13 @@ bool LAPPDPlots::Execute()
       std::map<unsigned long, vector<Waveform<double>>>::iterator it;
       for (it = boarddata.begin(); it != boarddata.end(); it++)
       {
-        unsigned long channelNo = it->first;
+        unsigned long originalChannelNo = it->first;
+        unsigned long channelNo = ((it->first % 1000)) % 60 + 1000;
         Waveform<double> w = it->second[0];
         Channel *ch = _geom->GetChannel(channelNo);
         int stripNo = ch->GetStripNum();
         if (LAPPDPlotsVerbosity > 3)
-          cout << "Drawing channel " << channelNo << " strip " << stripNo << ", with sample size " << w.GetSamples()->size() << endl;
+          cout << "Drawing channel " << originalChannelNo << " as channelNo" << channelNo << " strip " << stripNo << ", with sample size " << w.GetSamples()->size() << endl;
         if (!drawTriggerChannel)
           if ((channelNo % 1000) % 30 == 5)
             continue;
@@ -186,6 +207,14 @@ bool LAPPDPlots::Execute()
   {
 
     vector<int> DrawPositionBinHist = {Side0BinDrawPosition, Side1BinDrawPosition};
+    if (ReadBoards.size() > DrawPositionBinHist.size())
+    {
+      DrawPositionBinHist.clear();
+      for (int i = 0; i < ReadBoards.size(); i++)
+      {
+        DrawPositionBinHist.push_back(ReadBoards.at(i) + CanvasXSubPlotNumber + 1);
+      }
+    }
     for (int i = 0; i < ReadBoards.size(); i++)
     {
       const int drawPosition = DrawPositionBinHist[i];
@@ -216,12 +245,15 @@ bool LAPPDPlots::Execute()
       std::map<unsigned long, vector<Waveform<double>>>::iterator it;
       for (it = boarddata.begin(); it != boarddata.end(); it++)
       {
-        unsigned long channelNo = it->first;
+
+        unsigned long originalChannelNo = it->first;
+        unsigned long channelNo = ((it->first % 1000)) % 60 + 1000;
         Waveform<double> w = it->second[0];
         Channel *ch = _geom->GetChannel(channelNo);
         int stripNo = ch->GetStripNum();
         if (LAPPDPlotsVerbosity > 3)
-          cout << "Drawing channel " << channelNo << " strip " << stripNo << ", with sample size " << w.GetSamples()->size() << endl;
+          cout << "Drawing channel " << originalChannelNo << " as channelNo" << channelNo << " strip " << stripNo << ", with sample size " << w.GetSamples()->size() << endl;
+
         if (!drawTriggerChannel)
           if ((channelNo % 1000) % 30 == 5)
             continue;
@@ -365,12 +397,24 @@ std::map<unsigned long, vector<Waveform<double>>> LAPPDPlots::GetDataForBoard(in
   for (auto &it : lappddata)
   {
     unsigned long channelNo = it.first;
+    unsigned long forStripChannelNo = ((it.first % 1000)) % 60 + 1000;
 
-    Channel *ch = _geom->GetChannel(channelNo);
+    Channel *ch = _geom->GetChannel(forStripChannelNo);
     int stripSide = ch->GetStripSide();
+
+    int thisLAPPDID = static_cast<int>((channelNo % 1000) / 60);
+    int beginningBoardIDofThisLAPPDID = ReadBoards.at(std::distance(ACDCReadedLAPPDID.begin(), std::find(ACDCReadedLAPPDID.begin(), ACDCReadedLAPPDID.end(), thisLAPPDID)));
+
+    int targetLAPPDID = static_cast<int>(boardID / 2) * 2;
+    if (LoadLAPPDMap)
+    {
+      targetLAPPDID = thisLAPPDID;
+    }
+
     if (LAPPDPlotsVerbosity > 4)
-      cout << "GetData, channelNo: " << channelNo << ", side number" << stripSide << ", boardID " << boardID << endl;
-    if (static_cast<int>((channelNo % 1000) / 60) == static_cast<int>(boardID / 2) * 2 && stripSide == boardID % 2)
+      cout << "GetData, channelNo: " << channelNo << ", side number" << stripSide << ", boardID " << boardID << ", targetLAPPDID " << targetLAPPDID << endl;
+
+    if (static_cast<int>((channelNo % 1000) / 60) == targetLAPPDID && stripSide == boardID % 2)
     {
       boarddata[channelNo] = it.second;
       if (LAPPDPlotsVerbosity > 4)

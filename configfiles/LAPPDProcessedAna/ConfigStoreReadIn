@@ -32,7 +32,7 @@ ReorderVerbosityLevel 0
 ReorderInputWavLabel RawLAPPDData
 ReorderOutputWavLabel LAPPDWaveforms
 DelayOffset 0
-GlobalShift 150
+GlobalShift 0
 
 ReadStore 0
 NUM_VECTOR_DATA 7795
@@ -40,4 +40,4 @@ NUM_VECTOR_PPS 16
 OutputWavLabel RawLAPPDData 
 SelectSingleLAPPD false
 SelectedLAPPD 0
- 
+LoadLAPPDMap 1 

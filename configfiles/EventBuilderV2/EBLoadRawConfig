@@ -1,4 +1,4 @@
-verbosityEBLoadRaw 5
+verbosityEBLoadRaw 2
 ReadTriggerOverlap 1
 
 InputFile ./configfiles/EventBuilderV2/list.txt

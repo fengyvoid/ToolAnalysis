@@ -189,3 +189,4 @@
 #include "EBMRD.h"
 #include "EBSaver.h"
 #include "ANNIEEventTreeMaker.h"
+#include "ProcessedLAPPDFilter.h"

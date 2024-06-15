@@ -41,6 +41,7 @@ bool ConstructTimestampsFromMeta();
   int NUM_VECTOR_METADATA;
   int delayoffset;
   int GlobalShift;
+  bool LoadLAPPDMap;
   // Variables that you need in the tool
 
   //**************************** LAPPD tool chain, control variables ***************************************************
@@ -60,6 +61,7 @@ bool ConstructTimestampsFromMeta();
   std::map<unsigned long,vector<Waveform<double>>> lappddata;
   vector<unsigned short> acdcmetadata;
   vector<int> NReadBoards;
+  vector<int> ACDCReadedLAPPDID;
   vector<unsigned int> tcounters;
 
   //**************************** This tool, data variables ***************************************************

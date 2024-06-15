@@ -70,6 +70,7 @@ private:
     // Variables that you need in the tool
     Geometry *_geom;
     bool LAPPDana;
+    bool LoadLAPPDMapInfo;
 
     // LAPPD tool chain, data variables. (Will be used in multiple LAPPD tools)
     // everything you get or set to Store, which means it may be used in other tools or it's from other tools
@@ -81,6 +82,7 @@ private:
     std::map<unsigned long,vector<double>> waveformMaxLast;
     std::map<unsigned long,vector<double>> waveformMaxNearing;
     std::map<unsigned long,vector<int>> waveformMaxTimeBin;
+    vector<int> LAPPD_IDs;
 
     // This tool, data variables (only used in this tool, every thing that is an data object)
     std::map<unsigned long, vector<Waveform<double>>> lappdData;     // waveform data

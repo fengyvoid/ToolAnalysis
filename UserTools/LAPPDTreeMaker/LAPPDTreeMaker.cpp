@@ -41,6 +41,8 @@ bool LAPPDTreeMaker::Initialise(std::string configfile, DataModel &data)
     LoadGroupedTriggerInfo = false; // if not loading trigger, don't fill grouped trigger
   LoadGroupOption = "beam";
   m_variables.Get("LoadGroupOption", LoadGroupOption);
+  MultiLAPPDMapTreeMaker = false;
+  m_variables.Get("MultiLAPPDMapTreeMaker", MultiLAPPDMapTreeMaker);
 
   TString filename = treeMakerOutputFileName;
   file = new TFile(filename, "RECREATE");
@@ -188,6 +190,68 @@ bool LAPPDTreeMaker::Execute()
 
   if (LoadGroupedTriggerInfo)
     FillGroupedTriggerTree();
+
+  if (MultiLAPPDMapTreeMaker && LAPPDana)
+  {
+    if (treeMakerVerbosity > 0)
+      cout << "LAPPDTreeMaker::Execute() MultiLAPPDMapTreeMaker" << endl;
+    LoadLAPPDMapInfo();
+    bool getMap = m_data->Stores["ANNIEEvent"]->Get("LAPPDDataMap", LAPPDDataMap);
+    bool gotBeamgates_ns = m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
+    bool gotTimeStamps_ns = m_data->Stores["ANNIEEvent"]->Get("LAPPDTimeStamps_ns", LAPPDTimeStamps_ns);
+    bool gotTimeStampsRaw = m_data->Stores["ANNIEEvent"]->Get("LAPPDTimeStampsRaw", LAPPDTimeStampsRaw);
+    bool gotBeamgatesRaw = m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgatesRaw", LAPPDBeamgatesRaw);
+    bool gotOffsets = m_data->Stores["ANNIEEvent"]->Get("LAPPDOffsets", LAPPDOffsets);
+    bool gotTSCorrection = m_data->Stores["ANNIEEvent"]->Get("LAPPDTSCorrection", LAPPDTSCorrection);
+    bool gotDBGCorrection = m_data->Stores["ANNIEEvent"]->Get("LAPPDBGCorrection", LAPPDBGCorrection);
+    bool gotOSInMinusPS = m_data->Stores["ANNIEEvent"]->Get("LAPPDOSInMinusPS", LAPPDOSInMinusPS);
+    if (treeMakerVerbosity > 0)
+      cout << "LAPPDTreeMaker::Execute() MultiLAPPDMapTreeMaker get map = " << getMap << endl;
+    if (getMap)
+    {
+      if (treeMakerVerbosity > 0)
+        cout << "map size: " << LAPPDDataMap.size() << endl;
+      for (auto &item : LAPPDDataMap)
+      {
+        PsecData thisData = item.second;
+        int thisLAPPD_ID = thisData.LAPPD_ID;
+
+        uint64_t thisDataTime = item.first;
+        uint64_t thisTSRaw = LAPPDTimeStampsRaw.at(thisDataTime);
+        uint64_t thisBGRaw = LAPPDBeamgatesRaw.at(thisDataTime);
+        uint64_t thisOffset = LAPPDOffsets.at(thisDataTime);
+        int thisTSCorr = LAPPDTSCorrection.at(thisDataTime);
+        int thisDBGCorr = LAPPDBGCorrection.at(thisDataTime);
+        int thisOSInMinusPS = LAPPDOSInMinusPS.at(thisDataTime);
+
+        if (treeMakerVerbosity > 0)
+          cout << "outside tree maker, Got LAPPD ID: " << thisLAPPD_ID << ", time stamp: " << thisDataTime << ", TSraw " << thisTSRaw << ", BGraw " << thisBGRaw << ", offset " << thisOffset << ", TSCorr " << thisTSCorr << ", DBGCorr " << thisDBGCorr << ", OSInMinusPS " << thisOSInMinusPS << endl;
+
+        LAPPD_IDs.push_back(thisLAPPD_ID);
+        LAPPDMapTimeStampRaw.push_back(thisTSRaw);
+        LAPPDMapBeamgateRaw.push_back(thisBGRaw);
+        LAPPDMapOffsets.push_back(thisOffset);
+        LAPPDMapTSCorrections.push_back(thisTSCorr);
+        LAPPDMapBGCorrections.push_back(thisDBGCorr);
+        LAPPDMapOSInMinusPS.push_back(thisOSInMinusPS);
+
+        if (treeMakerVerbosity > 0)
+          cout << "outside size of LAPPD_IDs: " << LAPPD_IDs.size() << endl;
+      }
+    }
+    else
+    {
+      cout << "outside LAPPDTreeMaker::LoadLAPPDMapInfo, no LAPPDDataMap found" << endl;
+    }
+
+    if (treeMakerVerbosity > 0)
+    {
+      cout << "LAPPDMapTimeStampRaw: ";
+      for (auto &item : LAPPDMapTimeStampRaw)
+        cout << item << " ";
+      cout << "LAPPDTreeMaker::Execute() MultiLAPPDMapTreeMaker finished " << endl;
+    }
+  }
 
   if (LoadPPSTimestamp && LoadingPPS)
   {
@@ -347,6 +411,24 @@ void LAPPDTreeMaker::CleanVariables()
   groupedTriggerType = -9999;
   TriggerGroupNumInThisEvent = 0; // start from 0
   groupedTriggerType = -9999;
+
+  LAPPD_IDs.clear();
+  LAPPDMapTimeStampRaw.clear();
+  LAPPDMapBeamgateRaw.clear();
+  LAPPDMapOffsets.clear();
+  LAPPDMapTSCorrections.clear();
+  LAPPDMapBGCorrections.clear();
+  LAPPDMapOSInMinusPS.clear();
+
+  LAPPDDataMap.clear();
+  LAPPDBeamgate_ns.clear();
+  LAPPDTimeStamps_ns.clear();
+  LAPPDTimeStampsRaw.clear();
+  LAPPDBeamgatesRaw.clear();
+  LAPPDOffsets.clear();
+  LAPPDTSCorrection.clear();
+  LAPPDBGCorrection.clear();
+  LAPPDOSInMinusPS.clear();
 }
 
 bool LAPPDTreeMaker::LoadRunInfoFromRaw()
@@ -363,9 +445,9 @@ bool LAPPDTreeMaker::LoadRunInfoFromANNIEEvent()
 {
   if (treeMakerVerbosity > 0)
     cout << "LAPPDTreeMaker::LoadRunInfoFromANNIEEvent" << endl;
-  m_data->Stores["ANNIEEvent"]->Header->Get("RunNumber", RunNumber);
-  m_data->Stores["ANNIEEvent"]->Header->Get("SubRunNumber", SubRunNumber);
-  m_data->Stores["ANNIEEvent"]->Header->Get("PartFileNumber", PartFileNumber);
+  m_data->Stores["ANNIEEvent"]->Get("RunNumber", RunNumber);
+  m_data->Stores["ANNIEEvent"]->Get("SubRunNumber", SubRunNumber);
+  m_data->Stores["ANNIEEvent"]->Get("PartNumber", PartFileNumber);
   if (treeMakerVerbosity > 0)
     cout << "RunNumber: " << RunNumber << ", SubRunNumber: " << SubRunNumber << ", PartFileNumber: " << PartFileNumber << endl;
   return true;
@@ -401,7 +483,24 @@ bool LAPPDTreeMaker::FillPulseTree()
       PulseStart = thisPulse.GetLowRange();
       PulseEnd = thisPulse.GetHiRange();
       PulseSize = PulseEnd - PulseStart;
-      // TODO save threshold and baseline
+      // cout << " tree maker, this pulse0 LAPPD ID is " << LAPPD_ID << endl;
+      //  TODO save threshold and baseline
+      if (MultiLAPPDMapTreeMaker)
+      {
+        // find the index of LAPPD_ID in LAPPD_IDs, use that index to assign the timestamlUL and beam gate UL, if not found set them to zero
+        auto it = std::find(LAPPD_IDs.begin(), LAPPD_IDs.end(), LAPPD_ID);
+        if (it != LAPPD_IDs.end())
+        {
+          int index = std::distance(LAPPD_IDs.begin(), it);
+          LAPPDDataTimeStampUL = LAPPDMapTimeStampRaw.at(index);
+          LAPPDDataBeamgateUL = LAPPDMapBeamgateRaw.at(index);
+        }
+        else
+        {
+          LAPPDDataTimeStampUL = 0;
+          LAPPDDataBeamgateUL = 0;
+        }
+      }
       fPulse->Fill();
       foundPulseNum++;
     }
@@ -418,7 +517,29 @@ bool LAPPDTreeMaker::FillPulseTree()
       PulseStart = thisPulse.GetLowRange();
       PulseEnd = thisPulse.GetHiRange();
       PulseSize = PulseEnd - PulseStart;
+      /*cout << " this pulse1 LAPPD ID is " << LAPPD_ID << endl;
+      cout << "ThresReco pulse1 got LAPPD_IDs: ";
+      for (int i = 0; i < LAPPD_IDs.size(); i++)
+      {
+        cout << LAPPD_IDs.at(i) << " ";
+      }*/
       // TODO save threshold and baseline
+      if (MultiLAPPDMapTreeMaker)
+      {
+        // find the index of LAPPD_ID in LAPPD_IDs, use that index to assign the timestamlUL and beam gate UL, if not found set them to zero
+        auto it = std::find(LAPPD_IDs.begin(), LAPPD_IDs.end(), LAPPD_ID);
+        if (it != LAPPD_IDs.end())
+        {
+          int index = std::distance(LAPPD_IDs.begin(), it);
+          LAPPDDataTimeStampUL = LAPPDMapTimeStampRaw.at(index);
+          LAPPDDataBeamgateUL = LAPPDMapBeamgateRaw.at(index);
+        }
+        else
+        {
+          LAPPDDataTimeStampUL = 0;
+          LAPPDDataBeamgateUL = 0;
+        }
+      }
       fPulse->Fill();
       foundPulseNum++;
     }
@@ -461,6 +582,31 @@ bool LAPPDTreeMaker::FillHitTree()
       Pulse2StartTime = thisHit.GetPulse2StartTime();
       Pulse1LastTime = thisHit.GetPulse1LastTime();
       Pulse2LastTime = thisHit.GetPulse2LastTime();
+      if (treeMakerVerbosity > 0)
+      {
+        cout << " this hit LAPPD ID is " << LAPPD_ID << endl;
+        cout << "ThresReco hit got LAPPD_IDs: ";
+        for (int i = 0; i < LAPPD_IDs.size(); i++)
+        {
+          cout << LAPPD_IDs.at(i) << " ";
+        }
+      }
+      if (MultiLAPPDMapTreeMaker)
+      {
+        // find the index of LAPPD_ID in LAPPD_IDs, use that index to assign the timestamlUL and beam gate UL, if not found set them to zero
+        auto it = std::find(LAPPD_IDs.begin(), LAPPD_IDs.end(), LAPPD_ID);
+        if (it != LAPPD_IDs.end())
+        {
+          int index = std::distance(LAPPD_IDs.begin(), it);
+          LAPPDDataTimeStampUL = LAPPDMapTimeStampRaw.at(index);
+          LAPPDDataBeamgateUL = LAPPDMapBeamgateRaw.at(index);
+        }
+        else
+        {
+          LAPPDDataTimeStampUL = 0;
+          LAPPDDataBeamgateUL = 0;
+        }
+      }
       fHit->Fill();
       foundHitNum++;
     }
@@ -481,16 +627,42 @@ bool LAPPDTreeMaker::FillWaveformTree()
   std::map<unsigned long, vector<double>>::iterator it;
   for (it = waveformMax.begin(); it != waveformMax.end(); it++)
   {
-    StripNumber = it->first;
+    int key = it->first;
+    LAPPD_ID = static_cast<int>(key / 60);
+    int stripSide = static_cast<int>((key - LAPPD_ID * 60) / 30);
+    StripNumber = key - LAPPD_ID * 60 - stripSide * 30;
+    // cout << " this waveform LAPPD ID is " << LAPPD_ID << endl;
+
     for (int side = 0; side < 2; side++)
     {
       PulseSide = side;
-      LAPPD_ID = 0;
-      waveformMaxValue = waveformMax.at(StripNumber).at(side);
-      waveformRMSValue = waveformRMS.at(StripNumber).at(side);
-      waveformMaxFoundNear = waveformMaxLast.at(StripNumber).at(side);
-      waveformMaxNearingValue = waveformMaxNearing.at(StripNumber).at(side);
-      waveformMaxTimeBinValue = waveformMaxTimeBin.at(StripNumber).at(side);
+      waveformMaxValue = waveformMax.at(key).at(side);
+      waveformRMSValue = waveformRMS.at(key).at(side);
+      waveformMaxFoundNear = waveformMaxLast.at(key).at(side);
+      waveformMaxNearingValue = waveformMaxNearing.at(key).at(side);
+      waveformMaxTimeBinValue = waveformMaxTimeBin.at(key).at(side);
+      /*cout << " LAPPDTreeMaker fill waveform tree, LAPPD ID is " << LAPPD_ID << endl;
+      cout << "ThresReco got LAPPD_IDs: ";
+      for (int i = 0; i < LAPPD_IDs.size(); i++)
+      {
+        cout << LAPPD_IDs.at(i) << " ";
+      }*/
+      if (MultiLAPPDMapTreeMaker)
+      {
+        // find the index of LAPPD_ID in LAPPD_IDs, use that index to assign the timestamlUL and beam gate UL, if not found set them to zero
+        auto it = std::find(LAPPD_IDs.begin(), LAPPD_IDs.end(), LAPPD_ID);
+        if (it != LAPPD_IDs.end())
+        {
+          int index = std::distance(LAPPD_IDs.begin(), it);
+          LAPPDDataTimeStampUL = LAPPDMapTimeStampRaw.at(index);
+          LAPPDDataBeamgateUL = LAPPDMapBeamgateRaw.at(index);
+        }
+        else
+        {
+          LAPPDDataTimeStampUL = 0;
+          LAPPDDataBeamgateUL = 0;
+        }
+      }
       fWaveform->Fill();
     }
   }
@@ -517,14 +689,27 @@ bool LAPPDTreeMaker::FillLAPPDDataTimeStamp()
 {
   if (treeMakerVerbosity > 0)
     cout << "LAPPDTreeMaker::FillLAPPDDataTimeStamp. Before fill: LAPPDDataTimeStampUL: " << LAPPDDataTimeStampUL << ", LAPPDDataBeamgateUL: " << LAPPDDataBeamgateUL << ", LAPPDDataTimestampPart1: " << LAPPDDataTimestampPart1 << ", LAPPDDataBeamgatePart1: " << LAPPDDataBeamgatePart1 << ", LAPPDDataTimestampPart2: " << LAPPDDataTimestampPart2 << ", LAPPDDataBeamgatePart2: " << LAPPDDataBeamgatePart2 << endl;
-  m_data->CStore.Get("LAPPDBeamgate_Raw", LAPPDDataBeamgateUL);
-  m_data->CStore.Get("LAPPDTimestamp_Raw", LAPPDDataTimeStampUL);
-  m_data->CStore.Get("LAPPDBGIntCombined", LAPPDDataBeamgatePart1);
-  m_data->CStore.Get("LAPPDBGFloat", LAPPDDataBeamgatePart2);
-  m_data->CStore.Get("LAPPDTSIntCombined", LAPPDDataTimestampPart1);
-  m_data->CStore.Get("LAPPDTSFloat", LAPPDDataTimestampPart2);
-  m_data->CStore.Get("LAPPD_ID", LAPPD_ID);
-  fTimeStamp->Fill();
+  if (!MultiLAPPDMapTreeMaker)
+  {
+    m_data->CStore.Get("LAPPDBeamgate_Raw", LAPPDDataBeamgateUL);
+    m_data->CStore.Get("LAPPDTimestamp_Raw", LAPPDDataTimeStampUL);
+    m_data->CStore.Get("LAPPDBGIntCombined", LAPPDDataBeamgatePart1);
+    m_data->CStore.Get("LAPPDBGFloat", LAPPDDataBeamgatePart2);
+    m_data->CStore.Get("LAPPDTSIntCombined", LAPPDDataTimestampPart1);
+    m_data->CStore.Get("LAPPDTSFloat", LAPPDDataTimestampPart2);
+    m_data->CStore.Get("LAPPD_ID", LAPPD_ID);
+    fTimeStamp->Fill();
+  }
+  else
+  {
+    for (int i = 0; i < LAPPD_IDs.size(); i++)
+    {
+      LAPPD_ID = LAPPD_IDs.at(i);
+      LAPPDDataBeamgateUL = LAPPDMapBeamgateRaw.at(i);
+      LAPPDDataTimeStampUL = LAPPDMapTimeStampRaw.at(i);
+      fTimeStamp->Fill();
+    }
+  }
   if (treeMakerVerbosity > 0)
     cout << "LAPPDDataTimeStampUL: " << LAPPDDataTimeStampUL << ", LAPPDDataBeamgateUL: " << LAPPDDataBeamgateUL << ", LAPPDDataTimestampPart1: " << LAPPDDataTimestampPart1 << ", LAPPDDataBeamgatePart1: " << LAPPDDataBeamgatePart1 << ", LAPPDDataTimestampPart2: " << LAPPDDataTimestampPart2 << ", LAPPDDataBeamgatePart2: " << LAPPDDataBeamgatePart2 << endl;
   return true;
@@ -786,5 +971,57 @@ void LAPPDTreeMaker::CleanTriggers()
     unGroupedTriggerWords = lastTrigWords;
     std::vector<unsigned long> lastTrigTimestamps(unGroupedTriggerTimestamps.end() - 1000, unGroupedTriggerTimestamps.end());
     unGroupedTriggerTimestamps = lastTrigTimestamps;
+  }
+}
+
+void LAPPDTreeMaker::LoadLAPPDMapInfo()
+{
+  //cout << "LAPPDTreeMaker::LoadLAPPDMapInfo" << endl;
+  bool getMap = m_data->Stores["ANNIEEvent"]->Get("LAPPDDataMap", LAPPDDataMap);
+  bool gotBeamgates_ns = m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
+  bool gotTimeStamps_ns = m_data->Stores["ANNIEEvent"]->Get("LAPPDTimeStamps_ns", LAPPDTimeStamps_ns);
+  bool gotTimeStampsRaw = m_data->Stores["ANNIEEvent"]->Get("LAPPDTimeStampsRaw", LAPPDTimeStampsRaw);
+  bool gotBeamgatesRaw = m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgatesRaw", LAPPDBeamgatesRaw);
+  bool gotOffsets = m_data->Stores["ANNIEEvent"]->Get("LAPPDOffsets", LAPPDOffsets);
+  bool gotTSCorrection = m_data->Stores["ANNIEEvent"]->Get("LAPPDTSCorrection", LAPPDTSCorrection);
+  bool gotDBGCorrection = m_data->Stores["ANNIEEvent"]->Get("LAPPDBGCorrection", LAPPDBGCorrection);
+  bool gotOSInMinusPS = m_data->Stores["ANNIEEvent"]->Get("LAPPDOSInMinusPS", LAPPDOSInMinusPS);
+  //cout << "LAPPDTreeMaker::LoadLAPPDMapInfo() get map = " << getMap << endl;
+
+  if (getMap)
+  {
+    if (treeMakerVerbosity > 0)
+      cout << "map size: " << LAPPDDataMap.size() << endl;
+    for (auto &item : LAPPDDataMap)
+    {
+      PsecData thisData = item.second;
+      int thisLAPPD_ID = thisData.LAPPD_ID;
+
+      uint64_t thisDataTime = item.first;
+      uint64_t thisTSRaw = LAPPDTimeStampsRaw.at(thisDataTime);
+      uint64_t thisBGRaw = LAPPDBeamgatesRaw.at(thisDataTime);
+      uint64_t thisOffset = LAPPDOffsets.at(thisDataTime);
+      int thisTSCorr = LAPPDTSCorrection.at(thisDataTime);
+      int thisDBGCorr = LAPPDBGCorrection.at(thisDataTime);
+      int thisOSInMinusPS = LAPPDOSInMinusPS.at(thisDataTime);
+
+      if (treeMakerVerbosity > 0)
+        cout << "tree maker, Got LAPPD ID: " << thisLAPPD_ID << ", time stamp: " << thisDataTime << ", TSraw " << thisTSRaw << ", BGraw " << thisBGRaw << ", offset " << thisOffset << ", TSCorr " << thisTSCorr << ", DBGCorr " << thisDBGCorr << ", OSInMinusPS " << thisOSInMinusPS << endl;
+
+      LAPPD_IDs.push_back(thisLAPPD_ID);
+      LAPPDMapTimeStampRaw.push_back(thisTSRaw);
+      LAPPDMapBeamgateRaw.push_back(thisBGRaw);
+      LAPPDMapOffsets.push_back(thisOffset);
+      LAPPDMapTSCorrections.push_back(thisTSCorr);
+      LAPPDMapBGCorrections.push_back(thisDBGCorr);
+      LAPPDMapOSInMinusPS.push_back(thisOSInMinusPS);
+
+      if (treeMakerVerbosity > 0)
+        cout << "size of LAPPD_IDs: " << LAPPD_IDs.size() << endl;
+    }
+  }
+  else
+  {
+    cout << "LAPPDTreeMaker::LoadLAPPDMapInfo, no LAPPDDataMap found" << endl;
   }
 }

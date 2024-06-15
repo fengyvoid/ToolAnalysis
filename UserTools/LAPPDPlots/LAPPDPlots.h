@@ -74,6 +74,7 @@ private:
     double BinHistMin;
     double BinHistMax;
     int BinHistNumber;
+    bool LoadLAPPDMap;
 
 
     // Variables that you need in the tool
@@ -94,6 +95,8 @@ private:
     std::map<unsigned long, vector<Waveform<double>>> lappddata;
     std::vector<int> ReadBoards;
     int LAPPD_ID;
+    vector<int> ACDCReadedLAPPDID;
+    vector<int> LAPPD_IDs;
 
     //**************************** This tool, data variables ***************************************************
     // (only used in this tool, every thing that is an data object)

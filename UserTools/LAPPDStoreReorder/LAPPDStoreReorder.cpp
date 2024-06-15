@@ -25,6 +25,8 @@ bool LAPPDStoreReorder::Initialise(std::string configfile, DataModel &data)
         Log("Error: LAPPDStoreReorder: Failed to get ANNIEGeometry from the ANNIEEvent store", 0, LAPPDReorderVerbosityLevel);
         return false;
     }
+    LoadLAPPDMap = false;
+    m_variables.Get("LoadLAPPDMap", LoadLAPPDMap);
 
     return true;
 }
@@ -45,6 +47,7 @@ bool LAPPDStoreReorder::Execute()
     m_data->Stores["ANNIEEvent"]->Get("ACDCmetadata", acdcmetadata);
     m_data->Stores["ANNIEEvent"]->Get(InputWavLabel, lappddata);
     m_data->Stores["ANNIEEvent"]->Get("ACDCboards", NReadBoards);
+    m_data->Stores["ANNIEEvent"]->Get("ACDCReadedLAPPDID;", ACDCReadedLAPPDID);
 
     // Loop over waveforms, reorder data
     DoReorder();
@@ -75,21 +78,25 @@ void LAPPDStoreReorder::CleanDataObjects()
     lappddata.clear();
     acdcmetadata.clear();
     NReadBoards.clear();
+    ACDCReadedLAPPDID.clear();
     tcounters.clear();
 }
 
 bool LAPPDStoreReorder::DoReorder()
 {
+    Log("LAPPDStoreReorder::DoReorder()", 1, LAPPDReorderVerbosityLevel);
     // For 30 channels change to 10
     vector<unsigned short> Smeta26;
     for (int meta26 = 0; meta26 < NReadBoards.size(); meta26++)
     {
         Smeta26.push_back(acdcmetadata.at((meta26 * NUM_VECTOR_METADATA) + 10));
         if (LAPPDReorderVerbosityLevel > 1)
-            cout << "Metaword entry " << meta26 << " is " << Smeta26[meta26] << endl;
+            {cout << "Metaword entry " << meta26 << " is " << Smeta26[meta26] << endl;
+            cout<<"pushed meta26 = "<< meta26<<", with value at "<<(meta26 * NUM_VECTOR_METADATA) + 10<<" is "<<acdcmetadata.at((meta26 * NUM_VECTOR_METADATA) + 10)<<endl;
+            }
     }
     if (LAPPDReorderVerbosityLevel > 2)
-        cout << "REORDER TIME!!!!   " << acdcmetadata.size() << " " << acdcmetadata.at(10) << " " << acdcmetadata.at(102) << "lappd data size is " << lappddata.size() << ", reordereddata size is " << reordereddata.size() << endl;
+        cout << "REORDER TIME!!!!   " << acdcmetadata.size() << " " << acdcmetadata.at(10) << " " << acdcmetadata.at(102) << " lappd data size is " << lappddata.size() << ", reordereddata size is " << reordereddata.size() << endl;
     map<unsigned long, vector<Waveform<double>>>::iterator itr;
     for (itr = lappddata.begin(); itr != lappddata.end(); ++itr)
     {
@@ -110,6 +117,12 @@ bool LAPPDStoreReorder::DoReorder()
         int switchbit = 0;
         // Get the current board and the respective meta word
         int bi = (int)channelno / 30;
+        int LAPPDID = static_cast<int>((channelno%1000)/60);
+        int beginningBoardIDofThisLAPPDID = NReadBoards.at(std::distance(ACDCReadedLAPPDID.begin(), std::find(ACDCReadedLAPPDID.begin(), ACDCReadedLAPPDID.end(), LAPPDID)));
+        if(LoadLAPPDMap)
+        {
+            bi = beginningBoardIDofThisLAPPDID + bi%2;
+        }
         unsigned short switchword = Smeta26[std::distance(NReadBoards.begin(), std::find(NReadBoards.begin(), NReadBoards.end(), bi))];
         // Smeta26, 0 or 1, so switchword is the first timestmap or the second
         // Set the switchbit
@@ -143,6 +156,7 @@ bool LAPPDStoreReorder::DoReorder()
                 if (ibin > 255)
                     ibin = ibin - 255;
                 double nsamp = rwav.GetSamples()->at(ibin);
+                //cout << "ibin before shift is " << j << " value is " << rwav.GetSamples()->at(j) << ", after shift is " << ibin << " value is " << nsamp << endl;
                 rwavCorr.PushSample(nsamp);
             }
 

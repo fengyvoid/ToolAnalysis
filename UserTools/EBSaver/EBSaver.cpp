@@ -109,10 +109,7 @@ bool EBSaver::Execute()
   m_data->CStore.Get("GroupedTriggersInTotal", GroupedTriggersInTotal);
   m_data->CStore.Get("RunCodeInTotal", RunCodeInTotal);
 
-  // get the pmt data, runcode buffer, and match information
-
-  // get the pmt buffer, save the data, and remove the saved data from data buffer
-
+  int savedEventNumber = 0;
   // loop each track in the RunCodeInTotal;
   for (auto const &track : RunCodeInTotal)
   {
@@ -135,13 +132,14 @@ bool EBSaver::Execute()
       // if save Everything, in case there might be some mis aligned events not saved to that processed part file correctly and left in buffer, save them to corresponding part file
       if (runCode == savingRunCode)
       {
-        Log("\033[1;34m ****EBSaver: Saving a new event \033[0m", v_message, verbosityEBSaver);
+        Log("\033[1;34m ****EBSaver: Saving a new event with savedEventNumber = " + std::to_string(savedEventNumber) + " ****\033[0m", v_message, verbosityEBSaver);
 
         std::string saveFileName = savePath + saveName + "_R" + to_string(runCode / 100000) + "S" + to_string((runCode % 100000) / 10000 - 1) + "p" + to_string(runCode % 10000);
         Log("EBSaver: Saving to " + saveFileName + " with run code " + std::to_string(runCode) + " at index " + std::to_string(i), v_message, verbosityEBSaver);
 
         // if in last exe, the runcode for that group of trigger equals to the saving RunCode, save to ANNIEEvent Processed File
         SaveToANNIEEvent(saveFileName, runCode, triggerTrack, i);
+        savedEventNumber++;
       }
     }
   }
@@ -477,47 +475,50 @@ bool EBSaver::SaveToANNIEEvent(string saveFileName, int runCode, int triggerTrac
       // print PairedMRDTriggerTimestamp with track number and size
       for (auto const &track : PairedMRDTriggerTimestamp)
       {
-        Log("EBSaver: in PairedMRDTriggerTimestamp track " + std::to_string(track.first) + ", left trigger number " + std::to_string(track.second.size()), v_message, verbosityEBSaver);
+        Log("EBSaver: in PairedMRDTriggerTimestamp track " + std::to_string(track.first) + ", left trigger number " + std::to_string(track.second.size()), v_debug, verbosityEBSaver);
       }
       for (auto const &track : PairedMRDTimeStamps)
       {
-        Log("EBSaver: in PairedMRDTimeStamps track " + std::to_string(track.first) + ", left trigger number " + std::to_string(track.second.size()), v_message, verbosityEBSaver);
+        Log("EBSaver: in PairedMRDTimeStamps track " + std::to_string(track.first) + ", left trigger number " + std::to_string(track.second.size()), v_debug, verbosityEBSaver);
       }
       if (PairedMRDTriggerTimestamp.find(triggerTrack) != PairedMRDTriggerTimestamp.end())
       {
-        uint64_t minDiff = 100 * 60 * 1e9;
-        Log("Found trigger track = " + std::to_string(triggerTrack) + " in PairedMRDTriggerTimestamp", v_debug, verbosityEBSaver);
-        // print the size of PairedMRDTriggerTimestamp.at(triggerTrack), print the first and the last timestamp
-        Log("EBSaver: PairedMRDTriggerTimestamp size " + std::to_string(PairedMRDTriggerTimestamp.at(triggerTrack).size()), v_debug, verbosityEBSaver);
-        if (PairedMRDTriggerTimestamp.at(triggerTrack).size() > 0)
-          Log("EBSaver: PairedMRDTriggerTimestamp first " + std::to_string(PairedMRDTriggerTimestamp.at(triggerTrack).at(0)) + ", last " + std::to_string(PairedMRDTriggerTimestamp.at(triggerTrack).at(PairedMRDTriggerTimestamp.at(triggerTrack).size() - 1)), v_debug, verbosityEBSaver);
-
-        for (int i = 0; i < PairedMRDTriggerTimestamp.at(triggerTrack).size(); i++)
+        if (triggerTime > PairedMRDTriggerTimestamp.at(triggerTrack).at(0) && triggerTime < PairedMRDTriggerTimestamp.at(triggerTrack).at(PairedMRDTriggerTimestamp.at(triggerTrack).size() - 1))
         {
-          uint64_t diff = (PairedMRDTriggerTimestamp.at(triggerTrack).at(i) > triggerTime) ? PairedMRDTriggerTimestamp.at(triggerTrack).at(i) - triggerTime : triggerTime - PairedMRDTriggerTimestamp.at(triggerTrack).at(i);
-          if (diff < minDiff)
-            minDiff = diff;
+          uint64_t minDiff = 100 * 60 * 1e9;
+          Log("Found trigger track = " + std::to_string(triggerTrack) + " in PairedMRDTriggerTimestamp with current searching trigger type = " + std::to_string(triggerType) + " and trigger time = " + std::to_string(triggerTime), v_debug, verbosityEBSaver);
+          // print the size of PairedMRDTriggerTimestamp.at(triggerTrack), print the first and the last timestamp
+          Log("EBSaver: PairedMRDTriggerTimestamp size " + std::to_string(PairedMRDTriggerTimestamp.at(triggerTrack).size()), v_debug, verbosityEBSaver);
+          if (PairedMRDTriggerTimestamp.at(triggerTrack).size() > 0)
+            Log("EBSaver: PairedMRDTriggerTimestamp first " + std::to_string(PairedMRDTriggerTimestamp.at(triggerTrack).at(0)) + ", last " + std::to_string(PairedMRDTriggerTimestamp.at(triggerTrack).at(PairedMRDTriggerTimestamp.at(triggerTrack).size() - 1)), v_debug, verbosityEBSaver);
 
-          if (PairedMRDTriggerTimestamp.at(triggerTrack).at(i) == triggerTime || (diff < 1e6))
+          for (int i = 0; i < PairedMRDTriggerTimestamp.at(triggerTrack).size(); i++)
           {
-            if (diff < 1e6)
+            uint64_t diff = (PairedMRDTriggerTimestamp.at(triggerTrack).at(i) > triggerTime) ? PairedMRDTriggerTimestamp.at(triggerTrack).at(i) - triggerTime : triggerTime - PairedMRDTriggerTimestamp.at(triggerTrack).at(i);
+            if (diff < minDiff)
+              minDiff = diff;
+
+            if (PairedMRDTriggerTimestamp.at(triggerTrack).at(i) == triggerTime || (diff < 1e6))
             {
-              Log("EBSaver: diff<1e6, is " + std::to_string(diff), v_debug, verbosityEBSaver);
-              TriggerTimeWithoutMRD.emplace(PairedMRDTriggerTimestamp.at(triggerTrack).at(i), static_cast<int>(diff));
+              if (diff < 1e6)
+              {
+                Log("EBSaver: diff<1e6, is " + std::to_string(diff), v_debug, verbosityEBSaver);
+                TriggerTimeWithoutMRD.emplace(PairedMRDTriggerTimestamp.at(triggerTrack).at(i), static_cast<int>(diff));
+              }
+              uint64_t MRDTime = PairedMRDTimeStamps.at(triggerTrack).at(i);
+              bool saved = SaveMRDData(MRDTime);
+              MRDSaved = saved;
+              DataStreams["MRD"] = 1;
+              if (MRDSaved)
+                MRDPairInfoToRemoveTime[triggerTrack].push_back(MRDTime);
+              Log("EBSaver: Saved " + std::to_string(savedMRDNumber) + " MRD data with MRDTime " + std::to_string(MRDTime), v_debug, verbosityEBSaver);
+              Log("EBSaver: Found trigger with time " + std::to_string(triggerTime) + " in PairedMRDTriggerTimestamp " + std::to_string(i) + " match with MRDTime " + std::to_string(MRDTime), v_debug, verbosityEBSaver);
+              // break;
+              Log("EBSaver: While saving MRD data, use trigger time " + std::to_string(triggerTime) + " with minDiff " + std::to_string(minDiff), v_debug, verbosityEBSaver);
             }
-            uint64_t MRDTime = PairedMRDTimeStamps.at(triggerTrack).at(i);
-            bool saved = SaveMRDData(MRDTime);
-            MRDSaved = saved;
-            DataStreams["MRD"] = 1;
-            if (MRDSaved)
-              MRDPairInfoToRemoveTime[triggerTrack].push_back(MRDTime);
-            Log("EBSaver: Saved " + std::to_string(savedMRDNumber) + " MRD data with MRDTime " + std::to_string(MRDTime), v_debug, verbosityEBSaver);
-            Log("EBSaver: Found trigger with time " + std::to_string(triggerTime) + " in PairedMRDTriggerTimestamp " + std::to_string(i) + " match with MRDTime " + std::to_string(MRDTime), v_debug, verbosityEBSaver);
-            // break;
           }
         }
         // Log("EBSaver: MRDData saved", 8, verbosityEBSaver);
-        Log("EBSaver: While saving MRD data, use trigger time " + std::to_string(triggerTime) + " with minDiff " + std::to_string(minDiff), v_debug, verbosityEBSaver);
       }
     }
 
@@ -615,10 +616,12 @@ bool EBSaver::SaveGroupedTriggers(int triggerTrack, int groupIndex)
   ANNIEEvent->Set("GroupedTrigger", GroupedTrigger);
   int matchTriggerType = triggerTrack;
   ANNIEEvent->Set("PrimaryTriggerWord", matchTriggerType);
-  if(matchTriggerType!=14){
+  if (matchTriggerType != 14)
+  {
     ANNIEEvent->Set("TriggerWord", matchTriggerType);
   }
-  else{
+  else
+  {
     ANNIEEvent->Set("TriggerWord", 5);
   }
 

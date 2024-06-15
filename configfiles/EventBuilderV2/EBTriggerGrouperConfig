@@ -1,4 +1,4 @@
-verbosityEBTG 3
+verbosityEBTG 1
 GroupMode beam
 GroupTolerance 3000000
 GroupTrigWord 14 //undelayed beam

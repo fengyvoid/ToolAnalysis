@@ -12,6 +12,7 @@
 #include "LAPPDHit.h"
 #include "Geometry.h"
 #include "Position.h"
+#include "PsecData.h"
 
 /**
  * \class LAPPDTreeMaker
@@ -44,6 +45,7 @@ public:
     bool FillTriggerTree();
     bool FillGroupedTriggerTree();
     void CleanTriggers();
+    void LoadLAPPDMapInfo();
 
 private:
     TFile *file;
@@ -150,6 +152,25 @@ private:
     int RunNumber;
     int SubRunNumber;
     int PartFileNumber;
+
+    bool MultiLAPPDMapTreeMaker;
+    vector<int> LAPPD_IDs;
+    vector<uint64_t> LAPPDMapTimeStampRaw;
+    vector<uint64_t> LAPPDMapBeamgateRaw;
+    vector<uint64_t> LAPPDMapOffsets;
+    vector<int> LAPPDMapTSCorrections;
+    vector<int> LAPPDMapBGCorrections;
+    vector<int> LAPPDMapOSInMinusPS;
+
+    std::map<uint64_t, PsecData> LAPPDDataMap;
+    std::map<uint64_t, uint64_t> LAPPDBeamgate_ns;
+    std::map<uint64_t, uint64_t> LAPPDTimeStamps_ns; // data and key are the same
+    std::map<uint64_t, uint64_t> LAPPDTimeStampsRaw;
+    std::map<uint64_t, uint64_t> LAPPDBeamgatesRaw;
+    std::map<uint64_t, uint64_t> LAPPDOffsets;
+    std::map<uint64_t, int> LAPPDTSCorrection;
+    std::map<uint64_t, int> LAPPDBGCorrection;
+    std::map<uint64_t, int> LAPPDOSInMinusPS;
 };
 
 #endif

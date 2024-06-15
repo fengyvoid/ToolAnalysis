@@ -33,6 +33,9 @@ bool LAPPDTimeAlignment::Initialise(std::string configfile, DataModel &data)
     m_data->Stores["ANNIEEvent"]->Get("TrigChannel",TrigChannel);
     m_data->Stores["ANNIEEvent"]->Get("LAPPDchannelOffset",LAPPDchannelOffset);
 
+    LoadLAPPDMap = false;
+    m_variables.Get("LoadLAPPDMap",LoadLAPPDMap);
+
     return true;
 }
 
@@ -71,11 +74,20 @@ bool LAPPDTimeAlignment::Execute(){
   bool T0signalInWindow = false;
   double deltaT;
   
+  vector<int> ACDCReadedLAPPDID;
+  m_data->Stores["ANNIEEvent"]->Get("ACDCReadedLAPPDID", ACDCReadedLAPPDID);
 
   map <unsigned long, vector<Waveform<double>>> :: iterator itr_bi;
-  for(int bi: NReadBoards)
+  for(int i = 0;i< NReadBoards.size();i++)
     {
+        int bi = NReadBoards.at(i);
+        int thisLAPPDID = ACDCReadedLAPPDID.at(i);
+
         T0channelNo = LAPPDchannelOffset+(30*bi)+TrigChannel;
+        if(LoadLAPPDMap)
+        {
+          T0channelNo = 1000 + (30*(bi%2)) + 60* thisLAPPDID + TrigChannel;
+        }
 
         if(FindT0VerbosityLevel>0) cout<<"For board "<<bi<<", InputWavlabel: "<<InputWavLabel<<endl;
         

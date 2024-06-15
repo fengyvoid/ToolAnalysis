@@ -38,6 +38,8 @@ bool LAPPDThresReco::Initialise(std::string configfile, DataModel &data)
   m_variables.Get("loadPrintMRDinfo", loadPrintMRDinfo);
   // Control variables in this tool, initialized in this tool
   eventNumber = 0;
+  LoadLAPPDMapInfo = false;
+  m_variables.Get("LoadLAPPDMapInfo", LoadLAPPDMapInfo);
 
   // Global Control variables that you get from the config file
   ThresRecoInputWaveLabel = "LAPPDWave";
@@ -158,34 +160,49 @@ bool LAPPDThresReco::Execute()
   if (!LAPPDana)
     return true;
 
+  if (LoadLAPPDMapInfo)
+  {
+    m_data->Stores["ANNIEEvent"]->Get("LAPPD_IDs", LAPPD_IDs);
+    // print
+    /*cout << "ThresReco got LAPPD_IDs: ";
+    for (int i = 0; i < LAPPD_IDs.size(); i++)
+    {
+      cout << LAPPD_IDs.at(i) << " ";
+    }
+    cout << endl;*/
+  }
+  else
+  {
+    // get current LAPPD_ID
+    m_data->CStore.Get("LAPPD_ID", LAPPD_ID);
+  }
+
   // get the input LAPPD Data waveform;
   m_data->Stores["ANNIEEvent"]->Get(ThresRecoInputWaveLabel, lappdData);
-  // get current LAPPD_ID
-  m_data->CStore.Get("LAPPD_ID", LAPPD_ID);
 
-  if(LAPPDThresRecoVerbosity>0)
-    cout<<"Start WaveformMaximaFinding"<<endl;
+  if (LAPPDThresRecoVerbosity > 0)
+    cout << "Start WaveformMaximaFinding" << endl;
   WaveformMaximaFinding(); // find the maxima of the waveforms
-  if(LAPPDThresRecoVerbosity>0)
-    cout<<"Start FillLAPPDPulse"<<endl;
+  if (LAPPDThresRecoVerbosity > 0)
+    cout << "Start FillLAPPDPulse" << endl;
   FillLAPPDPulse(); // find pulses
-  if(LAPPDThresRecoVerbosity>0)
-    cout<<"Start FillLAPPDHit"<<endl;
-  FillLAPPDHit();   // find hits
-  if(LAPPDThresRecoVerbosity>0)
-    cout<<"Reco Finished, start filling"<<endl;
+  if (LAPPDThresRecoVerbosity > 0)
+    cout << "Start FillLAPPDHit" << endl;
+  FillLAPPDHit(); // find hits
+  if (LAPPDThresRecoVerbosity > 0)
+    cout << "Reco Finished, start filling" << endl;
 
   m_data->Stores["ANNIEEvent"]->Set(ThresRecoOutputPulseLabel, lappdPulses);
   m_data->Stores["ANNIEEvent"]->Set(ThresRecoOutputHitLabel, lappdHits);
-  m_data->Stores["ANNIEEvent"]->Set("waveformMax",waveformMax);
-  m_data->Stores["ANNIEEvent"]->Set("waveformRMS",waveformRMS);
-  m_data->Stores["ANNIEEvent"]->Set("waveformMaxLast",waveformMaxLast);
-  m_data->Stores["ANNIEEvent"]->Set("waveformMaxNearing",waveformMaxNearing);
-  m_data->Stores["ANNIEEvent"]->Set("waveformMaxTimeBin",waveformMaxTimeBin);
+  m_data->Stores["ANNIEEvent"]->Set("waveformMax", waveformMax);
+  m_data->Stores["ANNIEEvent"]->Set("waveformRMS", waveformRMS);
+  m_data->Stores["ANNIEEvent"]->Set("waveformMaxLast", waveformMaxLast);
+  m_data->Stores["ANNIEEvent"]->Set("waveformMaxNearing", waveformMaxNearing);
+  m_data->Stores["ANNIEEvent"]->Set("waveformMaxTimeBin", waveformMaxTimeBin);
   eventNumber++; // operation in this loop finished, increase the event number
 
-  if(LAPPDThresRecoVerbosity>0)
-    cout<<"Filling finished, printing to txt"<<endl;
+  if (LAPPDThresRecoVerbosity > 0)
+    cout << "Filling finished, printing to txt" << endl;
   if (printHitsTXT)
     PrintHitsToTXT(); // print hits to a txt file
   if (loadPrintMRDinfo)
@@ -224,23 +241,29 @@ void LAPPDThresReco::FillLAPPDPulse()
 
     // get the waveforms from channel number
     unsigned long channel = it->first;
-      channel = channel%1000 + 1000;
-    if ((channel % 1000)%30 == 5)
+    channel = channel % 1000 + 1000;
+    if ((channel % 1000) % 30 == 5)
       continue;
     Waveform<double> waveforms = it->second.at(0);
     vector<double> wav = *waveforms.GetSamples();
     vector<double> wave = wav;
-    if(wave.size() != 256) {
-      cout<<"FillLAPPDPulse: Found a bug waveform at channel "<<channel<<", size is "<<wave.size()<<endl;
+    if (wave.size() != 256)
+    {
+      cout << "FillLAPPDPulse: Found a bug waveform at channel " << channel << ", size is " << wave.size() << endl;
       continue;
     }
-    if(LAPPDThresRecoVerbosity>2)
-      cout<<"FillLAPPDPulse: Found waveform at channel "<<channel<<", size is "<<wave.size()<<endl;
+    if (LAPPDThresRecoVerbosity > 2)
+      cout << "FillLAPPDPulse: Found waveform at channel " << channel << ", size is " << wave.size() << endl;
     // flip the waveform, so that the signal is positive
     for (int i = 0; i < wave.size(); i++)
     {
       wave.at(i) = -wave.at(i);
     }
+
+    if (LoadLAPPDMapInfo)
+      LAPPD_ID = static_cast<int>((channel - 1000) / 60);
+
+    //cout << "FillLAPPDPulse LAPPD_ID: " << LAPPD_ID << " channel: " << channel << endl;
 
     // for this channel, find the pulses
     vector<LAPPDPulse> pulses = FindPulses(wave, LAPPD_ID, channel);
@@ -388,7 +411,7 @@ vector<LAPPDPulse> LAPPDThresReco::FindPulses(vector<double> wave, int LAPPD_ID,
           double peakBinGaus = GaussianFit(binNumbers, amplitudes);
 
           if (LAPPDThresRecoVerbosity > 1)
-            cout << "inserting pulse at time: " << peakBin * (25. / 256.) << "(" << peakBinGaus << ") with peakAmp: " << peakAmp << " from " << pulseStart << " to " << pulseStart + pulseSize << endl;
+            cout << "inserting pulse on LAPPD ID =" << LAPPD_ID << " at time: " << peakBin * (25. / 256.) << "(" << peakBinGaus << ") with peakAmp: " << peakAmp << " from " << pulseStart << " to " << pulseStart + pulseSize << endl;
           if (useMaxTime)
           {
             LAPPDPulse thisPulse(LAPPD_ID, channel, peakBin * (25. / 256.), Q, peakAmp, pulseStart, pulseStart + pulseSize);
@@ -784,72 +807,81 @@ int LAPPDThresReco::LoadMRDTrackReco(int SubEventID)
   return NumClusterTracks;
 }
 
+void LAPPDThresReco::WaveformMaximaFinding()
+{
+  // loop the lappdData map, for each value, find the maxima and RMS, and put them into waveformMax and waveformRMS
+  // use the strip number + 30* strip side as the key
+  if (LAPPDThresRecoVerbosity > 0)
+    cout << "WaveformMaximaFinding: Start finding maxima and RMS of the waveforms" << endl;
 
-
-void LAPPDThresReco::WaveformMaximaFinding(){
-  //loop the lappdData map, for each value, find the maxima and RMS, and put them into waveformMax and waveformRMS
-  //use the strip number + 30* strip side as the key
-  if(LAPPDThresRecoVerbosity>0 ) cout<<"WaveformMaximaFinding: Start finding maxima and RMS of the waveforms"<<endl;
-
-  std::map<unsigned long,vector<Waveform<double>>>::iterator it;
-  for(it = lappdData.begin(); it!= lappdData.end(); it++){
+  std::map<unsigned long, vector<Waveform<double>>>::iterator it;
+  for (it = lappdData.begin(); it != lappdData.end(); it++)
+  {
     unsigned long channel = it->first;
-    channel = channel%1000 + 1000;
-    if(channel == 1005 || channel == 1035) continue;
-    Channel* chan = _geom->GetChannel(channel);
+    channel = channel % 1000 + 1000;
+    if (channel == 1005 || channel == 1035)
+      continue;
+    Channel *chan = _geom->GetChannel(channel);
     int stripno = chan->GetStripNum();
     int stripSide = chan->GetStripSide();
     Waveform<double> waveforms = it->second.at(0);
     vector<double> wav = *waveforms.GetSamples();
 
     vector<double> wave = wav;
-    if(wave.size() != 256) {
-      cout<<"WaveformMaximaFinding: Found a bug waveform at channel "<<channel<<", size is "<<wav.size()<<endl;
+    if (wave.size() != 256)
+    {
+      cout << "WaveformMaximaFinding: Found a bug waveform at channel " << channel << ", size is " << wav.size() << endl;
       continue;
     }
-    if(LAPPDThresRecoVerbosity>2)
-      cout<<"WaveformMaximaFinding: Found a waveform at channel "<<channel<<", size is "<<wave.size()<< ",side is "<<stripSide<<", stripno is "<<stripno<<endl;
-    for(int i = 0; i<wave.size(); i++){
+    if (LAPPDThresRecoVerbosity > 2)
+      cout << "WaveformMaximaFinding: Found a waveform at channel " << channel << ", size is " << wave.size() << ",side is " << stripSide << ", stripno is " << stripno << endl;
+    for (int i = 0; i < wave.size(); i++)
+    {
       wave.at(i) = -wave.at(i);
     }
     double max = wave.at(0);
-    double rms = wave.at(0)*wave.at(0);
+    double rms = wave.at(0) * wave.at(0);
     bool maxIsLast = 0;
     double nearingMin = 0;
     int binOfMax = -1;
-    for(int i = 1; i<wave.size()-1; i++){
-      if(wave.at(i)>max) {
-        if(wave.at(i+1)>0.8*wave.at(i) && wave.at(i-1)>0.8*wave.at(i)){
+    for (int i = 1; i < wave.size() - 1; i++)
+    {
+      if (wave.at(i) > max)
+      {
+        if (wave.at(i + 1) > 0.8 * wave.at(i) && wave.at(i - 1) > 0.8 * wave.at(i))
+        {
           max = wave.at(i);
           maxIsLast = 1;
           binOfMax = i;
-
         }
-        if(wave.at(i+1)>wave.at(i-1)){
-            nearingMin = wave.at(i-1);
-          }else{
-            nearingMin = wave.at(i+1);
-          }
+        if (wave.at(i + 1) > wave.at(i - 1))
+        {
+          nearingMin = wave.at(i - 1);
+        }
+        else
+        {
+          nearingMin = wave.at(i + 1);
+        }
       }
 
-      rms += (wave.at(i))*(wave.at(i));
+      rms += (wave.at(i)) * (wave.at(i));
     }
 
-    rms = sqrt(rms/wave.size());
-    int key = stripno + 30*stripSide;
-    if(waveformMax[stripno].size() == 0){
-      waveformMax[stripno].resize(2);
-      waveformRMS[stripno].resize(2);
-      waveformMaxLast[stripno].resize(2);
-      waveformMaxNearing[stripno].resize(2);
-      waveformMaxTimeBin[stripno].resize(2);
+    rms = sqrt(rms / wave.size());
+    int LAPPD_ID = static_cast<int>((channel - 1000) / 60);
+    int key = stripno + 30 * stripSide + LAPPD_ID * 60;
+    if (waveformMax[key].size() == 0)
+    {
+      waveformMax[key].resize(2);
+      waveformRMS[key].resize(2);
+      waveformMaxLast[key].resize(2);
+      waveformMaxNearing[key].resize(2);
+      waveformMaxTimeBin[key].resize(2);
     }
-    waveformMax[stripno].at(stripSide) = max;
-    waveformRMS[stripno].at(stripSide) = rms;
-    waveformMaxLast[stripno].at(stripSide) = maxIsLast;
-    waveformMaxNearing[stripno].at(stripSide) = nearingMin;
-    waveformMaxTimeBin[stripno].at(stripSide) = binOfMax;
+    waveformMax[key].at(stripSide) = max;
+    waveformRMS[key].at(stripSide) = rms;
+    waveformMaxLast[key].at(stripSide) = maxIsLast;
+    waveformMaxNearing[key].at(stripSide) = nearingMin;
+    waveformMaxTimeBin[key].at(stripSide) = binOfMax;
   }
-
 }
-

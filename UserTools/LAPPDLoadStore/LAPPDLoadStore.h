@@ -130,6 +130,7 @@ private:
     std::map<uint64_t, int> LAPPDTSCorrection;
     std::map<uint64_t, int> LAPPDBGCorrection;
     std::map<uint64_t, int> LAPPDOSInMinusPS;
+    std::map<std::string, bool> DataStreams;
 
     // data variables don't need to be cleared in each loop
     // these are loaded offset for event building

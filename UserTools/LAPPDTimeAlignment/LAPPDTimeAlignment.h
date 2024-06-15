@@ -46,6 +46,8 @@ class LAPPDTimeAlignment: public Tool {
         string OutputWavLabel;
         int trigearlycut,triglatecut;
         int oldLaser;
+
+        bool LoadLAPPDMap;
 };
 
 

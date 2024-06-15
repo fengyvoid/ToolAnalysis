@@ -869,6 +869,7 @@ bool PhaseIITreeMaker::Execute(){
     if (fDataStreams["MRD"]==1) fHasMRD = 1;
     else fHasMRD = 0;
 
+
     m_data->Stores.at("ANNIEEvent")->Get("EventTimeMRD",fEventTimeMRD);
     fEventTimeMRD_Tree = (ULong64_t) fEventTimeMRD.GetNs();
     // bool got_mrdtime = m_data->Stores.at("ANNIEEvent")->Get("EventTime",mrd_timestamp);
@@ -1992,6 +1993,10 @@ void PhaseIITreeMaker::LoadLAPPDData()
   
   m_data->Stores["ANNIEEvent"]->Get("GroupedTrigger", GroupedTrigger);
   if(LAPPDDataMap.size() != 0)
-    FillLAPPDData();
+    {
+      FillLAPPDData();
+      //print the content of fDataStreams, and the size of data map
+      //cout<<"Found LAPPDData, LAPPDDataMap Size: "<<LAPPDDataMap.size()<<endl;
 
+    }
 }
