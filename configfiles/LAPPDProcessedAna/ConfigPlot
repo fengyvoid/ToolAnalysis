@@ -112,9 +112,11 @@ treeMakerOutputFileName LAPPDTree.root
 
 
 #LAPPDPlots
-#LAPPDPlotInputWaveLabel BLsubtractedLAPPDData
-LAPPDPlotInputWaveLabel LAPPDWaveforms
-LAPPDPlotsVerbosity 0
+LAPPDPlotInputWaveLabel BLsubtractedLAPPDData
+#LAPPDPlotInputWaveLabel LAPPDWaveforms
+#LAPPDPlotInputWaveLabel AlignedLAPPDData
+#LAPPDPlotInputWaveLabel RawLAPPDData
+LAPPDPlotsVerbosity 5
 CanvasXSubPlotNumber 2
 CanvasYSubPlotNumber 2
 canvasMargin 0.1

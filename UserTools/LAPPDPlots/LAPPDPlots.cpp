@@ -101,11 +101,11 @@ bool LAPPDPlots::Execute()
   m_data->Stores["ANNIEEvent"]->Get("ACDCReadedLAPPDID", ACDCReadedLAPPDID);
   m_data->Stores["ANNIEEvent"]->Get("LAPPD_IDs", LAPPD_IDs);
 
-  if (ACDCReadedLAPPDID.size() > 2)
-  {
-    CanvasXSubPlotNumber = static_cast<int>(ACDCReadedLAPPDID.size());
-    CanvasTotalSubPlotNumber = CanvasXSubPlotNumber * CanvasYSubPlotNumber;
-  }
+  // if (ACDCReadedLAPPDID.size() > 2)
+  //{
+  CanvasXSubPlotNumber = static_cast<int>(ACDCReadedLAPPDID.size());
+  CanvasTotalSubPlotNumber = CanvasXSubPlotNumber * CanvasYSubPlotNumber;
+  //}
 
   c->Clear();
   c->Divide(CanvasXSubPlotNumber, CanvasYSubPlotNumber);
@@ -119,23 +119,53 @@ bool LAPPDPlots::Execute()
 
   bool gotdata = m_data->Stores["ANNIEEvent"]->Get(LAPPDPlotInputWaveLabel, lappddata);
   m_data->Stores["ANNIEEvent"]->Get("ACDCboards", ReadBoards);
+  cout << "LAPPDPlots, got ACDCboards size = " << ReadBoards.size() << " with id = ";
+  for (auto i : ReadBoards)
+    cout << i << " ";
+  cout << endl;
+
   m_data->CStore.Get("LAPPD_ID", LAPPD_ID);
+  cout << "ACDCReadedLAPPDID size = " << ACDCReadedLAPPDID.size() << ": ";
+  for (auto i : ACDCReadedLAPPDID)
+    cout << i << " ";
+  cout << endl;
+
+  vector<int> drawPositions = ACDCReadedLAPPDID;
+  int minID = *min_element(ACDCReadedLAPPDID.begin(), ACDCReadedLAPPDID.end());
+  for (int i = 0; i < drawPositions.size(); i++)
+  {
+    drawPositions.at(i) = (drawPositions.at(i) - minID) * 2 + 1;
+    if (i % 2 == 1)
+      drawPositions.at(i) = drawPositions.at(i) + 1;
+  }
+  cout << "drawPositions size = " << drawPositions.size() << ": ";
+  for (auto i : drawPositions)
+    cout << i << " ";
+  cout << endl;
+
+  vector<int> drawBoardID = ACDCReadedLAPPDID;
+  for (int i = 0; i < drawBoardID.size(); i++)
+  {
+    drawBoardID.at(i) = drawBoardID.at(i) * 2;
+    if (i % 2 == 1)
+      drawBoardID.at(i) = (drawBoardID.at(i) + 1);
+  }
+  cout << "drawBoardID size = " << drawBoardID.size() << ": ";
+  for (auto i : drawBoardID)
+    cout << i << " ";
+  cout << endl;
 
   if (LAPPDPlotsVerbosity > 0)
-    cout << "LAPPDPlots execute with data " << LAPPDPlotInputWaveLabel << ", got data " << gotdata << ", data size " << lappddata.size() << ", Boards number" << ReadBoards.size() << ", ID " << LAPPD_ID << endl;
+    cout << "LAPPDPlots execute with data " << LAPPDPlotInputWaveLabel << ", got data " << gotdata << ", data size " << lappddata.size() << ", Board IDs size " << ReadBoards.size() << ", (single) ID " << LAPPD_ID << endl;
 
   if (DrawEventWaveform)
   {
     vector<int> DrawPosition = {Side0EventWaveformDrawPosition, Side1EventWaveformDrawPosition};
-    if (ReadBoards.size() > DrawPosition.size())
+    if (ACDCReadedLAPPDID.size() > DrawPosition.size())
     {
-      DrawPosition.clear();
-      for (int i = 0; i < ReadBoards.size(); i++)
-      {
-        DrawPosition.push_back(ReadBoards.at(i) + 1);
-      }
+      DrawPosition = drawPositions;
     }
-    for (int i = 0; i < ReadBoards.size(); i++)
+    for (int i = 0; i < drawBoardID.size(); i++)
     {
       const int drawPosition = DrawPosition[i];
       TPad *p = (TPad *)c->cd(drawPosition);
@@ -146,9 +176,9 @@ bool LAPPDPlots::Execute()
       p->SetTopMargin(canvasMargin);
       p->SetBottomMargin(canvasMargin);
       if (LAPPDPlotsVerbosity > 0)
-        cout << "Drawing board " << ReadBoards[i] << " at position " << DrawPosition[i] << " start" << endl;
-      std::map<unsigned long, vector<Waveform<double>>> boarddata = GetDataForBoard(ReadBoards[i]);
-      TString HistoName = "Event" + TString::Itoa(eventNumber, 10) + "_B" + ReadBoards[i] + "_ID" + LAPPD_ID;
+        cout << "Drawing board " << drawBoardID[i] << " at canvas position " << drawPosition << " start" << endl;
+      std::map<unsigned long, vector<Waveform<double>>> boarddata = GetDataForBoard(drawBoardID[i]);
+      TString HistoName = "Event" + TString::Itoa(eventNumber, 10) + "_B" + drawBoardID[i] + "_ID" + ACDCReadedLAPPDID[i];
       // convert BGTiming to string and add to HistoName
       // if (OnlyDrawInBeamWindow)
       HistoName += "_BG" + TString::Itoa(BGTiming, 10);
@@ -171,7 +201,7 @@ bool LAPPDPlots::Execute()
         Channel *ch = _geom->GetChannel(channelNo);
         int stripNo = ch->GetStripNum();
         if (LAPPDPlotsVerbosity > 3)
-          cout << "Drawing channel " << originalChannelNo << " as channelNo" << channelNo << " strip " << stripNo << ", with sample size " << w.GetSamples()->size() << endl;
+          cout << "Drawing channel " << originalChannelNo << " as channelNo " << channelNo << " strip " << stripNo << ", with sample size " << w.GetSamples()->size() <<", data at bin 0 = "<<-w.GetSamples()->at(0)<<endl;
         if (!drawTriggerChannel)
           if ((channelNo % 1000) % 30 == 5)
             continue;
@@ -179,15 +209,16 @@ bool LAPPDPlots::Execute()
         for (int i = 0; i < w.GetSamples()->size(); i++)
         {
           h->SetBinContent(i, stripNo + 1, -w.GetSamples()->at(i));
+          if(i<5) cout<<-w.GetSamples()->at(i)<<", ";
         }
       }
       if (LAPPDPlotsVerbosity > 3)
-        cout << "Finish Drawing event waveform" << endl;
+        cout << " Finish Drawing event waveform" << endl;
 
       h->SetMaximum(drawHighThreshold);
       h->SetMinimum(drawLowThreshold);
       h->SetStats(0);
-      h->GetXaxis()->SetTitle("Time (ns)");
+      h->GetXaxis()->SetTitle("Time (0.1ns)");
       h->GetXaxis()->SetTitleSize(titleSize);
       h->GetXaxis()->SetTitleOffset(canvasTitleOffset);
       h->GetYaxis()->SetTitle("Strip Number");
@@ -199,7 +230,7 @@ bool LAPPDPlots::Execute()
       f->cd();
       h->Write();
       if (LAPPDPlotsVerbosity > 0)
-        cout << "Drawing board " << ReadBoards[i] << " finished for Draw Event waveform" << endl;
+        cout << "Drawing board " << drawBoardID[i] << " finished for Draw Event waveform" << endl;
     }
   }
 
@@ -207,15 +238,15 @@ bool LAPPDPlots::Execute()
   {
 
     vector<int> DrawPositionBinHist = {Side0BinDrawPosition, Side1BinDrawPosition};
-    if (ReadBoards.size() > DrawPositionBinHist.size())
+    if (drawBoardID.size() > DrawPositionBinHist.size())
     {
       DrawPositionBinHist.clear();
-      for (int i = 0; i < ReadBoards.size(); i++)
+      for (int i = 0; i < drawBoardID.size(); i++)
       {
-        DrawPositionBinHist.push_back(ReadBoards.at(i) + CanvasXSubPlotNumber + 1);
+        DrawPositionBinHist.push_back(drawBoardID.at(i) + CanvasXSubPlotNumber);
       }
     }
-    for (int i = 0; i < ReadBoards.size(); i++)
+    for (int i = 0; i < drawBoardID.size(); i++)
     {
       const int drawPosition = DrawPositionBinHist[i];
       TPad *p = (TPad *)c->cd(drawPosition);
@@ -226,9 +257,9 @@ bool LAPPDPlots::Execute()
       p->SetTopMargin(canvasMargin);
       p->SetBottomMargin(canvasMargin);
       if (LAPPDPlotsVerbosity > 0)
-        cout << "Drawing board " << ReadBoards[i] << " at position " << DrawPositionBinHist[i] << " start" << endl;
-      std::map<unsigned long, vector<Waveform<double>>> boarddata = GetDataForBoard(ReadBoards[i]);
-      TString HistoName = "Event" + TString::Itoa(eventNumber, 10) + "_Bin_B" + ReadBoards[i] + "_ID" + LAPPD_ID;
+        cout << "Drawing board " << drawBoardID[i] << " at position " << DrawPositionBinHist[i] << " start" << endl;
+      std::map<unsigned long, vector<Waveform<double>>> boarddata = GetDataForBoard(drawBoardID[i]);
+      TString HistoName = "Event" + TString::Itoa(eventNumber, 10) + "_Bin_B" + drawBoardID[i] + "_ID" + ACDCReadedLAPPDID[i];
       // convert BGTiming to string and add to HistoName
       // if (OnlyDrawInBeamWindow)
       HistoName += "_BG" + TString::Itoa(BGTiming, 10);
@@ -279,7 +310,7 @@ bool LAPPDPlots::Execute()
       f->cd();
       h->Write();
       if (LAPPDPlotsVerbosity > 0)
-        cout << "Drawing board " << ReadBoards[i] << ", i=" << i << " in " << ReadBoards.size() << " finished for Draw Bin Hist" << endl;
+        cout << "Drawing board " << drawBoardID[i] << ", i=" << i << " in " << drawBoardID.size() << " finished for Draw Bin Hist" << endl;
     }
   }
 
@@ -307,10 +338,10 @@ bool LAPPDPlots::Execute()
       savedBoard.push_back(0);
     }
 
-    for (int i = 0; i < ReadBoards.size(); i++)
+    for (int i = 0; i < drawBoardID.size(); i++)
     {
       // data on board i, in key as channel number
-      std::map<unsigned long, vector<Waveform<double>>> boarddata = GetDataForBoard(ReadBoards[i]);
+      std::map<unsigned long, vector<Waveform<double>>> boarddata = GetDataForBoard(drawBoardID[i]);
       std::map<unsigned long, vector<Waveform<double>>>::iterator it;
       for (it = boarddata.begin(); it != boarddata.end(); it++)
       {
@@ -337,7 +368,7 @@ bool LAPPDPlots::Execute()
           if (LAPPDPlotsVerbosity > 0)
             cout << "Saved waveform " << endl;
 
-          savedBoard[ReadBoards[i]] = 1;
+          savedBoard[drawBoardID[i]] = 1;
         }
       }
     }
@@ -403,16 +434,15 @@ std::map<unsigned long, vector<Waveform<double>>> LAPPDPlots::GetDataForBoard(in
     int stripSide = ch->GetStripSide();
 
     int thisLAPPDID = static_cast<int>((channelNo % 1000) / 60);
-    int beginningBoardIDofThisLAPPDID = ReadBoards.at(std::distance(ACDCReadedLAPPDID.begin(), std::find(ACDCReadedLAPPDID.begin(), ACDCReadedLAPPDID.end(), thisLAPPDID)));
 
-    int targetLAPPDID = static_cast<int>(boardID / 2) * 2;
+    int targetLAPPDID = static_cast<int>(boardID / 2);
     if (LoadLAPPDMap)
     {
       targetLAPPDID = thisLAPPDID;
     }
 
     if (LAPPDPlotsVerbosity > 4)
-      cout << "GetData, channelNo: " << channelNo << ", side number" << stripSide << ", boardID " << boardID << ", targetLAPPDID " << targetLAPPDID << endl;
+      cout << "GetData, channelNo: " << channelNo << ", side number" << stripSide << ", with input boardID " << boardID << ", targetLAPPDID " << targetLAPPDID << endl;
 
     if (static_cast<int>((channelNo % 1000) / 60) == targetLAPPDID && stripSide == boardID % 2)
     {
