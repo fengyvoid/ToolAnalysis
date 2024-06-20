@@ -21,6 +21,7 @@
 #include "ANNIEalgorithms.h"
 #include "TimeClass.h"
 #include "BeamStatus.h"
+#include "PsecData.h"
 
 class PhaseIITreeMaker: public Tool {
 
@@ -50,6 +51,8 @@ class PhaseIITreeMaker: public Tool {
   bool LoadTankClusterClassifiers(double cluster_time);
   void LoadAllTankHits(bool IsData);
   void LoadSiPMHits();
+  void LoadLAPPDData();
+  void FillLAPPDData();
 
  private:
 
@@ -355,6 +358,43 @@ class PhaseIITreeMaker: public Tool {
   bool RecoDebug_fill = 0; //Outputs results of Reconstruction at each step (best fits, FOMs, etc.)
   bool muonTruthRecoDiff_fill = 0; //Output difference in tmuonruth and reconstructed values
   bool SiPMPulseInfo_fill = 0;
+
+  // LAPPD data variables
+  bool LAPPDData_fill = 0;
+  int gotLAPPDNumber;
+  std::map<uint64_t, PsecData> LAPPDDataMap;
+  std::map<uint64_t, uint64_t> LAPPDBeamgate_ns;
+  std::map<uint64_t, uint64_t> LAPPDTimeStamps_ns; // data and key are the same
+  std::map<uint64_t, uint64_t> LAPPDTimeStampsRaw;
+  std::map<uint64_t, uint64_t> LAPPDBeamgatesRaw;
+  std::map<uint64_t, uint64_t> LAPPDOffsets;
+  std::map<uint64_t, int> LAPPDTSCorrection;
+  std::map<uint64_t, int> LAPPDBGCorrection;
+  std::map<uint64_t, int> LAPPDOSInMinusPS;
+
+  vector<int> fLAPPD_ID;
+  vector<uint64_t> fLAPPD_Beamgate_ns;
+  vector<uint64_t> fLAPPD_Timestamp_ns;
+  vector<uint64_t> fLAPPD_Beamgate_Raw;
+  vector<uint64_t> fLAPPD_Timestamp_Raw;
+  vector<uint64_t> fLAPPD_Offset;
+  vector<int> fLAPPD_TSCorrection;
+  vector<int> fLAPPD_BGCorrection;
+  vector<int> fLAPPD_OSInMinusPS;
+
+  std::map<uint64_t, uint32_t> GroupedTrigger;
+
+  vector<uint64_t> fGroupedTriggerTime;
+  vector<uint32_t> fGroupedTriggerWord;
+
+
+    uint64_t beamInfoTime;
+    int64_t timeDiff;
+  double E_TOR860, E_TOR875, THCURR, BTJT2, HP875, VP875, HPTG1, VPTG1, HPTG2, VPTG2, BTH2T2;
+
+
+
+
 };
 
 

@@ -1,0 +1,6 @@
+FilterVerbosity 0
+
+saveAllLAPPDEvents 1
+filterType MRDtrack
+requirePulsedAmp 15
+requirePulsedStripNumber 7

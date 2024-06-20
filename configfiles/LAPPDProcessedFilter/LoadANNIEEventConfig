@@ -1,0 +1,6 @@
+verbose 2
+
+FileForListOfInputs configfiles/LAPPDProcessedFilter/list.txt
+
+EventOffset 0
+GlobalEvNr 1
