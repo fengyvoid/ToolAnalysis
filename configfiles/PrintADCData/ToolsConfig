@@ -1,0 +1,5 @@
+myLoadGeometry LoadGeometry configfiles/LoadGeometry/LoadGeometryConfig
+myLoadANNIEEvent LoadANNIEEvent configfiles/PrintADCData/LoadANNIEEventConfig
+myPhaseIIADCCalibrator PhaseIIADCCalibrator ./configfiles/PrintADCData/PhaseIIADCCalibratorConfig
+myPhaseIIADCHitFinder PhaseIIADCHitFinder ./configfiles/PrintADCData/PhaseIIADCHitFinderConfig
+myPrintADCData PrintADCData configfiles/PrintADCData/PrintADCDataConfig

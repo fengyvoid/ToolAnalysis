@@ -190,3 +190,4 @@
 #include "EBSaver.h"
 #include "ANNIEEventTreeMaker.h"
 #include "ProcessedLAPPDFilter.h"
+#include "BeamQuality.h"
