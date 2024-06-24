@@ -103,7 +103,10 @@ bool LAPPDPlots::Execute()
 
   // if (ACDCReadedLAPPDID.size() > 2)
   //{
-  CanvasXSubPlotNumber = static_cast<int>(ACDCReadedLAPPDID.size());
+  // CanvasXSubPlotNumber = static_cast<int>(ACDCReadedLAPPDID.size());
+  // CanvasXSubPlotNumber = max element of ACDCReadedLAPPDID minus min element of ACDCReadedLAPPDID + 1
+  CanvasXSubPlotNumber = *max_element(ACDCReadedLAPPDID.begin(), ACDCReadedLAPPDID.end()) - *min_element(ACDCReadedLAPPDID.begin(), ACDCReadedLAPPDID.end()) + 1;
+  CanvasXSubPlotNumber = CanvasXSubPlotNumber * 2;
   CanvasTotalSubPlotNumber = CanvasXSubPlotNumber * CanvasYSubPlotNumber;
   //}
 
@@ -119,17 +122,19 @@ bool LAPPDPlots::Execute()
 
   bool gotdata = m_data->Stores["ANNIEEvent"]->Get(LAPPDPlotInputWaveLabel, lappddata);
   m_data->Stores["ANNIEEvent"]->Get("ACDCboards", ReadBoards);
-  cout << "LAPPDPlots, got ACDCboards size = " << ReadBoards.size() << " with id = ";
-  for (auto i : ReadBoards)
-    cout << i << " ";
-  cout << endl;
-
   m_data->CStore.Get("LAPPD_ID", LAPPD_ID);
-  cout << "ACDCReadedLAPPDID size = " << ACDCReadedLAPPDID.size() << ": ";
-  for (auto i : ACDCReadedLAPPDID)
-    cout << i << " ";
-  cout << endl;
+  if (LAPPDPlotsVerbosity > 0)
+  {
+    cout << "LAPPDPlots, got ACDCboards size = " << ReadBoards.size() << " with id = ";
+    for (auto i : ReadBoards)
+      cout << i << " ";
+    cout << endl;
 
+    cout << "ACDCReadedLAPPDID size = " << ACDCReadedLAPPDID.size() << ": ";
+    for (auto i : ACDCReadedLAPPDID)
+      cout << i << " ";
+    cout << endl;
+  }
   vector<int> drawPositions = ACDCReadedLAPPDID;
   int minID = *min_element(ACDCReadedLAPPDID.begin(), ACDCReadedLAPPDID.end());
   for (int i = 0; i < drawPositions.size(); i++)
@@ -138,10 +143,13 @@ bool LAPPDPlots::Execute()
     if (i % 2 == 1)
       drawPositions.at(i) = drawPositions.at(i) + 1;
   }
-  cout << "drawPositions size = " << drawPositions.size() << ": ";
-  for (auto i : drawPositions)
-    cout << i << " ";
-  cout << endl;
+  if (LAPPDPlotsVerbosity > 0)
+  {
+    cout << "drawPositions size = " << drawPositions.size() << ": ";
+    for (auto i : drawPositions)
+      cout << i << " ";
+    cout << endl;
+  }
 
   vector<int> drawBoardID = ACDCReadedLAPPDID;
   for (int i = 0; i < drawBoardID.size(); i++)
@@ -150,14 +158,15 @@ bool LAPPDPlots::Execute()
     if (i % 2 == 1)
       drawBoardID.at(i) = (drawBoardID.at(i) + 1);
   }
-  cout << "drawBoardID size = " << drawBoardID.size() << ": ";
-  for (auto i : drawBoardID)
-    cout << i << " ";
-  cout << endl;
-
   if (LAPPDPlotsVerbosity > 0)
-    cout << "LAPPDPlots execute with data " << LAPPDPlotInputWaveLabel << ", got data " << gotdata << ", data size " << lappddata.size() << ", Board IDs size " << ReadBoards.size() << ", (single) ID " << LAPPD_ID << endl;
+  {
+    cout << "drawBoardID size = " << drawBoardID.size() << ": ";
+    for (auto i : drawBoardID)
+      cout << i << " ";
+    cout << endl;
 
+    cout << "LAPPDPlots execute with data " << LAPPDPlotInputWaveLabel << ", got data " << gotdata << ", data size " << lappddata.size() << ", Board IDs size " << ReadBoards.size() << ", (single) ID " << LAPPD_ID << endl;
+  }
   if (DrawEventWaveform)
   {
     vector<int> DrawPosition = {Side0EventWaveformDrawPosition, Side1EventWaveformDrawPosition};
@@ -201,7 +210,7 @@ bool LAPPDPlots::Execute()
         Channel *ch = _geom->GetChannel(channelNo);
         int stripNo = ch->GetStripNum();
         if (LAPPDPlotsVerbosity > 3)
-          cout << "Drawing channel " << originalChannelNo << " as channelNo " << channelNo << " strip " << stripNo << ", with sample size " << w.GetSamples()->size() <<", data at bin 0 = "<<-w.GetSamples()->at(0)<<endl;
+          cout << "Drawing channel " << originalChannelNo << " as channelNo " << channelNo << " strip " << stripNo << ", with sample size " << w.GetSamples()->size() << ", data at bin 0 = " << -w.GetSamples()->at(0) << endl;
         if (!drawTriggerChannel)
           if ((channelNo % 1000) % 30 == 5)
             continue;
@@ -209,7 +218,11 @@ bool LAPPDPlots::Execute()
         for (int i = 0; i < w.GetSamples()->size(); i++)
         {
           h->SetBinContent(i, stripNo + 1, -w.GetSamples()->at(i));
-          if(i<5) cout<<-w.GetSamples()->at(i)<<", ";
+          if (LAPPDPlotsVerbosity > 0)
+          {
+            if (i < 5)
+              cout << -w.GetSamples()->at(i) << ", ";
+          }
         }
       }
       if (LAPPDPlotsVerbosity > 3)
@@ -243,7 +256,7 @@ bool LAPPDPlots::Execute()
       DrawPositionBinHist.clear();
       for (int i = 0; i < drawBoardID.size(); i++)
       {
-        DrawPositionBinHist.push_back(drawBoardID.at(i) + CanvasXSubPlotNumber);
+        DrawPositionBinHist.push_back(drawBoardID.at(i) + CanvasXSubPlotNumber + 1);
       }
     }
     for (int i = 0; i < drawBoardID.size(); i++)

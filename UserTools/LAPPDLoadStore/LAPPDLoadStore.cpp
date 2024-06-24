@@ -1109,7 +1109,7 @@ bool LAPPDLoadStore::DoPedestalSubtract()
             if (DoPedSubtract == 1)
             {
                 auto iter = PedestalValues->find((it->first));
-                if(kvec==0)
+                if(kvec==0 && LAPPDStoreReadInVerbosity>5)
                     cout<<std::fixed<<", found PedestalValues for channel "<<it->first<<" with value = "<<iter->second.at(0);
                 if (iter != PedestalValues->end() && iter->second.size() > kvec)
                 {
@@ -1137,7 +1137,7 @@ bool LAPPDLoadStore::DoPedestalSubtract()
 
         unsigned long pushChannelNo = (unsigned long)it->first;
         LAPPDWaveforms.insert(pair<unsigned long, vector<Waveform<double>>>(pushChannelNo, VecTmpWave));
-        cout<<", Pushed to LAPPDWaveforms with channel number "<<pushChannelNo<<endl;
+        //cout<<", Pushed to LAPPDWaveforms with channel number "<<pushChannelNo<<endl;
 
         tmpWave.ClearSamples();
         VecTmpWave.clear();
