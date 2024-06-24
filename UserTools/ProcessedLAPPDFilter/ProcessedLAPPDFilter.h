@@ -63,6 +63,7 @@ private:
     int EventPMTClusterNumber;
     int CurrentExeNumber;
     int pairedEventNumber;
+    int PsecDataNumber;
 
 
 

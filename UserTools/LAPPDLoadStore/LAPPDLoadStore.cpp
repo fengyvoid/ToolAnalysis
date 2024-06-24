@@ -1032,7 +1032,7 @@ bool LAPPDLoadStore::ParsePSECData()
         int bi = ParaBoards.at(i) % 2;
         Parse_buffer.clear();
         if (LAPPDStoreReadInVerbosity > 2)
-            std::cout << "Parsing board " << ReadBoards[bi] << std::endl;
+            std::cout << "Parsing board with ReadBoards ID" << ReadBoards[bi] << std::endl;
         // Go over all ACDC board data frames by seperating them
         int frametype = static_cast<int>(Raw_buffer.size() / ReadBoards.size());
         for (int c = bi * frametype; c < (bi + 1) * frametype; c++)
@@ -1101,11 +1101,16 @@ bool LAPPDLoadStore::DoPedestalSubtract()
     for (std::map<int, vector<unsigned short>>::iterator it = data.begin(); it != data.end(); ++it) // looping over the data map by channel number, from 0 to 60
     {
         int wrongPedChannel = 0;
+        if(LAPPDStoreReadInVerbosity>5)
+            cout<<"Do Pedestal sub at Channel "<<it->first;
+        
         for (int kvec = 0; kvec < it->second.size(); kvec++)
         { // loop all data point in this channel
             if (DoPedSubtract == 1)
             {
                 auto iter = PedestalValues->find((it->first));
+                if(kvec==0 && LAPPDStoreReadInVerbosity>5)
+                    cout<<std::fixed<<", found PedestalValues for channel "<<it->first<<" with value = "<<iter->second.at(0);
                 if (iter != PedestalValues->end() && iter->second.size() > kvec)
                 {
                     pedval = iter->second.at(kvec);
@@ -1122,6 +1127,8 @@ bool LAPPDLoadStore::DoPedestalSubtract()
             }
             val = it->second.at(kvec);
             tmpWave.PushSample(0.3 * (double)(val - pedval));
+            if(LAPPDStoreReadInVerbosity>5 && kvec<10)
+                cout<<", "<<val<<"-"<<pedval<<"="<<0.3 * (double)(val - pedval);
         }
         if (wrongPedChannel != 0)
             cout << "Pedestal value not found for channel " << wrongPedChannel << "with it->first channel" << it->first << ", LAPPD channel shift " << LAPPD_ID * 60 << endl;
@@ -1130,6 +1137,7 @@ bool LAPPDLoadStore::DoPedestalSubtract()
 
         unsigned long pushChannelNo = (unsigned long)it->first;
         LAPPDWaveforms.insert(pair<unsigned long, vector<Waveform<double>>>(pushChannelNo, VecTmpWave));
+        //cout<<", Pushed to LAPPDWaveforms with channel number "<<pushChannelNo<<endl;
 
         tmpWave.ClearSamples();
         VecTmpWave.clear();

@@ -171,6 +171,15 @@ private:
     std::map<uint64_t, int> LAPPDTSCorrection;
     std::map<uint64_t, int> LAPPDBGCorrection;
     std::map<uint64_t, int> LAPPDOSInMinusPS;
+
+
+    uint64_t LTSRaw;
+    uint64_t LBGRaw;
+    uint64_t LOffset_ns;
+    int LTSCorrection;
+    int LBGCorrection;
+    int LOSInMinusPS;
+    uint64_t CTCPrimeTriggerTime;
 };
 
 #endif

@@ -84,7 +84,7 @@ bool EBLAPPD::Execute()
       bool LaserTriggerGroupped = false;
       m_data->CStore.Get("LaserTriggerGroupped", LaserTriggerGroupped);
       if (LaserTriggerGroupped)
-        Matching(47, 46);
+        Matching(47, 47);
       else
         Log("EBLAPPD: LaserTriggerGroupped is false, no laser trigger groupped in the grouper, stop matching", v_message, verbosityEBLAPPD);
 
@@ -116,6 +116,7 @@ bool EBLAPPD::Execute()
   m_data->CStore.Set("PairedLAPPDTimeStamps", PairedLAPPDTimeStamps);
   m_data->CStore.Set("PairedLAPPD_TriggerIndex", PairedLAPPD_TriggerIndex);
   Log("EBLAPPD: Set pairing information to CStore, PairedLAPPDTimeStamps[14] size = " + std::to_string(PairedLAPPDTimeStamps[14].size()), v_message, verbosityEBLAPPD);
+  Log("EBLAPPD: Set pairing information to CStore, PairedLAPPDTimeStamps[47] size = " + std::to_string(PairedLAPPDTimeStamps[47].size()), v_message, verbosityEBLAPPD);
 
   // Set the indexing of buffer
   m_data->CStore.Set("Buffer_LAPPDTimestamp_ns", Buffer_LAPPDTimestamp_ns);
@@ -216,6 +217,7 @@ bool EBLAPPD::LoadLAPPDData()
 bool EBLAPPD::Matching(int targetTrigger, int matchToTrack)
 {
   cout << "\033[1;34m******* EBLAPPD : Matching *******\033[0m" << endl;
+  Log("EBLAPPD: Matching LAPPD data with target trigger " + std::to_string(targetTrigger) + " in track " + std::to_string(matchToTrack), v_message, verbosityEBLAPPD);
 
   std::map<int, std::vector<std::map<uint64_t, uint32_t>>> GroupedTriggersInTotal; // each map is a group of triggers, with the key is the target trigger word
   m_data->CStore.Get("GroupedTriggersInTotal", GroupedTriggersInTotal);
@@ -253,7 +255,7 @@ bool EBLAPPD::Matching(int targetTrigger, int matchToTrack)
         matchedNumberInTrack.emplace(TrackTriggerWord, 0);
       if (TrackTriggerWord != matchToTrack && !matchToAllTriggers)
       {
-        Log("EBLAPPD: Skipping TrackTriggerWord " + std::to_string(TrackTriggerWord), v_debug, verbosityEBLAPPD);
+        //Log("EBLAPPD: Skipping TrackTriggerWord " + std::to_string(TrackTriggerWord), v_debug, verbosityEBLAPPD);
         continue;
       }
       vector<std::map<uint64_t, uint32_t>> GroupedTriggers = pair.second;

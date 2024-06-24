@@ -17,7 +17,9 @@ IFBeamDBInterfaceV2::IFBeamDBInterfaceV2()
   if (!fCurl) throw std::runtime_error("IFBeamDBInterfaceV2 failed to"
     " initialize libcurl");
 
-// the map include the device name we want to have in the output
+
+  // the map include the device name we want to have in the output
+
   requiredDevices = {
     {"E:TOR860", "E12"},
     {"E:TOR875", "E12"},
@@ -252,6 +254,7 @@ IFBeamDBInterfaceV2::ParseDBResponseSingleSpan(const std::string& response) cons
 					       timestamp);
   }
 
+
 for (auto &ts : retMap) {
     for (auto &dev : requiredDevices) {
       if (ts.second.find(dev.first) == ts.second.end()) {
@@ -338,6 +341,41 @@ IFBeamDBInterfaceV2::ParseDBResponseBundleSpan(const std::string& response) cons
   std::cout << "After inserting, total number of elements in retMap: " << totalAfter << std::endl;
   std::cout << "Size of retMap is " << retMap.size() << std::endl;
   
+  //count the total number of elements in retMap times the number of elements in that element, print the total number
+  int total = 0;
+  for (auto &ts : retMap) {
+    total += ts.second.size();
+  }
+  std::cout << "Total number of elements in retMap: " << total << std::endl;
+  std::cout << "Size of retMap is " << retMap.size() << std::endl;
+
+
+  //check each timestamp in the retMap, to see if it have all the devices in the requiredDevices map keys, if yes, continue
+  //if not, create entry for that device at retMap[TS], use the data type from the value of requiredDevices
+  // use value as -9999, unit as doulbe, timestamp = TS
+  for (auto &ts : retMap) {
+    /*cout<<"size of this timestamp is "<<ts.second.size()<<endl;
+    //print all device name at this timestamp
+    for (auto &datapoint : ts.second) {
+      cout<<"device name is "<<datapoint.first<<endl;
+      datapoint.second.Print();
+    }*/
+
+    for (auto &dev : requiredDevices) {
+      if (ts.second.find(dev.first) == ts.second.end()) {
+          //cout<<" not finding device "<<dev.first<<" at time "<<ts.first<<endl;
+          ts.second[dev.first] = BeamDataPoint(-9999., dev.second, ts.first);
+      }
+    }
+  }
+
+  int totalAfter = 0;
+  for (auto &ts : retMap) {
+    totalAfter += ts.second.size();
+  }
+  std::cout << "After inserting, total number of elements in retMap: " << totalAfter << std::endl;
+  std::cout << "Size of retMap is " << retMap.size() << std::endl;
+  
   return retMap;
 }
 
@@ -386,13 +424,13 @@ IFBeamDBInterfaceV2::ParseDBResponseSingle(const std::string& response) const
 					     timestamp);
 
 for (auto &ts : retMap) {
+
     for (auto &dev : requiredDevices) {
       if (ts.second.find(dev.first) == ts.second.end()) {
           ts.second[dev.first] = BeamDataPoint(-9999, dev.second, ts.first);
       }
     }
   }
-	
   return retMap;
 }
 
@@ -436,6 +474,7 @@ IFBeamDBInterfaceV2::ParseDBResponseBundle(const std::string& response) const
 					       unit,
 					       timestamp);
   }
+
 
 for (auto &ts : retMap) {
     for (auto &dev : requiredDevices) {
