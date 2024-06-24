@@ -1,0 +1,11 @@
+verbosity 5
+
+UseLEDWaveforms 0            # specifies whether to show or save full waveforms from the DAQ or the LED waveform windows
+
+OutputFile test              # Base filename given to both the ROOT and txt file that are output from the tool
+
+SaveWaveforms 1              # Determines whether or not to save raw waveforms in the output ROOT file
+
+WavesWithPulsesOnly 0        # Controls whether or not to save only waveforms that have a pulse in them (determined by the hit finding tools)
+
+MaxWaveforms 1000            # Controls the number of raw waveforms to be saved to the output ROOT file. Used to keep the ROOT file from exploding under the sheer number of raw waveforms saved

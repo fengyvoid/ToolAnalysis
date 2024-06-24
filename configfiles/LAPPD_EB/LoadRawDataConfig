@@ -3,7 +3,7 @@ BuildType LAPPDAndCTC
 Mode FileList
 
 
-InputFile ./configfiles/LAPPD_EB/list.txt
+InputFile ./configfiles/LAPPD_EB/my_files.txt
 
 
 DummyRunInfo 1

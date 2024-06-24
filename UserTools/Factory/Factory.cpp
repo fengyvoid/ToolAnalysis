@@ -182,5 +182,6 @@ if (tool=="EBMRD") ret=new EBMRD;
 if (tool=="EBSaver") ret=new EBSaver;
 if (tool=="ANNIEEventTreeMaker") ret=new ANNIEEventTreeMaker;
 if (tool=="ProcessedLAPPDFilter") ret=new ProcessedLAPPDFilter;
+if (tool=="BeamQuality") ret=new BeamQuality;
 return ret;
 }

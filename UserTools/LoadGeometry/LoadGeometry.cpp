@@ -20,6 +20,7 @@ bool LoadGeometry::Initialise(std::string configfile, DataModel &data){
   m_variables.Get("FACCMRDGeoFile", fFACCMRDGeoFile);
   m_variables.Get("TankPMTGeoFile", fTankPMTGeoFile);
   m_variables.Get("TankPMTGainFile", fTankPMTGainFile);
+  m_variables.Get("TankPMTTimingOffsetFile", fTankPMTTimingOffsetFile);
   m_variables.Get("AuxiliaryChannelFile", fAuxChannelFile);
   m_variables.Get("LAPPDGeoFile", fLAPPDGeoFile);
   m_variables.Get("DetectorGeoFile", fDetectorGeoFile);
@@ -58,6 +59,12 @@ bool LoadGeometry::Initialise(std::string configfile, DataModel &data){
     return false;
   }
 
+  if(!this->FileExists(fTankPMTTimingOffsetFile)){
+    Log("LoadGeometry Tool: File for Tank PMT Timing offsets does not exist!",v_error,verbosity);
+    if (verbosity > 0) std::cout << "Filepath was... " << fTankPMTTimingOffsetFile << std::endl;
+    return false;
+  }
+
   if(!this->FileExists(fAuxChannelFile)){
     Log("LoadGeometry Tool: File for Auxiliary Channels does not exist!",v_error,verbosity);
     if (verbosity > 0) std::cout << "Filepath was... " << fAuxChannelFile << std::endl;
@@ -69,6 +76,7 @@ bool LoadGeometry::Initialise(std::string configfile, DataModel &data){
   MRDChannelNumToCrateSpaceMap = new std::map<int,std::vector<int>>;
   TankPMTCrateSpaceToChannelNumMap = new std::map<std::vector<int>,int>;
   ChannelNumToTankPMTSPEChargeMap = new std::map<int,double>;
+  ChannelNumToTankPMTTimingOffsetMap = new std::map<unsigned long,double>;
   ChannelNumToTankPMTCrateSpaceMap = new std::map<int,std::vector<int>>;
   AuxCrateSpaceToChannelNumMap = new std::map<std::vector<int>,int>;
   AuxChannelNumToTypeMap = new std::map<int,std::string>;
@@ -87,6 +95,9 @@ bool LoadGeometry::Initialise(std::string configfile, DataModel &data){
   //Load TankPMT charge to PE conversion
   this->LoadTankPMTGains();
 
+  //Load TankPMT timing offsets
+  this->LoadTankPMTTimingOffsets();
+
   //Load auxiliary and spare channels
   this->LoadAuxiliaryChannels();
 
@@ -100,6 +111,7 @@ bool LoadGeometry::Initialise(std::string configfile, DataModel &data){
   m_data->CStore.Set("TankPMTCrateSpaceToChannelNumMap",TankPMTCrateSpaceToChannelNumMap);
   m_data->CStore.Set("ChannelNumToTankPMTCrateSpaceMap",ChannelNumToTankPMTCrateSpaceMap);
   m_data->CStore.Set("ChannelNumToTankPMTSPEChargeMap",ChannelNumToTankPMTSPEChargeMap);
+  m_data->CStore.Set("ChannelNumToTankPMTTimingOffsetMap",ChannelNumToTankPMTTimingOffsetMap);
   m_data->CStore.Set("AuxCrateSpaceToChannelNumMap",AuxCrateSpaceToChannelNumMap);
   m_data->CStore.Set("AuxChannelNumToCrateSpaceMap",AuxChannelNumToCrateSpaceMap);
   m_data->CStore.Set("AuxChannelNumToTypeMap",AuxChannelNumToTypeMap);
@@ -902,6 +914,26 @@ void LoadGeometry::LoadTankPMTGains(){
       channelkey = std::stoi(DataEntries.at(0));
       SPECharge= std::stod(DataEntries.at(1));
       ChannelNumToTankPMTSPEChargeMap->emplace(channelkey,SPECharge);
+    }
+  }
+  return;
+}
+
+void LoadGeometry::LoadTankPMTTimingOffsets(){
+  ifstream myfile(fTankPMTTimingOffsetFile.c_str());
+  std::string line;
+  if (myfile.is_open()){
+    //Loop over lines, collect all detector data (should only be one line here)
+    while(getline(myfile,line)){
+      if(verbosity>3) std::cout << line << std::endl; //has our stuff;
+      if(line.find("#")!=std::string::npos) continue;
+      std::vector<std::string> DataEntries;
+      boost::split(DataEntries,line, boost::is_any_of(","), boost::token_compress_on);
+      int channelkey = -9999;
+      double TimingOffset = -9999.;
+      channelkey = std::stoul(DataEntries.at(0));
+      TimingOffset= std::stod(DataEntries.at(2));
+      ChannelNumToTankPMTTimingOffsetMap->emplace(channelkey,TimingOffset);
     }
   }
   return;

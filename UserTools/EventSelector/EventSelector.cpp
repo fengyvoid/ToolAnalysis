@@ -776,7 +776,7 @@ bool EventSelector::EventSelectionByPMTMRDCoinc() {
     if (verbosity > 1) std::cout <<"max_charge: "<<max_charge<<", n_hits: "<<n_hits<<std::endl;
     Log("EventSelector tool: MRD/Tank coincidene candidate "+std::to_string(i_mrd)+ " has time difference: "+std::to_string(time_diff),1,verbosity);
     
-    if (time_diff > pmtmrd_coinc_min && time_diff < pmtmrd_coinc_max && max_charge > 200 && n_hits >= 20){
+    if (time_diff > pmtmrd_coinc_min && time_diff < pmtmrd_coinc_max){
       coincidence = true;
       vector_mrd_coincidence.push_back(i_mrd);
     }
