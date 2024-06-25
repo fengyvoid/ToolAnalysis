@@ -127,3 +127,4 @@ CanvasHeight 500
 maxDrawEventNumber 50
 
 DrawBinHist 1
+LoadLAPPDMap 1
