@@ -60,15 +60,13 @@ bool TriggerDataDecoder::Initialise(std::string configfile, DataModel &data){
 bool TriggerDataDecoder::Execute(){
 
   if (mode == "EventBuilding"){
-
-processed_sources.clear();
-processed_ns.clear();
-
     m_data->CStore.Set("NewCTCDataAvailable",false);
     bool PauseCTCDecoding = false;
     m_data->CStore.Get("PauseCTCDecoding",PauseCTCDecoding);
-    if (PauseCTCDecoding && verbosity > 0){
-      std::cout << "TriggerDataDecoder tool: Pausing trigger decoding to let Tank and MRD data catch up..." << std::endl;
+    if (PauseCTCDecoding)
+      if(verbosity > 0){
+        std::cout << "TriggerDataDecoder tool: Pausing trigger decoding to let Tank and MRD data catch up..." << std::endl;
+      }
       return true;
     }
     //Clear decoding maps if a new run/subrun is encountered
@@ -212,22 +210,6 @@ bool TriggerDataDecoder::Finalise(){
     StoreC1C2.Set("c2",c2);
     StoreC1C2.Save(storec1c2.c_str());
   }*/
-  ofstream trigDebug;
-  trigDebug.open("TrigDecoderDebug.txt");
-  int i = 0;
-  for (auto it = TimeToTriggerWordMapComplete->begin(); it != TimeToTriggerWordMapComplete->end(); ++it)
-  {
-    if (i > 10000)
-      break;
-    trigDebug << it->first << " ";
-    for (auto trig = it->second.begin(); trig != it->second.end(); ++trig)
-    {
-      trigDebug << *trig << " ";
-    }
-    trigDebug << endl;
-    i++;
-  }
-  trigDebug.close();
 
   return true;
 }
