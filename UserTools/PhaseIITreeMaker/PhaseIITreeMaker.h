@@ -22,6 +22,8 @@
 #include "TimeClass.h"
 #include "BeamStatus.h"
 #include "PsecData.h"
+#include "LAPPDPulse.h"
+#include "LAPPDHit.h"
 
 class PhaseIITreeMaker: public Tool {
 
@@ -53,6 +55,9 @@ class PhaseIITreeMaker: public Tool {
   void LoadSiPMHits();
   void LoadLAPPDData();
   void FillLAPPDData();
+
+  void FillLAPPDHit();
+  void FillLAPPDPulse();
 
  private:
 
@@ -393,6 +398,32 @@ class PhaseIITreeMaker: public Tool {
   double E_TOR860, E_TOR875, THCURR, BTJT2, HP875, VP875, HPTG1, VPTG1, HPTG2, VPTG2, BTH2T2;
 
 
+  bool LAPPDReco_fill = 0;
+  std::map<unsigned long, vector<vector<LAPPDPulse>>> lappdPulses;
+  std::map<unsigned long, vector<LAPPDHit>> lappdHits;
+
+  vector<int> fLAPPD_IDs;
+  vector<int> fChannelID;
+  vector<double> fPulsePeakTime;
+  vector<double> fPulseCharge;
+  vector<double> fPulsePeakAmp;
+  vector<double> fPulseStart;
+  vector<double> fPulseEnd;
+  vector<double> fPulseWidth;
+  vector<int> fPulseSide;
+  vector<int> fPulseStripNum;
+
+  vector<int> fLAPPDHit_IDs;
+  vector<int> fLAPPDHitChannel;
+  vector<int> fLAPPDHitStrip;
+  vector<double> fLAPPDHitTime;
+  vector<double> fLAPPDHitAmp;
+  vector<double> fLAPPDHitParallelPos;
+  vector<double> fLAPPDHitTransversePos;
+  vector<double> fLAPPDHitP1StartTime;
+  vector<double> fLAPPDHitP2StartTime;
+  vector<double> fLAPPDHitP1EndTime;
+  vector<double> fLAPPDHitP2EndTime;
 
 
 };

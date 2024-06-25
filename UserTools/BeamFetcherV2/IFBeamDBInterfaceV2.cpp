@@ -318,13 +318,6 @@ IFBeamDBInterfaceV2::ParseDBResponseBundleSpan(const std::string& response) cons
   //if not, create entry for that device at retMap[TS], use the data type from the value of requiredDevices
   // use value as -9999, unit as doulbe, timestamp = TS
   for (auto &ts : retMap) {
-    /*cout<<"size of this timestamp is "<<ts.second.size()<<endl;
-    //print all device name at this timestamp
-    for (auto &datapoint : ts.second) {
-      cout<<"device name is "<<datapoint.first<<endl;
-      datapoint.second.Print();
-    }*/
-
     for (auto &dev : requiredDevices) {
       if (ts.second.find(dev.first) == ts.second.end()) {
           //cout<<" not finding device "<<dev.first<<" at time "<<ts.first<<endl;

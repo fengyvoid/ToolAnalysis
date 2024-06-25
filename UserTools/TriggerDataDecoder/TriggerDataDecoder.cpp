@@ -67,8 +67,11 @@ processed_ns.clear();
     m_data->CStore.Set("NewCTCDataAvailable",false);
     bool PauseCTCDecoding = false;
     m_data->CStore.Get("PauseCTCDecoding",PauseCTCDecoding);
-    if (PauseCTCDecoding){
-      if(verbosity>0) std::cout << "TriggerDataDecoder tool: Pausing trigger decoding to let Tank and MRD data catch up..." << std::endl;
+
+    if (PauseCTCDecoding ){
+	    if(verbosity > 0){
+      std::cout << "TriggerDataDecoder tool: Pausing trigger decoding to let Tank and MRD data catch up..." << std::endl;
+	    }
       return true;
     }
     //Clear decoding maps if a new run/subrun is encountered

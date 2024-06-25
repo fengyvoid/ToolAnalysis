@@ -26,6 +26,7 @@ bool PhaseIITreeMaker::Initialise(std::string configfile, DataModel &data){
   m_variables.Get("RecoDebug_fill", RecoDebug_fill);
   m_variables.Get("muonTruthRecoDiff_fill", muonTruthRecoDiff_fill);
   m_variables.Get("LAPPDData_fill", LAPPDData_fill);
+  m_variables.Get("LAPPDReco_fill", LAPPDReco_fill);
 
   m_variables.Get("SiPMPulseInfo_fill",SiPMPulseInfo_fill);
   m_variables.Get("TankClusterProcessing",TankClusterProcessing);
@@ -116,6 +117,32 @@ bool PhaseIITreeMaker::Initialise(std::string configfile, DataModel &data){
 
       fPhaseIITankClusterTree->Branch("GroupedTriggerTime",&fGroupedTriggerTime);
       fPhaseIITankClusterTree->Branch("GroupedTriggerWord",&fGroupedTriggerWord);
+
+      if(LAPPDReco_fill)
+      {
+        fPhaseIITankClusterTree->Branch("LAPPD_PulseIDs",&fLAPPD_IDs);
+        fPhaseIITankClusterTree->Branch("LAPPD_ChannelID",&fChannelID);
+        fPhaseIITankClusterTree->Branch("LAPPD_PeakTime",&fPulsePeakTime);
+        fPhaseIITankClusterTree->Branch("LAPPD_PeakAmp",&fPulsePeakAmp);
+        fPhaseIITankClusterTree->Branch("LAPPD_Charge",&fPulseCharge);
+        fPhaseIITankClusterTree->Branch("LAPPD_PulseStart",&fPulseStart);
+        fPhaseIITankClusterTree->Branch("LAPPD_PulseEnd",&fPulseEnd);
+        fPhaseIITankClusterTree->Branch("LAPPD_PulseWidth",&fPulseWidth);
+        fPhaseIITankClusterTree->Branch("LAPPD_PulseSide",&fPulseSide);
+        fPhaseIITankClusterTree->Branch("LAPPD_PulseStripNum",&fPulseStripNum);
+
+        fPhaseIITankClusterTree->Branch("LAPPDID_Hit",&fLAPPDHit_IDs);
+        fPhaseIITankClusterTree->Branch("LAPPDHitChannel",&fLAPPDHitChannel);
+        fPhaseIITankClusterTree->Branch("LAPPDHitStrip",&fLAPPDHitStrip);
+        fPhaseIITankClusterTree->Branch("LAPPDHitTime",&fLAPPDHitTime);
+        fPhaseIITankClusterTree->Branch("LAPPDHitAmp",&fLAPPDHitAmp);
+        fPhaseIITankClusterTree->Branch("LAPPDHitParallelPos",&fLAPPDHitParallelPos);
+        fPhaseIITankClusterTree->Branch("LAPPDHitTransversePos",&fLAPPDHitTransversePos);
+        fPhaseIITankClusterTree->Branch("LAPPDHitP1StartTime",&fLAPPDHitP1StartTime);
+        fPhaseIITankClusterTree->Branch("LAPPDHitP2StartTime",&fLAPPDHitP2StartTime);
+        fPhaseIITankClusterTree->Branch("LAPPDHitP1EndTime",&fLAPPDHitP1EndTime);
+        fPhaseIITankClusterTree->Branch("LAPPDHitP2EndTime",&fLAPPDHitP2EndTime);
+      }
     } 
   } 
 
@@ -187,6 +214,33 @@ bool PhaseIITreeMaker::Initialise(std::string configfile, DataModel &data){
 
       fPhaseIIMRDClusterTree->Branch("GroupedTriggerTime",&fGroupedTriggerTime);
       fPhaseIIMRDClusterTree->Branch("GroupedTriggerWord",&fGroupedTriggerWord);
+
+      if(LAPPDReco_fill)
+      {
+        fPhaseIIMRDClusterTree->Branch("LAPPD_PulseIDs",&fLAPPD_IDs);
+        fPhaseIIMRDClusterTree->Branch("LAPPD_ChannelID",&fChannelID);
+        fPhaseIIMRDClusterTree->Branch("LAPPD_PeakTime",&fPulsePeakTime);
+        fPhaseIIMRDClusterTree->Branch("LAPPD_PeakAmp",&fPulsePeakAmp);
+        fPhaseIIMRDClusterTree->Branch("LAPPD_Charge",&fPulseCharge);
+        fPhaseIIMRDClusterTree->Branch("LAPPD_PulseStart",&fPulseStart);
+        fPhaseIIMRDClusterTree->Branch("LAPPD_PulseEnd",&fPulseEnd);
+        fPhaseIIMRDClusterTree->Branch("LAPPD_PulseWidth",&fPulseWidth);
+        fPhaseIIMRDClusterTree->Branch("LAPPD_PulseSide",&fPulseSide);
+        fPhaseIIMRDClusterTree->Branch("LAPPD_PulseStripNum",&fPulseStripNum);
+
+        fPhaseIIMRDClusterTree->Branch("LAPPDID_Hit",&fLAPPDHit_IDs);
+        fPhaseIIMRDClusterTree->Branch("LAPPDHitChannel",&fLAPPDHitChannel);
+        fPhaseIIMRDClusterTree->Branch("LAPPDHitStrip",&fLAPPDHitStrip);
+        fPhaseIIMRDClusterTree->Branch("LAPPDHitTime",&fLAPPDHitTime);
+        fPhaseIIMRDClusterTree->Branch("LAPPDHitAmp",&fLAPPDHitAmp);
+        fPhaseIIMRDClusterTree->Branch("LAPPDHitParallelPos",&fLAPPDHitParallelPos);
+        fPhaseIIMRDClusterTree->Branch("LAPPDHitTransversePos",&fLAPPDHitTransversePos);
+        fPhaseIIMRDClusterTree->Branch("LAPPDHitP1StartTime",&fLAPPDHitP1StartTime);
+        fPhaseIIMRDClusterTree->Branch("LAPPDHitP2StartTime",&fLAPPDHitP2StartTime);
+        fPhaseIIMRDClusterTree->Branch("LAPPDHitP1EndTime",&fLAPPDHitP1EndTime);
+        fPhaseIIMRDClusterTree->Branch("LAPPDHitP2EndTime",&fLAPPDHitP2EndTime);
+      }
+
     } 
 
   }
@@ -439,6 +493,32 @@ bool PhaseIITreeMaker::Initialise(std::string configfile, DataModel &data){
 
       fPhaseIITrigTree->Branch("GroupedTriggerTime",&fGroupedTriggerTime);
       fPhaseIITrigTree->Branch("GroupedTriggerWord",&fGroupedTriggerWord);
+
+      if(LAPPDReco_fill)
+      {
+        fPhaseIITrigTree->Branch("LAPPD_PulseIDs",&fLAPPD_IDs);
+        fPhaseIITrigTree->Branch("LAPPD_ChannelID",&fChannelID);
+        fPhaseIITrigTree->Branch("LAPPD_PeakTime",&fPulsePeakTime);
+        fPhaseIITrigTree->Branch("LAPPD_PeakAmp",&fPulsePeakAmp);
+        fPhaseIITrigTree->Branch("LAPPD_Charge",&fPulseCharge);
+        fPhaseIITrigTree->Branch("LAPPD_PulseStart",&fPulseStart);
+        fPhaseIITrigTree->Branch("LAPPD_PulseEnd",&fPulseEnd);
+        fPhaseIITrigTree->Branch("LAPPD_PulseWidth",&fPulseWidth);
+        fPhaseIITrigTree->Branch("LAPPD_PulseSide",&fPulseSide);
+        fPhaseIITrigTree->Branch("LAPPD_PulseStripNum",&fPulseStripNum);
+
+        fPhaseIITrigTree->Branch("LAPPDID_Hit",&fLAPPDHit_IDs);
+        fPhaseIITrigTree->Branch("LAPPDHitChannel",&fLAPPDHitChannel);
+        fPhaseIITrigTree->Branch("LAPPDHitStrip",&fLAPPDHitStrip);
+        fPhaseIITrigTree->Branch("LAPPDHitTime",&fLAPPDHitTime);
+        fPhaseIITrigTree->Branch("LAPPDHitAmp",&fLAPPDHitAmp);
+        fPhaseIITrigTree->Branch("LAPPDHitParallelPos",&fLAPPDHitParallelPos);
+        fPhaseIITrigTree->Branch("LAPPDHitTransversePos",&fLAPPDHitTransversePos);
+        fPhaseIITrigTree->Branch("LAPPDHitP1StartTime",&fLAPPDHitP1StartTime);
+        fPhaseIITrigTree->Branch("LAPPDHitP2StartTime",&fLAPPDHitP2StartTime);
+        fPhaseIITrigTree->Branch("LAPPDHitP1EndTime",&fLAPPDHitP1EndTime);
+        fPhaseIITrigTree->Branch("LAPPDHitP2EndTime",&fLAPPDHitP2EndTime);
+      }
     } 
   }
   return true;
@@ -546,9 +626,10 @@ bool PhaseIITreeMaker::Execute(){
       m_data->Stores.at("ANNIEEvent")->Get("RunType",fRunType);
       m_data->Stores.at("ANNIEEvent")->Get("RunStartTime",fStartTime);
 
-      
+      uint64_t primaryTrigTime = 0;
+      m_data->Stores.at("ANNIEEvent")->Get("PrimaryTriggerTime", primaryTrigTime);
   
-      fStartTime_Tree = (ULong64_t) fStartTime;
+      fStartTime_Tree = (ULong64_t) primaryTrigTime;
       // ANNIE Event number
       m_data->Stores.at("ANNIEEvent")->Get("EventTimeTank",fEventTimeTank);
       fEventTimeTank_Tree = (ULong64_t) fEventTimeTank;
@@ -794,7 +875,9 @@ bool PhaseIITreeMaker::Execute(){
       m_data->Stores.at("ANNIEEvent")->Get("SubrunNumber",fSubrunNumber);
       m_data->Stores.at("ANNIEEvent")->Get("RunType",fRunType);
       m_data->Stores.at("ANNIEEvent")->Get("RunStartTime",fStartTime);
-      fStartTime_Tree = (ULong64_t) fStartTime;
+      uint64_t primaryTrigTime = 0;
+      m_data->Stores.at("ANNIEEvent")->Get("PrimaryTriggerTime", primaryTrigTime);
+      fStartTime_Tree = (ULong64_t) primaryTrigTime;
       m_data->Stores.at("ANNIEEvent")->Get("EventNumber",fEventNumber);
       m_data->Stores.at("ANNIEEvent")->Get("EventTimeTank",fEventTimeTank);
       fEventTimeTank_Tree = (ULong64_t) fEventTimeTank;
@@ -827,7 +910,9 @@ bool PhaseIITreeMaker::Execute(){
     m_data->Stores.at("ANNIEEvent")->Get("SubrunNumber",fSubrunNumber);
     m_data->Stores.at("ANNIEEvent")->Get("RunType",fRunType);
     m_data->Stores.at("ANNIEEvent")->Get("RunStartTime",fStartTime);
-    fStartTime_Tree = (ULong64_t) fStartTime;  
+      uint64_t primaryTrigTime = 0;
+      m_data->Stores.at("ANNIEEvent")->Get("PrimaryTriggerTime", primaryTrigTime);
+      fStartTime_Tree = (ULong64_t) primaryTrigTime;
 
     // ANNIE Event number
     m_data->Stores.at("ANNIEEvent")->Get("EventNumber",fEventNumber);
@@ -1163,6 +1248,33 @@ void PhaseIITreeMaker::ResetVariables() {
 
     fGroupedTriggerTime.clear();
     fGroupedTriggerWord.clear();
+
+    lappdPulses.clear();
+    lappdHits.clear();
+
+    fLAPPD_IDs.clear();
+    fChannelID.clear();
+    fPulsePeakTime.clear();
+    fPulseCharge.clear();
+    fPulsePeakAmp.clear();
+    fPulseStart.clear();
+    fPulseEnd.clear();
+    fPulseWidth.clear();
+    fPulseSide.clear();
+    fPulseStripNum.clear();
+
+    fLAPPDHit_IDs.clear();
+    fLAPPDHitChannel.clear();
+    fLAPPDHitStrip.clear();
+    fLAPPDHitTime.clear();
+    fLAPPDHitAmp.clear();
+    fLAPPDHitParallelPos.clear();
+    fLAPPDHitTransversePos.clear();
+    fLAPPDHitP1StartTime.clear();
+    fLAPPDHitP2StartTime.clear();
+    fLAPPDHitP1EndTime.clear();
+    fLAPPDHitP2EndTime.clear();
+
   }
 
 }
@@ -1997,6 +2109,93 @@ void PhaseIITreeMaker::LoadLAPPDData()
       FillLAPPDData();
       //print the content of fDataStreams, and the size of data map
       //cout<<"Found LAPPDData, LAPPDDataMap Size: "<<LAPPDDataMap.size()<<endl;
+      if(LAPPDReco_fill){
+      FillLAPPDPulse();
+      FillLAPPDHit();
+      }
+    }
+}
+
+void PhaseIITreeMaker::FillLAPPDPulse()
+{
+  bool gotPulse = m_data->Stores["ANNIEEvent"]->Get("LAPPDPulses", lappdPulses);
+  if(gotPulse)
+  {
+      
+    std::map<unsigned long, vector<vector<LAPPDPulse>>>::iterator it;
+    for (it = lappdPulses.begin(); it != lappdPulses.end(); it++)
+    {
+      int stripno = it->first;
+      vector<vector<LAPPDPulse>> stripPulses = it->second;
+
+      vector<LAPPDPulse> pulse0 = stripPulses.at(0);
+      vector<LAPPDPulse> pulse1 = stripPulses.at(1);
+      for (int i = 0; i < pulse0.size(); i++)
+      {
+        fPulseSide.push_back(0);
+        LAPPDPulse thisPulse = pulse0.at(i);
+        fLAPPD_IDs.push_back(thisPulse.GetTubeId());
+        fChannelID.push_back(thisPulse.GetChannelID());
+        fPulseStripNum.push_back(stripno);
+        fPulsePeakTime.push_back(thisPulse.GetTime());
+        fPulseCharge.push_back(thisPulse.GetCharge());
+        fPulsePeakAmp.push_back(thisPulse.GetPeak());
+        fPulseStart.push_back(thisPulse.GetLowRange());
+        fPulseEnd.push_back(thisPulse.GetHiRange());
+        fPulseWidth.push_back(thisPulse.GetHiRange() - thisPulse.GetLowRange());
+      }
+      for(int i = 0; i<pulse1.size();i++)
+      {
+        fPulseSide.push_back(1);
+        LAPPDPulse thisPulse = pulse1.at(i);
+        fLAPPD_IDs.push_back(thisPulse.GetTubeId());
+        fChannelID.push_back(thisPulse.GetChannelID());
+        fPulseStripNum.push_back(stripno);
+        fPulsePeakTime.push_back(thisPulse.GetTime());
+        fPulseCharge.push_back(thisPulse.GetCharge());
+        fPulsePeakAmp.push_back(thisPulse.GetPeak());
+        fPulseStart.push_back(thisPulse.GetLowRange());
+        fPulseEnd.push_back(thisPulse.GetHiRange());
+        fPulseWidth.push_back(thisPulse.GetHiRange() - thisPulse.GetLowRange());
+      }
 
     }
+
+  }
+
+}
+
+
+void PhaseIITreeMaker::FillLAPPDHit(){
+  bool gotHit = m_data->Stores["ANNIEEvent"]->Get("LAPPDHits", lappdHits);
+
+  if(gotHit)
+  {
+  std::map<unsigned long, vector<LAPPDHit>>::iterator it;
+  for (it = lappdHits.begin(); it != lappdHits.end(); it++)
+  {
+    int stripno = it->first;
+    vector<LAPPDHit> stripHits = it->second;
+    for (int i = 0; i < stripHits.size(); i++)
+    {
+      LAPPDHit thisHit = stripHits.at(i);
+      fLAPPDHit_IDs.push_back(thisHit.GetTubeId());
+      fLAPPDHitStrip.push_back(stripno);
+      fLAPPDHitTime.push_back(thisHit.GetTime());
+      fLAPPDHitAmp.push_back(thisHit.GetCharge());
+      vector<double> position = thisHit.GetPosition();
+      /*
+      XPosTank = position.at(0);
+      YPosTank = position.at(1);
+      ZPosTank = position.at(2);*/
+      vector<double> localPosition = thisHit.GetLocalPosition();
+      fLAPPDHitParallelPos.push_back(localPosition.at(0));
+      fLAPPDHitTransversePos.push_back(localPosition.at(1));
+      fLAPPDHitP1StartTime.push_back(thisHit.GetPulse1StartTime());
+      fLAPPDHitP2StartTime.push_back(thisHit.GetPulse2StartTime());
+      fLAPPDHitP1EndTime.push_back(thisHit.GetPulse1LastTime());
+      fLAPPDHitP2EndTime.push_back(thisHit.GetPulse2LastTime());
+    }
+  }
+  }
 }
