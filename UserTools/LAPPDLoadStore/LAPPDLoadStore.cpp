@@ -1356,7 +1356,7 @@ void LAPPDLoadStore::LoadOffsetsAndCorrections()
         BGCorrections[key][EventIndex] = static_cast<int>(BGCorrection_tick) - 1000;
         TSCorrections[key][EventIndex] = static_cast<int>(TSCorrection_tick) - 1000;
 
-        if (i % (static_cast<int>(nentries / 10)) == 0)
+        if (nentries > 10 && i % (static_cast<int>(nentries / 10)) == 0)
         {
             cout << "LAPPDStoreReadIn Loading offsets and corrections, " << i << " entries loaded" << endl;
             cout << "Printing key: " << key << ", EventIndex: " << EventIndex << ", final_offset_ns_0: " << final_offset_ns_0 << ", final_offset_ps_negative_0: " << final_offset_ps_negative_0 << ", BGCorrection_tick: " << BGCorrection_tick << ", TSCorrection_tick: " << TSCorrection_tick << endl;
