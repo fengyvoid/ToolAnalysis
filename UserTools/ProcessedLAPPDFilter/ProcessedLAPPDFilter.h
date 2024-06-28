@@ -45,18 +45,21 @@ private:
     string MRDDataName;
     string MRDNoVetoDataName;
     string AllLAPPDDataName;
+    string PMTClusterDataName;
 
     string filterType;
 
     BoostStore *FilteredMRD = nullptr;
     BoostStore *FilteredMRDNoVeto = nullptr;
     BoostStore *FilteredAllLAPPD = nullptr;
+    BoostStore *FilteredPMTCluster = nullptr;
 
     bool gotEventMRD;
     bool gotEventMRDNoVeto;
     bool gotEventPMTCluster;
 
     bool saveAllLAPPDEvents;
+    bool savePMTClusterEvents;
 
     int EventMRDNumber;
     int EventMRDNoVetoNumber;
@@ -71,6 +74,8 @@ private:
 
     double requirePulsedAmp;
     int requirePulsedStripNumber;
+
+    int PMTClusterEventNum;
 
 
 };
