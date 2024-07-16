@@ -359,6 +359,12 @@ bool LAPPDLoadStore::Execute()
                 // cout << "ReadedBoards loaded with " << *it << endl;
             }
 
+	    if(Raw_buffer.size() == 0 || ReadBoards.size() == 0)
+	    {
+	    	m_data->CStore.Set("LAPPDana",false);
+	        cout<<"LAPPD Load Store, find Raw buffer size == 0 or ReadBoards size == 0"<<endl;
+		return true;
+	    }
             int frametype = static_cast<int>(Raw_buffer.size() / ReadBoards.size());
             if (frametype != num_vector_data)
             {
