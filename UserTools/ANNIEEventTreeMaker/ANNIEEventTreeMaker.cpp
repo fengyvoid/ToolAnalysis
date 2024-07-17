@@ -203,6 +203,11 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
     fANNIETree->Branch("LAPPDHitP1EndTime", &fLAPPDHitP1EndTime);
     fANNIETree->Branch("LAPPDHitP2EndTime", &fLAPPDHitP2EndTime);
 
+    fANNIETree->Branch("LAPPDHitP1PeakTime", &fLAPPDHitP1PeakTime);
+    fANNIETree->Branch("LAPPDHitP2PeakTime", &fLAPPDHitP2PeakTime);
+    fANNIETree->Branch("LAPPDHitP1PeakAmp", &fLAPPDHitP1PeakAmp);
+    fANNIETree->Branch("LAPPDHitP2PeakAmp", &fLAPPDHitP2PeakAmp);
+
     /*
     fANNIETree->Branch("LAPPDWaveformChankey", &LAPPDWaveformChankey, "LAPPDWaveformChankey/I");
     fANNIETree->Branch("WaveformMax", &waveformMaxValue, "WaveformMax/D");
@@ -616,6 +621,10 @@ void ANNIEEventTreeMaker::ResetVariables()
   fLAPPDHitP2StartTime.clear();
   fLAPPDHitP1EndTime.clear();
   fLAPPDHitP2EndTime.clear();
+  fLAPPDHitP1PeakTime.clear();
+  fLAPPDHitP2PeakTime.clear();
+  fLAPPDHitP1PeakAmp.clear();
+  fLAPPDHitP2PeakAmp.clear();
 
   LAPPDWaveformChankey.clear();
   waveformMaxValue.clear();
@@ -1230,6 +1239,8 @@ void ANNIEEventTreeMaker::FillLAPPDHit()
       for (int i = 0; i < stripHits.size(); i++)
       {
         LAPPDHit thisHit = stripHits.at(i);
+        LAPPDPulse p1 = thisHit.GetPulse1();
+        LAPPDPulse p2 = thisHit.GetPulse2();
         fLAPPDHit_IDs.push_back(thisHit.GetTubeId());
         fLAPPDHitStrip.push_back(stripno);
         fLAPPDHitTime.push_back(thisHit.GetTime());
@@ -1242,10 +1253,20 @@ void ANNIEEventTreeMaker::FillLAPPDHit()
         vector<double> localPosition = thisHit.GetLocalPosition();
         fLAPPDHitParallelPos.push_back(localPosition.at(0));
         fLAPPDHitTransversePos.push_back(localPosition.at(1));
-        fLAPPDHitP1StartTime.push_back(thisHit.GetPulse1StartTime());
-        fLAPPDHitP2StartTime.push_back(thisHit.GetPulse2StartTime());
-        fLAPPDHitP1EndTime.push_back(thisHit.GetPulse1LastTime());
-        fLAPPDHitP2EndTime.push_back(thisHit.GetPulse2LastTime());
+        //fLAPPDHitP1StartTime.push_back(thisHit.GetPulse1StartTime());
+        //fLAPPDHitP2StartTime.push_back(thisHit.GetPulse2StartTime());
+        //fLAPPDHitP1EndTime.push_back(thisHit.GetPulse1LastTime());
+        //fLAPPDHitP2EndTime.push_back(thisHit.GetPulse2LastTime());
+        
+        fLAPPDHitP1StartTime.push_back(p1.GetLowRange());
+        fLAPPDHitP2StartTime.push_back(p2.GetLowRange());
+        fLAPPDHitP1EndTime.push_back(p1.GetHiRange());
+        fLAPPDHitP2EndTime.push_back(p2.GetHiRange());
+
+        fLAPPDHitP1PeakTime.push_back(p1.GetTime());
+        fLAPPDHitP2PeakTime.push_back(p2.GetTime());
+        fLAPPDHitP1PeakAmp.push_back(p1.GetPeak());
+        fLAPPDHitP2PeakAmp.push_back(p2.GetPeak());
       }
     }
   }

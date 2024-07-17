@@ -630,17 +630,17 @@ LAPPDHit LAPPDThresReco::MakeHit(LAPPDPulse pulse0, LAPPDPulse pulse1)
     }
     if (useRange == -1)
     {
-      LAPPDHit hit(tubeID, averageTime, averageAmp, positionInTank, positionOnLAPPD, pulse1LastTime, pulse2LastTime, pulse1StartTime, pulse2StartTime);
+      LAPPDHit hit(tubeID, averageTime, averageAmp, positionInTank, positionOnLAPPD, pulse1LastTime, pulse2LastTime, pulse1StartTime, pulse2StartTime, pulse0, pulse1);
       return hit;
     }
     else if (useRange == 0)
     {
-      LAPPDHit hit(tubeID, averageTimeLow, averageAmp, positionInTank, positionOnLAPPD, pulse1LastTime, pulse2LastTime, pulse1StartTime, pulse2StartTime);
+      LAPPDHit hit(tubeID, averageTimeLow, averageAmp, positionInTank, positionOnLAPPD, pulse1LastTime, pulse2LastTime, pulse1StartTime, pulse2StartTime, pulse0, pulse1);
       return hit;
     }
     else if (useRange == 1)
     {
-      LAPPDHit hit(tubeID, averageTimeHi, averageAmp, positionInTank, positionOnLAPPD, pulse1LastTime, pulse2LastTime, pulse1StartTime, pulse2StartTime);
+      LAPPDHit hit(tubeID, averageTimeHi, averageAmp, positionInTank, positionOnLAPPD, pulse1LastTime, pulse2LastTime, pulse1StartTime, pulse2StartTime, pulse0, pulse1);
       return hit;
     }
     else

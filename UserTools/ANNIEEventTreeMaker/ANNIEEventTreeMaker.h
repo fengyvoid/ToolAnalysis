@@ -227,6 +227,12 @@ private:
     vector<double> fLAPPDHitP2StartTime;
     vector<double> fLAPPDHitP1EndTime;
     vector<double> fLAPPDHitP2EndTime;
+    vector<double> fLAPPDHitP1PeakTime;
+    vector<double> fLAPPDHitP2PeakTime;
+    vector<double> fLAPPDHitP1PeakAmp;
+    vector<double> fLAPPDHitP2PeakAmp;
+
+
 
     // waveform
     vector<int> LAPPDWaveformChankey;
