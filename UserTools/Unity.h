@@ -191,3 +191,4 @@
 #include "ANNIEEventTreeMaker.h"
 #include "ProcessedLAPPDFilter.h"
 #include "BeamQuality.h"
+#include "FitRWMWaveform.h"

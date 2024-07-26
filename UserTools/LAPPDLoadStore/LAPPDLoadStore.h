@@ -105,6 +105,14 @@ private:
     vector<int> LAPPDLoadedTSCorrections;
     vector<int> LAPPDLoadedBGCorrections;
     vector<int> LAPPDLoadedOSInMinusPS;
+    vector<uint64_t> LAPPDLoadedBG_PPSBefore;
+    vector<uint64_t> LAPPDLoadedBG_PPSAfter;
+    vector<uint64_t> LAPPDLoadedBG_PPSDiff;
+    vector<int> LAPPDLoadedBG_PPSMissing;
+    vector<uint64_t> LAPPDLoadedTS_PPSBefore;
+    vector<uint64_t> LAPPDLoadedTS_PPSAfter;
+    vector<uint64_t> LAPPDLoadedTS_PPSDiff;
+    vector<int> LAPPDLoadedTS_PPSMissing;
 
     vector<int> ParaBoards; // save the board index for this PsecData
     std::map<unsigned long, vector<Waveform<double>>> LAPPDWaveforms;
@@ -131,6 +139,15 @@ private:
     std::map<uint64_t, int> LAPPDBGCorrection;
     std::map<uint64_t, int> LAPPDOSInMinusPS;
     std::map<std::string, bool> DataStreams;
+    // save PPS info for the second order correction
+    std::map<uint64_t, uint64_t> LAPPDBG_PPSBefore;
+    std::map<uint64_t, uint64_t> LAPPDBG_PPSAfter;
+    std::map<uint64_t, uint64_t> LAPPDBG_PPSDiff;
+    std::map<uint64_t, int> LAPPDBG_PPSMissing;
+    std::map<uint64_t, uint64_t> LAPPDTS_PPSBefore;
+    std::map<uint64_t, uint64_t> LAPPDTS_PPSAfter;
+    std::map<uint64_t, uint64_t> LAPPDTS_PPSDiff;
+    std::map<uint64_t, int> LAPPDTS_PPSMissing;
 
     // data variables don't need to be cleared in each loop
     // these are loaded offset for event building
@@ -138,6 +155,16 @@ private:
     std::map<string, vector<int>> Offsets_minus_ps; // offset in ps, use offset - this/1e3 as the real offset
     std::map<string, vector<int>> BGCorrections;    // Loaded BGcorrections, same key as Offsets, but offset saved on event by event basis in that part file, in unit of ticks
     std::map<string, vector<int>> TSCorrections;    // TS corrections, in unit of ticks
+    std::map<string, vector<uint64_t>> BG_PPSBefore_loaded;     // BG PPS before, in unit of ticks
+    std::map<string, vector<uint64_t>> BG_PPSAfter_loaded;      // BG PPS after, in unit of ticks
+    std::map<string, vector<uint64_t>> BG_PPSDiff_loaded;   // BG PPS Diff
+    std::map<string, vector<int>> BG_PPSMissing_loaded;  // BG PPS Missing
+    std::map<string, vector<uint64_t>> TS_PPSBefore_loaded;   // TS PPS before, in unit of ticks
+    std::map<string, vector<uint64_t>> TS_PPSAfter_loaded;    // TS PPS after, in unit of ticks
+    std::map<string, vector<uint64_t>> TS_PPSDiff_loaded;   // TS PPS Diff
+    std::map<string, vector<int>> TS_PPSMissing_loaded;  // TS PPS Missing
+
+
     int runNumber;
     int subRunNumber;
     int partFileNumber;

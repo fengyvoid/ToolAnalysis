@@ -75,6 +75,9 @@ private:
     bool saveOrphan;
     bool saveBeamInfo;
 
+    bool saveRawRWMWaveform;
+    bool saveRawBRFWaveform;
+
     string savePath;
     string saveName;
 
@@ -93,8 +96,8 @@ private:
     int savedPMTHitMapNumber;
     int savedMRDNumber;
     int savedLAPPDNumber;
-    
-    std::map<uint64_t, int> TriggerTimeWithoutMRD; //trigger time, 8 or 36
+
+    std::map<uint64_t, int> TriggerTimeWithoutMRD; // trigger time, 8 or 36
 
     int thisRunNum;
     int thisSubrunNum;
@@ -117,7 +120,6 @@ private:
     std::map<int, vector<uint64_t>> MRDPairInfoToRemoveTime;
     std::map<int, vector<uint64_t>> LAPPDPairInfoToRemoveTime;
 
-
     std::map<int, std::vector<std::map<uint64_t, uint32_t>>> GroupedTriggersInTotal; // each map is a group of triggers, with the key is the target trigger word
     std::map<int, std::vector<int>> RunCodeInTotal;
 
@@ -135,6 +137,9 @@ private:
     std::map<uint64_t, std::map<unsigned long, std::vector<std::vector<ADCPulse>>>> *InProgressRecoADCHitsAux; // Key: {MTCTime}, value: map of found pulses
     std::map<uint64_t, std::map<unsigned long, std::vector<Hit>> *> *InProgressHitsAux;                        // Key: {MTCTime}, value: map of  Hit distributions
     std::map<uint64_t, std::map<unsigned long, std::vector<int>>> *FinishedRawAcqSize;                         // Key: {MTCTime}, value: map of acquisition time window sizes
+
+    std::map<uint64_t, std::vector<uint16_t>> *RWMRawWaveforms; // Key: MTCTime, Value: RWM waveform
+    std::map<uint64_t, std::vector<uint16_t>> *BRFRawWaveforms; // Key: MTCTime, Value: BRF waveform
 
     std::map<int, vector<uint64_t>> PairedPMTTriggerTimestamp;
     std::map<int, vector<int>> PairedPMT_TriggerIndex;
@@ -164,13 +169,20 @@ private:
     vector<int> Buffer_LAPPDBGCorrection;
     vector<int> Buffer_LAPPDTSCorrection;
     vector<int> Buffer_LAPPDOffset_minus_ps;
+    vector<uint64_t> Buffer_LAPPDBG_PPSBefore;
+    vector<uint64_t> Buffer_LAPPDBG_PPSAfter;
+    vector<uint64_t> Buffer_LAPPDBG_PPSDiff;
+    vector<int> Buffer_LAPPDBG_PPSMissing;
+    vector<uint64_t> Buffer_LAPPDTS_PPSBefore;
+    vector<uint64_t> Buffer_LAPPDTS_PPSAfter;
+    vector<uint64_t> Buffer_LAPPDTS_PPSDiff;
+    vector<int> Buffer_LAPPDTS_PPSMissing;
 
     vector<int> Buffer_LAPPDRunCode;
 
     std::map<int, vector<uint64_t>> PairedLAPPDTriggerTimestamp;
     std::map<int, vector<int>> PairedLAPPD_TriggerIndex;
     std::map<int, vector<uint64_t>> PairedLAPPDTimeStamps;
-
 
     // beam info related objects
     vector<uint64_t> BeamInfoTimestamps;
@@ -185,7 +197,6 @@ private:
     std::map<uint64_t, double> HPTG2_map;
     std::map<uint64_t, double> VPTG2_map;
     std::map<uint64_t, double> BTH2T2_map;
-
 };
 
 #endif

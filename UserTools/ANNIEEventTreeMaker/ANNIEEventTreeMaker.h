@@ -46,6 +46,8 @@ public:
     bool LoadEventInfo();
     void LoadBeamInfo();
 
+    void LoadRWMBRFInfo();
+
     void LoadAllTankHits();
     void LoadSiPMHits();
 
@@ -107,6 +109,7 @@ private:
     bool cluster_TankHitInfo_fill = 1;
     bool MRDHitInfo_fill = 1;
     bool LAPPDData_fill = 1;
+    bool RWMBRF_fill = 1;
 
     // What reco information will be filled
     bool MCTruth_fill = 0; // Output the MC truth information
@@ -165,6 +168,17 @@ private:
     uint64_t fBeamInfoTime;
     int64_t fBeamInfoTimeToTriggerDiff;
 
+    // RWM and BRF information
+    double fRWMRisingStart; // start of the rising of the waveform
+    double fRWMRisingEnd;   // maximum of the rising of the waveform
+    double fRWMHalfRising;  // half of the rising of the waveform, from start to maximum
+    double fRWMFHWM;        // full width at half maximum of the waveform
+    double fRWMFirstPeak;   // first peak of the waveform
+
+    double fBRFFirstPeak;    // first peak of the waveform
+    double fBRFAveragePeak;  // average peak of the waveform
+    double fBRFFirstPeakFit; // first peak of the waveform, Gaussian fit
+
     // TankHitInfo_fill
     int fNHits = 0;
     std::vector<int> fIsFiltered;
@@ -198,6 +212,14 @@ private:
     vector<int> fLAPPD_TSCorrection;
     vector<int> fLAPPD_BGCorrection;
     vector<int> fLAPPD_OSInMinusPS;
+    vector<uint64_t> fLAPPD_BGPPSBefore;
+    vector<uint64_t> fLAPPD_BGPPSAfter;
+    vector<uint64_t> fLAPPD_BGPPSDiff;
+    vector<int> fLAPPD_BGPPSMissing;
+    vector<uint64_t> fLAPPD_TSPPSBefore;
+    vector<uint64_t> fLAPPD_TSPPSAfter;
+    vector<uint64_t> fLAPPD_TSPPSDiff;
+    vector<int> fLAPPD_TSPPSMissing;
 
     // LAPPD Reco Fill
     vector<uint64_t> fLAPPDPulseTimeStampUL;
@@ -231,8 +253,6 @@ private:
     vector<double> fLAPPDHitP2PeakTime;
     vector<double> fLAPPDHitP1PeakAmp;
     vector<double> fLAPPDHitP2PeakAmp;
-
-
 
     // waveform
     vector<int> LAPPDWaveformChankey;
@@ -470,6 +490,14 @@ private:
     std::map<uint64_t, int> LAPPDTSCorrection;
     std::map<uint64_t, int> LAPPDBGCorrection;
     std::map<uint64_t, int> LAPPDOSInMinusPS;
+    std::map<uint64_t, uint64_t> LAPPDBG_PPSBefore;
+    std::map<uint64_t, uint64_t> LAPPDBG_PPSAfter;
+    std::map<uint64_t, uint64_t> LAPPDBG_PPSDiff;
+    std::map<uint64_t, int> LAPPDBG_PPSMissing;
+    std::map<uint64_t, uint64_t> LAPPDTS_PPSBefore;
+    std::map<uint64_t, uint64_t> LAPPDTS_PPSAfter;
+    std::map<uint64_t, uint64_t> LAPPDTS_PPSDiff;
+    std::map<uint64_t, int> LAPPDTS_PPSMissing;
 
     std::map<unsigned long, vector<vector<LAPPDPulse>>> lappdPulses;
     std::map<unsigned long, vector<LAPPDHit>> lappdHits;
@@ -504,7 +532,6 @@ private:
     std::map<unsigned long, vector<double>> waveformMaxLast;
     std::map<unsigned long, vector<double>> waveformMaxNearing;
     std::map<unsigned long, vector<int>> waveformMaxTimeBin;
-
 };
 
 #endif

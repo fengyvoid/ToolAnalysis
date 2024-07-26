@@ -437,6 +437,40 @@ bool ProcessedLAPPDFilter::GotANNIEEventAndSave(BoostStore *BS, string savePath)
   m_data->Stores["ANNIEEvent"]->Get("beam_good", beam_good);
   BS->Set("beam_good", beam_good);
 
+  std::vector<uint16_t> RWMRawWaveform;
+  std::vector<uint16_t> BRFRawWaveform;
+
+  m_data->Stores["ANNIEEvent"]->Get("RWMRawWaveform", RWMRawWaveform);
+  BS->Set("RWMRawWaveform", RWMRawWaveform);
+  m_data->Stores["ANNIEEvent"]->Get("BRFRawWaveform", BRFRawWaveform);
+  BS->Set("BRFRawWaveform", BRFRawWaveform);
+
+  std::map<uint64_t, uint64_t> LAPPDBG_PPSBefore;
+  std::map<uint64_t, uint64_t> LAPPDBG_PPSAfter;
+  std::map<uint64_t, uint64_t> LAPPDBG_PPSDiff;
+  std::map<uint64_t, int> LAPPDBG_PPSMissing;
+  std::map<uint64_t, uint64_t> LAPPDTS_PPSBefore;
+  std::map<uint64_t, uint64_t> LAPPDTS_PPSAfter;
+  std::map<uint64_t, uint64_t> LAPPDTS_PPSDiff;
+  std::map<uint64_t, int> LAPPDTS_PPSMissing;
+
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBG_PPSBefore", LAPPDBG_PPSBefore);
+  BS->Set("LAPPDBG_PPSBefore", LAPPDBG_PPSBefore);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBG_PPSAfter", LAPPDBG_PPSAfter);
+  BS->Set("LAPPDBG_PPSAfter", LAPPDBG_PPSAfter);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBG_PPSDiff", LAPPDBG_PPSDiff);
+  BS->Set("LAPPDBG_PPSDiff", LAPPDBG_PPSDiff);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBG_PPSMissing", LAPPDBG_PPSMissing);
+  BS->Set("LAPPDBG_PPSMissing", LAPPDBG_PPSMissing);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSBefore", LAPPDTS_PPSBefore);
+  BS->Set("LAPPDTS_PPSBefore", LAPPDTS_PPSBefore);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSAfter", LAPPDTS_PPSAfter);
+  BS->Set("LAPPDTS_PPSAfter", LAPPDTS_PPSAfter);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSDiff", LAPPDTS_PPSDiff);
+  BS->Set("LAPPDTS_PPSDiff", LAPPDTS_PPSDiff);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSMissing", LAPPDTS_PPSMissing);
+  BS->Set("LAPPDTS_PPSMissing", LAPPDTS_PPSMissing);
+
   BS->Save(savePath);
   if (FilterVerbosity > 2)
     cout << "Saved to " << savePath << " successfully" << endl;

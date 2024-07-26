@@ -32,6 +32,7 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
   m_variables.Get("TankCluster_fill", TankCluster_fill);
   m_variables.Get("cluster_TankHitInfo_fill", cluster_TankHitInfo_fill);
   m_variables.Get("MRDHitInfo_fill", MRDHitInfo_fill);
+  m_variables.Get("RWMBRF_fill", RWMBRF_fill);
 
   m_variables.Get("MCTruth_fill", MCTruth_fill);
   m_variables.Get("MRDReco_fill", MRDReco_fill);
@@ -105,6 +106,19 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
     fANNIETree->Branch("BeamInfoTimeToTriggerDiff", &fBeamInfoTimeToTriggerDiff, "BeamInfoTimeToTriggerDiff/G");
   }
 
+  if (RWMBRF_fill)
+  {
+    fANNIETree->Branch("RWMRisingStart", &fRWMRisingStart, "fRWMRisingStart/D");
+    fANNIETree->Branch("RWMRisingEnd", &fRWMRisingEnd, "fRWMRisingEnd/D");
+    fANNIETree->Branch("RWMHalfRising", &fRWMHalfRising, "fRWMHalfRising/D");
+    fANNIETree->Branch("RWMFHWM", &fRWMFHWM, "fRWMFHWM/D");
+    fANNIETree->Branch("RWMFirstPeak", &fRWMFirstPeak, "fRWMFirstPeak/D");
+
+    fANNIETree->Branch("BRFFirstPeak", &fBRFFirstPeak, "fBRFFirstPeak/D");
+    fANNIETree->Branch("BRFAveragePeak", &fBRFAveragePeak, "fBRFAveragePeak/D");
+    fANNIETree->Branch("BRFFirstPeakFit", &fBRFFirstPeakFit, "fBRFFirstPeakFit/D");
+  }
+
   //********************************************************//
 
   // Tank cluster information
@@ -166,6 +180,14 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
     fANNIETree->Branch("LAPPD_TSCorrection", &fLAPPD_TSCorrection);
     fANNIETree->Branch("LAPPD_BGCorrection", &fLAPPD_BGCorrection);
     fANNIETree->Branch("LAPPD_OSInMinusPS", &fLAPPD_OSInMinusPS);
+    fANNIETree->Branch("LAPPD_BGPPSBefore", &fLAPPD_BGPPSBefore);
+    fANNIETree->Branch("LAPPD_BGPPSAfter", &fLAPPD_BGPPSAfter);
+    fANNIETree->Branch("LAPPD_BGPPSDiff", &fLAPPD_BGPPSDiff);
+    fANNIETree->Branch("LAPPD_BGPPSMissing", &fLAPPD_BGPPSMissing);
+    fANNIETree->Branch("LAPPD_TSPPSBefore", &fLAPPD_TSPPSBefore);
+    fANNIETree->Branch("LAPPD_TSPPSAfter", &fLAPPD_TSPPSAfter);
+    fANNIETree->Branch("LAPPD_TSPPSDiff", &fLAPPD_TSPPSDiff);
+    fANNIETree->Branch("LAPPD_TSPPSMissing", &fLAPPD_TSPPSMissing);
   }
 
   // LAPPD reconstruction information
@@ -446,6 +468,12 @@ bool ANNIEEventTreeMaker::Execute()
   LoadBeamInfo();
   // done
 
+  //****************************** Fill RWM BRF Info *************************************//
+  if (RWMBRF_fill)
+  {
+    LoadRWMBRFInfo();
+  }
+
   //****************************** Fill Hit Info *************************************//
   if (TankHitInfo_fill)
   {
@@ -559,6 +587,16 @@ void ANNIEEventTreeMaker::ResetVariables()
   fBeamInfoTime = 0;
   fBeamInfoTimeToTriggerDiff = -9999;
 
+  // RWM BRF info
+  fRWMRisingStart = -9999;
+  fRWMRisingEnd = -9999;
+  fRWMHalfRising = -9999;
+  fRWMFHWM = -9999;
+  fRWMFirstPeak = -9999;
+  fBRFFirstPeak = -9999;
+  fBRFAveragePeak = -9999;
+  fBRFFirstPeakFit = -9999;
+
   // TankHitInfo
   fNHits = 0;
   fIsFiltered.clear();
@@ -592,6 +630,14 @@ void ANNIEEventTreeMaker::ResetVariables()
   fLAPPD_TSCorrection.clear();
   fLAPPD_BGCorrection.clear();
   fLAPPD_OSInMinusPS.clear();
+  fLAPPD_BGPPSBefore.clear();
+  fLAPPD_BGPPSAfter.clear();
+  fLAPPD_BGPPSDiff.clear();
+  fLAPPD_BGPPSMissing.clear();
+  fLAPPD_TSPPSBefore.clear();
+  fLAPPD_TSPPSAfter.clear();
+  fLAPPD_TSPPSDiff.clear();
+  fLAPPD_TSPPSMissing.clear();
 
   // LAPPD Reco Fill
   fLAPPDPulseTimeStampUL.clear();
@@ -850,6 +896,14 @@ void ANNIEEventTreeMaker::ResetVariables()
   LAPPDTSCorrection.clear();
   LAPPDBGCorrection.clear();
   LAPPDOSInMinusPS.clear();
+  LAPPDBG_PPSBefore.clear();
+  LAPPDBG_PPSAfter.clear();
+  LAPPDBG_PPSDiff.clear();
+  LAPPDBG_PPSMissing.clear();
+  LAPPDTS_PPSBefore.clear();
+  LAPPDTS_PPSAfter.clear();
+  LAPPDTS_PPSDiff.clear();
+  LAPPDTS_PPSMissing.clear();
 
   // LAPPD Reco Fill
   lappdPulses.clear();
@@ -928,7 +982,6 @@ bool ANNIEEventTreeMaker::LoadEventInfo()
   if (!gotETMRD)
     fEventTimeMRD = 0;
 
-
   if (fillAllTriggers)
     return true;
   else if (fill_singleTrigger)
@@ -949,7 +1002,6 @@ bool ANNIEEventTreeMaker::LoadEventInfo()
   }
   else
     return true;
-
 }
 
 void ANNIEEventTreeMaker::LoadBeamInfo()
@@ -973,6 +1025,20 @@ void ANNIEEventTreeMaker::LoadBeamInfo()
 
   m_data->Stores["ANNIEEvent"]->Get("BeamInfoTime", fBeamInfoTime);
   m_data->Stores["ANNIEEvent"]->Get("BeamInfoTimeToTriggerDiff", fBeamInfoTimeToTriggerDiff);
+}
+
+void ANNIEEventTreeMaker::LoadRWMBRFInfo()
+{
+  Log("ANNIEEventTreeMaker Tool: LoadRWMBRFInfo", v_debug, ANNIEEventTreeMakerVerbosity);
+  m_data->Stores["ANNIEEvent"]->Get("RWMRisingStart", fRWMRisingStart);
+  m_data->Stores["ANNIEEvent"]->Get("RWMRisingEnd", fRWMRisingEnd);
+  m_data->Stores["ANNIEEvent"]->Get("RWMHalfRising", fRWMHalfRising);
+  m_data->Stores["ANNIEEvent"]->Get("RWMFHWM", fRWMFHWM);
+  m_data->Stores["ANNIEEvent"]->Get("RWMFirstPeak", fRWMFirstPeak);
+
+  m_data->Stores["ANNIEEvent"]->Get("BRFFirstPeak", fBRFFirstPeak);
+  m_data->Stores["ANNIEEvent"]->Get("BRFAveragePeak", fBRFAveragePeak);
+  m_data->Stores["ANNIEEvent"]->Get("BRFFirstPeakFit", fBRFFirstPeakFit);
 }
 
 void ANNIEEventTreeMaker::LoadAllTankHits()
@@ -1147,6 +1213,15 @@ void ANNIEEventTreeMaker::LoadLAPPDInfo()
   m_data->Stores["ANNIEEvent"]->Get("LAPPDTSCorrection", LAPPDTSCorrection);
   m_data->Stores["ANNIEEvent"]->Get("LAPPDBGCorrection", LAPPDBGCorrection);
   m_data->Stores["ANNIEEvent"]->Get("LAPPDOSInMinusPS", LAPPDOSInMinusPS);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBG_PPSBefore", LAPPDBG_PPSBefore);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBG_PPSAfter", LAPPDBG_PPSAfter);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBG_PPSDiff", LAPPDBG_PPSDiff);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBG_PPSMissing", LAPPDBG_PPSMissing);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSBefore", LAPPDTS_PPSBefore);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSAfter", LAPPDTS_PPSAfter);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSDiff", LAPPDTS_PPSDiff);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSMissing", LAPPDTS_PPSMissing);
+
   if (LAPPDDataMap.size() != 0)
   {
     FillLAPPDInfo();
@@ -1176,6 +1251,14 @@ void ANNIEEventTreeMaker::FillLAPPDInfo()
     fLAPPD_TSCorrection.push_back(LAPPDTSCorrection[key]);
     fLAPPD_BGCorrection.push_back(LAPPDBGCorrection[key]);
     fLAPPD_OSInMinusPS.push_back(LAPPDOSInMinusPS[key]);
+    fLAPPD_BGPPSBefore.push_back(LAPPDBG_PPSBefore[key]);
+    fLAPPD_BGPPSAfter.push_back(LAPPDBG_PPSAfter[key]);
+    fLAPPD_BGPPSDiff.push_back(LAPPDBG_PPSDiff[key]);
+    fLAPPD_BGPPSMissing.push_back(LAPPDBG_PPSMissing[key]);
+    fLAPPD_TSPPSBefore.push_back(LAPPDTS_PPSBefore[key]);
+    fLAPPD_TSPPSAfter.push_back(LAPPDTS_PPSAfter[key]);
+    fLAPPD_TSPPSDiff.push_back(LAPPDTS_PPSDiff[key]);
+    fLAPPD_TSPPSMissing.push_back(LAPPDTS_PPSMissing[key]);
   }
 }
 
@@ -1253,11 +1336,11 @@ void ANNIEEventTreeMaker::FillLAPPDHit()
         vector<double> localPosition = thisHit.GetLocalPosition();
         fLAPPDHitParallelPos.push_back(localPosition.at(0));
         fLAPPDHitTransversePos.push_back(localPosition.at(1));
-        //fLAPPDHitP1StartTime.push_back(thisHit.GetPulse1StartTime());
-        //fLAPPDHitP2StartTime.push_back(thisHit.GetPulse2StartTime());
-        //fLAPPDHitP1EndTime.push_back(thisHit.GetPulse1LastTime());
-        //fLAPPDHitP2EndTime.push_back(thisHit.GetPulse2LastTime());
-        
+        // fLAPPDHitP1StartTime.push_back(thisHit.GetPulse1StartTime());
+        // fLAPPDHitP2StartTime.push_back(thisHit.GetPulse2StartTime());
+        // fLAPPDHitP1EndTime.push_back(thisHit.GetPulse1LastTime());
+        // fLAPPDHitP2EndTime.push_back(thisHit.GetPulse2LastTime());
+
         fLAPPDHitP1StartTime.push_back(p1.GetLowRange());
         fLAPPDHitP2StartTime.push_back(p2.GetLowRange());
         fLAPPDHitP1EndTime.push_back(p1.GetHiRange());
