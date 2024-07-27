@@ -1329,8 +1329,6 @@ void ANNIEEventTreeMaker::FillLAPPDHit()
         fLAPPDHitTime.push_back(thisHit.GetTime());
         fLAPPDHitAmp.push_back(thisHit.GetCharge());
         vector<double> position = thisHit.GetPosition();
-        p1.Print();
-        p2.Print();
         /*
         XPosTank = position.at(0);
         YPosTank = position.at(1);
