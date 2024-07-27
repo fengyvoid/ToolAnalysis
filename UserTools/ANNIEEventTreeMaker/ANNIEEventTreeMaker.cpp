@@ -1329,6 +1329,8 @@ void ANNIEEventTreeMaker::FillLAPPDHit()
         fLAPPDHitTime.push_back(thisHit.GetTime());
         fLAPPDHitAmp.push_back(thisHit.GetCharge());
         vector<double> position = thisHit.GetPosition();
+        p1.Print();
+        p2.Print();
         /*
         XPosTank = position.at(0);
         YPosTank = position.at(1);
@@ -1340,7 +1342,7 @@ void ANNIEEventTreeMaker::FillLAPPDHit()
         // fLAPPDHitP2StartTime.push_back(thisHit.GetPulse2StartTime());
         // fLAPPDHitP1EndTime.push_back(thisHit.GetPulse1LastTime());
         // fLAPPDHitP2EndTime.push_back(thisHit.GetPulse2LastTime());
-
+        cout<<"Pulse 1 start time: "<<p1.GetLowRange()<<", Pulse 2 start time: "<<p2.GetLowRange()<<endl;
         fLAPPDHitP1StartTime.push_back(p1.GetLowRange());
         fLAPPDHitP2StartTime.push_back(p2.GetLowRange());
         fLAPPDHitP1EndTime.push_back(p1.GetHiRange());

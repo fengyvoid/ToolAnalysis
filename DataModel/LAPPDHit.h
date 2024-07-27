@@ -82,6 +82,13 @@ protected:
 			ar & Position;
 			ar & LocalPosition;
 			ar & Charge;
+
+			ar & Pulse1LastTime;
+			ar & Pulse2LastTime;
+			ar & Pulse1StartTime;
+			ar & Pulse2StartTime;
+			ar & pulse1;
+			ar & pulse2;
 		}
 	}
 };
