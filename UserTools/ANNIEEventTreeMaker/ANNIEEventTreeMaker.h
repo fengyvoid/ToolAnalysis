@@ -110,6 +110,7 @@ private:
     bool MRDHitInfo_fill = 1;
     bool LAPPDData_fill = 1;
     bool RWMBRF_fill = 1;
+    bool LAPPD_PPS_fill = 1;
 
     // What reco information will be filled
     bool MCTruth_fill = 0; // Output the MC truth information

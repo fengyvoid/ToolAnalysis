@@ -42,6 +42,7 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
   m_variables.Get("LAPPDData_fill", LAPPDData_fill);
   m_variables.Get("SiPMPulseInfo_fill", SiPMPulseInfo_fill);
   m_variables.Get("LAPPDReco_fill", LAPPDReco_fill);
+  m_variables.Get("LAPPD_PPS_fill", LAPPD_PPS_fill);
 
   std::string output_filename = "ANNIEEventTree.root";
   m_variables.Get("OutputFile", output_filename);
@@ -180,6 +181,7 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
     fANNIETree->Branch("LAPPD_TSCorrection", &fLAPPD_TSCorrection);
     fANNIETree->Branch("LAPPD_BGCorrection", &fLAPPD_BGCorrection);
     fANNIETree->Branch("LAPPD_OSInMinusPS", &fLAPPD_OSInMinusPS);
+    if(LAPPD_PPS_fill){
     fANNIETree->Branch("LAPPD_BGPPSBefore", &fLAPPD_BGPPSBefore);
     fANNIETree->Branch("LAPPD_BGPPSAfter", &fLAPPD_BGPPSAfter);
     fANNIETree->Branch("LAPPD_BGPPSDiff", &fLAPPD_BGPPSDiff);
@@ -188,6 +190,7 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
     fANNIETree->Branch("LAPPD_TSPPSAfter", &fLAPPD_TSPPSAfter);
     fANNIETree->Branch("LAPPD_TSPPSDiff", &fLAPPD_TSPPSDiff);
     fANNIETree->Branch("LAPPD_TSPPSMissing", &fLAPPD_TSPPSMissing);
+    }
   }
 
   // LAPPD reconstruction information
@@ -630,6 +633,7 @@ void ANNIEEventTreeMaker::ResetVariables()
   fLAPPD_TSCorrection.clear();
   fLAPPD_BGCorrection.clear();
   fLAPPD_OSInMinusPS.clear();
+  // LAPPD_PPS_fill
   fLAPPD_BGPPSBefore.clear();
   fLAPPD_BGPPSAfter.clear();
   fLAPPD_BGPPSDiff.clear();
@@ -896,6 +900,7 @@ void ANNIEEventTreeMaker::ResetVariables()
   LAPPDTSCorrection.clear();
   LAPPDBGCorrection.clear();
   LAPPDOSInMinusPS.clear();
+  // LAPPD_PPS_fill
   LAPPDBG_PPSBefore.clear();
   LAPPDBG_PPSAfter.clear();
   LAPPDBG_PPSDiff.clear();

@@ -45,6 +45,7 @@ SelectedLAPPD 0
 loadPSEC 1
 loadPPS 0
 loadOffsets 0
+LoadBuiltPPSInfo 1
 num_vector_data 7795
 num_vector_pps 16
 
