@@ -1420,11 +1420,11 @@ bool EBSaver::SaveBeamInfo(uint64_t TriggerTime)
   {
     Log("EBSaver: Failed to find the closest beam info timestamp to trigger time", v_message, verbosityEBSaver);
 
-    uint64_t beamInfoTime = 0;
+    uint64_t beamInfoTime_long = 0;
     int64_t timeDiff = -9999;
     double defaultVal = -9999.;
     int beam_good = 0;
-    ANNIEEvent->Set("BeamInfoTime", beamInfoTime);
+    ANNIEEvent->Set("BeamInfoTime", beamInfoTime_long);
     ANNIEEvent->Set("BeamInfoTimeToTriggerDiff", timeDiff);
     ANNIEEvent->Set("beam_E_TOR860", defaultVal);
     ANNIEEvent->Set("beam_E_TOR875", defaultVal);
@@ -1447,7 +1447,8 @@ bool EBSaver::SaveBeamInfo(uint64_t TriggerTime)
 
     // get the precise difference
     uint64_t beamInfoTime = BeamInfoTimestamps.at(minIndex);
-    int64_t timeDiff = (beamInfoTime > TriggerTime) ? beamInfoTime - TriggerTime : -static_cast<int64_t>(TriggerTime - beamInfoTime);
+    ULong64_t beamInfoTime_long = beamInfoTime * 1e6;
+    int64_t timeDiff = beamInfoTime_long - TriggerTime;
 
     // check if the map has the key
     E_TOR860 = E_TOR860_map.at(beamInfoTime);
@@ -1462,7 +1463,7 @@ bool EBSaver::SaveBeamInfo(uint64_t TriggerTime)
     VPTG2 = VPTG2_map.at(beamInfoTime);
     BTH2T2 = BTH2T2_map.at(beamInfoTime);
 
-    ANNIEEvent->Set("BeamInfoTime", beamInfoTime * 1e6);
+    ANNIEEvent->Set("BeamInfoTime", beamInfoTime);
     ANNIEEvent->Set("BeamInfoTimeToTriggerDiff", timeDiff);
 
     ANNIEEvent->Set("beam_E_TOR860", E_TOR860);
