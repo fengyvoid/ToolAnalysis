@@ -104,7 +104,7 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
     fANNIETree->Branch("beam_VPTG2", &beam_VPTG2, "beam_VPTG2/D");
     fANNIETree->Branch("beam_BTH2T2", &beam_BTH2T2, "beam_BTH2T2/D");
     fANNIETree->Branch("BeamInfoTime", &fBeamInfoTime, "BeamInfoTime/l");
-    fANNIETree->Branch("BeamInfoTimeToTriggerDiff", &fBeamInfoTimeToTriggerDiff, "BeamInfoTimeToTriggerDiff/G");
+    fANNIETree->Branch("BeamInfoTimeToTriggerDiff", &fBeamInfoTimeToTriggerDiff, "BeamInfoTimeToTriggerDiff/L");
   }
 
   if (RWMBRF_fill)
