@@ -43,6 +43,15 @@ private:
     int LAPPDBGCorrection;
     int LAPPDTSCorrection;
     int LAPPDOffset_minus_ps;
+    uint64_t LAPPDBG_PPSBefore;
+    uint64_t LAPPDBG_PPSAfter;
+    uint64_t LAPPDBG_PPSDiff;
+    int LAPPDBG_PPSMissing;
+    uint64_t LAPPDTS_PPSBefore;
+    uint64_t LAPPDTS_PPSAfter;
+    uint64_t LAPPDTS_PPSDiff;
+    int LAPPDTS_PPSMissing;
+
 
     vector<uint64_t> MatchBuffer_LAPPDTimestamp_ns; // used to indexing data for unmatched
 
@@ -57,6 +66,14 @@ private:
     vector<int> Buffer_LAPPDTSCorrection;
     vector<int> Buffer_LAPPDOffset_minus_ps;
     vector<int> Buffer_RunCode;
+    vector<uint64_t> Buffer_LAPPDBG_PPSBefore;
+    vector<uint64_t> Buffer_LAPPDBG_PPSAfter;
+    vector<uint64_t> Buffer_LAPPDBG_PPSDiff;
+    vector<int> Buffer_LAPPDBG_PPSMissing;
+    vector<uint64_t> Buffer_LAPPDTS_PPSBefore;
+    vector<uint64_t> Buffer_LAPPDTS_PPSAfter;
+    vector<uint64_t> Buffer_LAPPDTS_PPSDiff;
+    vector<int> Buffer_LAPPDTS_PPSMissing;
 
     std::map<int, vector<uint64_t>> PairedCTCTimeStamps;
     std::map<int, vector<int>> PairedLAPPD_TriggerIndex;

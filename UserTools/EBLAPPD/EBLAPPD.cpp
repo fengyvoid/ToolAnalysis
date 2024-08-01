@@ -41,7 +41,16 @@ bool EBLAPPD::Execute()
   m_data->CStore.Get("Buffer_LAPPDTSCorrection", Buffer_LAPPDTSCorrection);
   m_data->CStore.Get("Buffer_LAPPDOffset_minus_ps", Buffer_LAPPDOffset_minus_ps);
   m_data->CStore.Get("Buffer_LAPPDRunCode", Buffer_RunCode);
-  
+
+  m_data->CStore.Get("Buffer_LAPPDBG_PPSBefore", Buffer_LAPPDBG_PPSBefore);
+  m_data->CStore.Get("Buffer_LAPPDBG_PPSAfter", Buffer_LAPPDBG_PPSAfter);
+  m_data->CStore.Get("Buffer_LAPPDBG_PPSDiff", Buffer_LAPPDBG_PPSDiff);
+  m_data->CStore.Get("Buffer_LAPPDBG_PPSMissing", Buffer_LAPPDBG_PPSMissing);
+  m_data->CStore.Get("Buffer_LAPPDTS_PPSBefore", Buffer_LAPPDTS_PPSBefore);
+  m_data->CStore.Get("Buffer_LAPPDTS_PPSAfter", Buffer_LAPPDTS_PPSAfter);
+  m_data->CStore.Get("Buffer_LAPPDTS_PPSDiff", Buffer_LAPPDTS_PPSDiff);
+  m_data->CStore.Get("Buffer_LAPPDTS_PPSMissing", Buffer_LAPPDTS_PPSMissing);
+
   Log("EBLAPPD: Got pairing information from CStore, PairedLAPPDTimeStamps[14] size = " + std::to_string(PairedLAPPDTimeStamps[14].size()), v_message, verbosityEBLAPPD);
 
   CleanData();
@@ -80,7 +89,7 @@ bool EBLAPPD::Execute()
         Matching(14, 14);
       else
         Log("EBLAPPD: BeamTriggerGroupped is false, no beam trigger groupped in the grouper, stop matching", v_message, verbosityEBLAPPD);
-    
+
       bool LaserTriggerGroupped = false;
       m_data->CStore.Get("LaserTriggerGroupped", LaserTriggerGroupped);
       if (LaserTriggerGroupped)
@@ -101,7 +110,7 @@ bool EBLAPPD::Execute()
         Matching(31, 46);
       else
         Log("EBLAPPD: LEDTriggerGroupped is false, no LED trigger groupped in the grouper, stop matching", v_message, verbosityEBLAPPD);
-    
+
       bool NuMITriggerGroupped = false;
       m_data->CStore.Get("NuMITriggerGroupped", NuMITriggerGroupped);
       if (NuMITriggerGroupped)
@@ -132,6 +141,15 @@ bool EBLAPPD::Execute()
   m_data->CStore.Set("Buffer_LAPPDOffset_minus_ps", Buffer_LAPPDOffset_minus_ps);
   m_data->CStore.Set("Buffer_LAPPDRunCode", Buffer_RunCode);
 
+  m_data->CStore.Set("Buffer_LAPPDBG_PPSBefore", Buffer_LAPPDBG_PPSBefore);
+  m_data->CStore.Set("Buffer_LAPPDBG_PPSAfter", Buffer_LAPPDBG_PPSAfter);
+  m_data->CStore.Set("Buffer_LAPPDBG_PPSDiff", Buffer_LAPPDBG_PPSDiff);
+  m_data->CStore.Set("Buffer_LAPPDBG_PPSMissing", Buffer_LAPPDBG_PPSMissing);
+  m_data->CStore.Set("Buffer_LAPPDTS_PPSBefore", Buffer_LAPPDTS_PPSBefore);
+  m_data->CStore.Set("Buffer_LAPPDTS_PPSAfter", Buffer_LAPPDTS_PPSAfter);
+  m_data->CStore.Set("Buffer_LAPPDTS_PPSDiff", Buffer_LAPPDTS_PPSDiff);
+  m_data->CStore.Set("Buffer_LAPPDTS_PPSMissing", Buffer_LAPPDTS_PPSMissing);
+
   exeNum++;
 
   return true;
@@ -155,6 +173,15 @@ bool EBLAPPD::CleanData()
   LAPPDBGCorrection = 0;
   LAPPDTSCorrection = 0;
   LAPPDOffset_minus_ps = 0;
+
+  LAPPDBG_PPSBefore = 0;
+  LAPPDBG_PPSAfter = 0;
+  LAPPDBG_PPSDiff = 0;
+  LAPPDBG_PPSMissing = 0;
+  LAPPDTS_PPSBefore = 0;
+  LAPPDTS_PPSAfter = 0;
+  LAPPDTS_PPSDiff = 0;
+  LAPPDTS_PPSMissing = 0;
 
   return true;
 }
@@ -182,10 +209,27 @@ bool EBLAPPD::LoadLAPPDData()
   LAPPDBeamgate_ns = LAPPDBeamgate_ns + LAPPDBGCorrection + LAPPDOffset;
   LAPPDTimestamp_ns = LAPPDTimestamp_ns + LAPPDTSCorrection + LAPPDOffset;
 
+  LAPPDBG_PPSBefore = 0;
+  LAPPDBG_PPSAfter = 0;
+  LAPPDBG_PPSDiff = 0;
+  LAPPDBG_PPSMissing = 0;
+  LAPPDTS_PPSBefore = 0;
+  LAPPDTS_PPSAfter = 0;
+  LAPPDTS_PPSDiff = 0;
+  LAPPDTS_PPSMissing = 0;
+  m_data->CStore.Get("BG_PPSBefore", LAPPDBG_PPSBefore);
+  m_data->CStore.Get("BG_PPSAfter", LAPPDBG_PPSAfter);
+  m_data->CStore.Get("BG_PPSDiff", LAPPDBG_PPSDiff);
+  m_data->CStore.Get("BG_PPSMissing", LAPPDBG_PPSMissing);
+  m_data->CStore.Get("TS_PPSBefore", LAPPDTS_PPSBefore);
+  m_data->CStore.Get("TS_PPSAfter", LAPPDTS_PPSAfter);
+  m_data->CStore.Get("TS_PPSDiff", LAPPDTS_PPSDiff);
+  m_data->CStore.Get("TS_PPSMissing", LAPPDTS_PPSMissing);
+
   if (verbosityEBLAPPD > 1)
   {
     cout << "Processing new LAPPD data from store" << endl;
-    cout << "Got info: LAPPDBeamgate_Raw: " << LAPPDBeamgate_Raw << ", LAPPDTimestamp_Raw: " << LAPPDTimestamp_Raw << ", LAPPDBGCorrection: " << LAPPDBGCorrection << ", LAPPDTSCorrection: " << LAPPDTSCorrection << ", LAPPDOffset: " << LAPPDOffset << ", LAPPDOffset_minus_ps: " << LAPPDOffset_minus_ps << endl;
+    cout << "Got info: LAPPDBeamgate_Raw: " << LAPPDBeamgate_Raw << ", LAPPDTimestamp_Raw: " << LAPPDTimestamp_Raw << ", LAPPDBGCorrection: " << LAPPDBGCorrection << ", LAPPDTSCorrection: " << LAPPDTSCorrection << ", LAPPDOffset: " << LAPPDOffset << ", LAPPDOffset_minus_ps: " << LAPPDOffset_minus_ps << ", LAPPDBG_PPSBefore: " << LAPPDBG_PPSBefore << ", LAPPDBG_PPSAfter: " << LAPPDBG_PPSAfter << ", LAPPDBG_PPSDiff: " << LAPPDBG_PPSDiff << ", LAPPDBG_PPSMissing: " << LAPPDBG_PPSMissing << ", LAPPDTS_PPSBefore: " << LAPPDTS_PPSBefore << ", LAPPDTS_PPSAfter: " << LAPPDTS_PPSAfter << ", LAPPDTS_PPSDiff: " << LAPPDTS_PPSDiff << ", LAPPDTS_PPSMissing: " << LAPPDTS_PPSMissing << endl;
     cout << "LAPPDBeamgate_ns:   " << LAPPDBeamgate_ns << endl;
     cout << "LAPPDTimestamp_ns: " << LAPPDTimestamp_ns << endl;
   }
@@ -206,7 +250,19 @@ bool EBLAPPD::LoadLAPPDData()
     Buffer_LAPPDOffset_minus_ps.push_back(LAPPDOffset_minus_ps);
     Buffer_RunCode.push_back(currentRunCode);
 
+    Buffer_LAPPDBG_PPSBefore.push_back(LAPPDBG_PPSBefore);
+    Buffer_LAPPDBG_PPSAfter.push_back(LAPPDBG_PPSAfter);
+    Buffer_LAPPDBG_PPSDiff.push_back(LAPPDBG_PPSDiff);
+    Buffer_LAPPDBG_PPSMissing.push_back(LAPPDBG_PPSMissing);
+    Buffer_LAPPDTS_PPSBefore.push_back(LAPPDTS_PPSBefore);
+    Buffer_LAPPDTS_PPSAfter.push_back(LAPPDTS_PPSAfter);
+    Buffer_LAPPDTS_PPSDiff.push_back(LAPPDTS_PPSDiff);
+    Buffer_LAPPDTS_PPSMissing.push_back(LAPPDTS_PPSMissing);
+
     MatchBuffer_LAPPDTimestamp_ns.push_back(LAPPDTimestamp_ns);
+
+    if (LAPPDTS_PPSMissing != LAPPDBG_PPSMissing)
+      Log("EBLAPPD: PPS missing in BG and TS are different, BG: " + std::to_string(LAPPDBG_PPSMissing) + ", TS: " + std::to_string(LAPPDTS_PPSMissing), v_warning, verbosityEBLAPPD);
 
     Log("EBLAPPD: Loaded LAPPD data to buffer, Buffer_LAPPDData size after this load is now " + std::to_string(Buffer_LAPPDData.size()), v_message, verbosityEBLAPPD);
   }
@@ -221,7 +277,7 @@ bool EBLAPPD::Matching(int targetTrigger, int matchToTrack)
 
   std::map<int, std::vector<std::map<uint64_t, uint32_t>>> GroupedTriggersInTotal; // each map is a group of triggers, with the key is the target trigger word
   m_data->CStore.Get("GroupedTriggersInTotal", GroupedTriggersInTotal);
-  //print how many trigger groups in each track
+  // print how many trigger groups in each track
 
   vector<uint64_t> matchedLAPPDTimes;
   vector<int> indexToRemove;
@@ -251,11 +307,11 @@ bool EBLAPPD::Matching(int targetTrigger, int matchToTrack)
     for (std::pair<int, std::vector<std::map<uint64_t, uint32_t>>> pair : GroupedTriggersInTotal)
     {
       int TrackTriggerWord = pair.first;
-      if(matchedNumberInTrack.find(TrackTriggerWord) == matchedNumberInTrack.end())
+      if (matchedNumberInTrack.find(TrackTriggerWord) == matchedNumberInTrack.end())
         matchedNumberInTrack.emplace(TrackTriggerWord, 0);
       if (TrackTriggerWord != matchToTrack && !matchToAllTriggers)
       {
-        //Log("EBLAPPD: Skipping TrackTriggerWord " + std::to_string(TrackTriggerWord), v_debug, verbosityEBLAPPD);
+        // Log("EBLAPPD: Skipping TrackTriggerWord " + std::to_string(TrackTriggerWord), v_debug, verbosityEBLAPPD);
         continue;
       }
       vector<std::map<uint64_t, uint32_t>> GroupedTriggers = pair.second;
@@ -312,12 +368,11 @@ bool EBLAPPD::Matching(int targetTrigger, int matchToTrack)
   }
 
   Log("EBLAPPD: Finished removing paired LAPPD data from match buffer, MatchBuffer_LAPPDTimestamp_ns size is now " + std::to_string(MatchBuffer_LAPPDTimestamp_ns.size()), v_message, verbosityEBLAPPD);
-  //print all elements in matchedNumberInTrack with key and value
-  for(std::pair<int, int> pair : matchedNumberInTrack)
+  // print all elements in matchedNumberInTrack with key and value
+  for (std::pair<int, int> pair : matchedNumberInTrack)
   {
     Log("EBLAPPD: Match finished, matched number in Track " + std::to_string(pair.first) + " is = " + std::to_string(pair.second), v_message, verbosityEBLAPPD);
   }
-
 
   return true;
 }

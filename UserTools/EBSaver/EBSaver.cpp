@@ -35,6 +35,11 @@ bool EBSaver::Initialise(std::string configfile, DataModel &data)
   saveBeamInfo = true;
   m_variables.Get("saveBeamInfo", saveBeamInfo);
 
+  saveRawBRFWaveform = true;
+  m_variables.Get("saveRawBRFWaveform", saveRawBRFWaveform);
+  saveRawRWMWaveform = true;
+  m_variables.Get("saveRawRWMWaveform", saveRawRWMWaveform);
+
   ANNIEEvent = new BoostStore(false, 2);
 
   exeNumber = 0;
@@ -65,6 +70,9 @@ bool EBSaver::Initialise(std::string configfile, DataModel &data)
   InProgressRecoADCHitsAux = new std::map<uint64_t, std::map<unsigned long, std::vector<std::vector<ADCPulse>>>>;
   InProgressHitsAux = new std::map<uint64_t, std::map<unsigned long, std::vector<Hit>> *>;
   FinishedRawAcqSize = new std::map<uint64_t, std::map<unsigned long, std::vector<int>>>;
+
+  RWMRawWaveforms = new std::map<uint64_t, std::vector<uint16_t>>;
+  BRFRawWaveforms = new std::map<uint64_t, std::vector<uint16_t>>;
 
   if (saveBeamInfo)
   {
@@ -753,6 +761,41 @@ bool EBSaver::SavePMTData(uint64_t PMTTime)
   ANNIEEvent->Set("RecoAuxADCData", PMTRecoADCHitsAux);
   ANNIEEvent->Set("RawAcqSize", PMTRawAcqSize);
 
+  if(saveRawRWMWaveform)
+  {
+    //find PMTTime as key in RWMRawWaveforms, if found, save it, if not, save an empty vector
+    if (RWMRawWaveforms->find(PMTTime) != RWMRawWaveforms->end() && RWMRawWaveforms->at(PMTTime).size() > 0)
+    {
+      std::vector<uint16_t> RWMRawWaveform = RWMRawWaveforms->at(PMTTime);
+      ANNIEEvent->Set("RWMRawWaveform", RWMRawWaveform);
+      Log("EBSaver: Saved RWM data with PMTTime " + std::to_string(PMTTime), v_debug, verbosityEBSaver);
+      RWMRawWaveforms->erase(PMTTime);
+    }
+    else
+    {
+      std::vector<uint16_t> RWMRawWaveform;
+      ANNIEEvent->Set("RWMRawWaveform", RWMRawWaveform);
+      Log("EBSaver: Saved empty RWM data with PMTTime " + std::to_string(PMTTime), v_debug, verbosityEBSaver);
+    }
+  }
+  if(saveRawBRFWaveform)
+  {
+    //find PMTTime as key in BRFRawWaveforms, if found, save it, if not, save an empty vector
+    if (BRFRawWaveforms->find(PMTTime) != BRFRawWaveforms->end() && BRFRawWaveforms->at(PMTTime).size() > 0)
+    {
+      std::vector<uint16_t> BRFRawWaveform = BRFRawWaveforms->at(PMTTime);
+      ANNIEEvent->Set("BRFRawWaveform", BRFRawWaveform);
+      Log("EBSaver: Saved BRF data with PMTTime " + std::to_string(PMTTime), v_debug, verbosityEBSaver);
+      BRFRawWaveforms->erase(PMTTime);
+    }
+    else
+    {
+      std::vector<uint16_t> BRFRawWaveform;
+      ANNIEEvent->Set("BRFRawWaveform", BRFRawWaveform);
+      Log("EBSaver: Saved empty BRF data with PMTTime " + std::to_string(PMTTime), v_debug, verbosityEBSaver);
+    }
+  }
+
   savedPMTHitMapNumber++;
 
   // erase the built data from original data buffer
@@ -859,6 +902,14 @@ bool EBSaver::SaveLAPPDData(uint64_t LAPPDTime)
     std::map<uint64_t, int> LAPPDTSCorrection;
     std::map<uint64_t, int> LAPPDBGCorrection;
     std::map<uint64_t, int> LAPPDOSInMinusPS;
+    std::map<uint64_t, uint64_t> LAPPDBG_PPSBefore;
+    std::map<uint64_t, uint64_t> LAPPDBG_PPSAfter;
+    std::map<uint64_t, uint64_t> LAPPDBG_PPSDiff;
+    std::map<uint64_t, int> LAPPDBG_PPSMissing;
+    std::map<uint64_t, uint64_t> LAPPDTS_PPSBefore;
+    std::map<uint64_t, uint64_t> LAPPDTS_PPSAfter;
+    std::map<uint64_t, uint64_t> LAPPDTS_PPSDiff;
+    std::map<uint64_t, int> LAPPDTS_PPSMissing;
 
     bool gotMap = ANNIEEvent->Get("LAPPDDataMap", LAPPDDataMap);
     bool gotBeamgates_ns = ANNIEEvent->Get("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
@@ -869,6 +920,14 @@ bool EBSaver::SaveLAPPDData(uint64_t LAPPDTime)
     bool gotTSCorrection = ANNIEEvent->Get("LAPPDTSCorrection", LAPPDTSCorrection);
     bool gotDBGCorrection = ANNIEEvent->Get("LAPPDBGCorrection", LAPPDBGCorrection);
     bool gotOSInMinusPS = ANNIEEvent->Get("LAPPDOSInMinusPS", LAPPDOSInMinusPS);
+    bool gotBG_PPSBefore = ANNIEEvent->Get("LAPPDBG_PPSBefore", LAPPDBG_PPSBefore);
+    bool gotBG_PPSAfter = ANNIEEvent->Get("LAPPDBG_PPSAfter", LAPPDBG_PPSAfter);
+    bool gotBG_PPSDiff = ANNIEEvent->Get("LAPPDBG_PPSDiff", LAPPDBG_PPSDiff);
+    bool gotBG_PPSMissing = ANNIEEvent->Get("LAPPDBG_PPSMissing", LAPPDBG_PPSMissing);
+    bool gotTS_PPSBefore = ANNIEEvent->Get("LAPPDTS_PPSBefore", LAPPDTS_PPSBefore);
+    bool gotTS_PPSAfter = ANNIEEvent->Get("LAPPDTS_PPSAfter", LAPPDTS_PPSAfter);
+    bool gotTS_PPSDiff = ANNIEEvent->Get("LAPPDTS_PPSDiff", LAPPDTS_PPSDiff);
+    bool gotTS_PPSMissing = ANNIEEvent->Get("LAPPDTS_PPSMissing", LAPPDTS_PPSMissing);
 
     LAPPDDataMap.emplace(LAPPDTime, Buffer_LAPPDData.at(index));
     LAPPDBeamgate_ns.emplace(LAPPDTime, Buffer_LAPPDBeamgate_ns.at(index));
@@ -879,6 +938,19 @@ bool EBSaver::SaveLAPPDData(uint64_t LAPPDTime)
     LAPPDTSCorrection.emplace(LAPPDTime, Buffer_LAPPDTSCorrection.at(index));
     LAPPDBGCorrection.emplace(LAPPDTime, Buffer_LAPPDBGCorrection.at(index));
     LAPPDOSInMinusPS.emplace(LAPPDTime, Buffer_LAPPDOffset_minus_ps.at(index));
+    LAPPDBG_PPSBefore.emplace(LAPPDTime, Buffer_LAPPDBG_PPSBefore.at(index));
+    LAPPDBG_PPSAfter.emplace(LAPPDTime, Buffer_LAPPDBG_PPSAfter.at(index));
+    LAPPDBG_PPSDiff.emplace(LAPPDTime, Buffer_LAPPDBG_PPSDiff.at(index));
+    LAPPDBG_PPSMissing.emplace(LAPPDTime, Buffer_LAPPDBG_PPSMissing.at(index));
+    LAPPDTS_PPSBefore.emplace(LAPPDTime, Buffer_LAPPDTS_PPSBefore.at(index));
+    LAPPDTS_PPSAfter.emplace(LAPPDTime, Buffer_LAPPDTS_PPSAfter.at(index));
+    LAPPDTS_PPSDiff.emplace(LAPPDTime, Buffer_LAPPDTS_PPSDiff.at(index));
+    LAPPDTS_PPSMissing.emplace(LAPPDTime, Buffer_LAPPDTS_PPSMissing.at(index));
+
+    if(Buffer_LAPPDTS_PPSMissing.at(index)!= Buffer_LAPPDBG_PPSMissing.at(index))
+    {
+      Log("EBSaver: LAPPDTS_PPSMissing is different from LAPPDBG_PPSMissing, LAPPDTS_PPSMissing " + std::to_string(Buffer_LAPPDTS_PPSMissing.at(index)) + " LAPPDBG_PPSMissing " + std::to_string(Buffer_LAPPDBG_PPSMissing.at(index)), v_message, verbosityEBSaver);
+    }
 
     ANNIEEvent->Set("LAPPDDataMap", LAPPDDataMap);
     ANNIEEvent->Set("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
@@ -889,6 +961,14 @@ bool EBSaver::SaveLAPPDData(uint64_t LAPPDTime)
     ANNIEEvent->Set("LAPPDTSCorrection", LAPPDTSCorrection);
     ANNIEEvent->Set("LAPPDBGCorrection", LAPPDBGCorrection);
     ANNIEEvent->Set("LAPPDOSInMinusPS", LAPPDOSInMinusPS);
+    ANNIEEvent->Set("LAPPDBG_PPSBefore", LAPPDBG_PPSBefore);
+    ANNIEEvent->Set("LAPPDBG_PPSAfter", LAPPDBG_PPSAfter);
+    ANNIEEvent->Set("LAPPDBG_PPSDiff", LAPPDBG_PPSDiff);
+    ANNIEEvent->Set("LAPPDBG_PPSMissing", LAPPDBG_PPSMissing);
+    ANNIEEvent->Set("LAPPDTS_PPSBefore", LAPPDTS_PPSBefore);
+    ANNIEEvent->Set("LAPPDTS_PPSAfter", LAPPDTS_PPSAfter);
+    ANNIEEvent->Set("LAPPDTS_PPSDiff", LAPPDTS_PPSDiff);
+    ANNIEEvent->Set("LAPPDTS_PPSMissing", LAPPDTS_PPSMissing);
 
     savedLAPPDNumber++;
 
@@ -902,6 +982,14 @@ bool EBSaver::SaveLAPPDData(uint64_t LAPPDTime)
     Buffer_LAPPDTSCorrection.erase(Buffer_LAPPDTSCorrection.begin() + index);
     Buffer_LAPPDBGCorrection.erase(Buffer_LAPPDBGCorrection.begin() + index);
     Buffer_LAPPDOffset_minus_ps.erase(Buffer_LAPPDOffset_minus_ps.begin() + index);
+    Buffer_LAPPDBG_PPSBefore.erase(Buffer_LAPPDBG_PPSBefore.begin() + index);
+    Buffer_LAPPDBG_PPSAfter.erase(Buffer_LAPPDBG_PPSAfter.begin() + index);
+    Buffer_LAPPDBG_PPSDiff.erase(Buffer_LAPPDBG_PPSDiff.begin() + index);
+    Buffer_LAPPDBG_PPSMissing.erase(Buffer_LAPPDBG_PPSMissing.begin() + index);
+    Buffer_LAPPDTS_PPSBefore.erase(Buffer_LAPPDTS_PPSBefore.begin() + index);
+    Buffer_LAPPDTS_PPSAfter.erase(Buffer_LAPPDTS_PPSAfter.begin() + index);
+    Buffer_LAPPDTS_PPSDiff.erase(Buffer_LAPPDTS_PPSDiff.begin() + index);
+    Buffer_LAPPDTS_PPSMissing.erase(Buffer_LAPPDTS_PPSMissing.begin() + index);
 
     Log("EBSaver: Saved LAPPD data with LAPPDTime " + std::to_string(LAPPDTime), v_debug, verbosityEBSaver);
     return true;
@@ -957,6 +1045,8 @@ bool EBSaver::GotAllDataFromOriginalBuffer()
   bool gotIPHitsAux = m_data->CStore.Get("InProgressHitsAux", InProgressHitsAux);
   bool gotIPRADCH = m_data->CStore.Get("InProgressRecoADCHitsAux", InProgressRecoADCHitsAux);
   bool gotFRAS = m_data->CStore.Get("FinishedRawAcqSize", FinishedRawAcqSize); // Filled in PhaseIIADCCalibrator
+  bool gotRWM = m_data->CStore.Get("RWMRawWaveforms", RWMRawWaveforms);
+  bool gotBRF = m_data->CStore.Get("BRFRawWaveforms", BRFRawWaveforms);
 
   if (!gotPMTHits || !gotPMTChkey || !gotIPRecoADCHits || !gotIPHitsAux || !gotIPRADCH || !gotFRAS)
   {
@@ -1021,6 +1111,17 @@ bool EBSaver::GotAllDataFromOriginalBuffer()
   bool gotBuffer_LAPPDOffset_minus_ps = m_data->CStore.Get("Buffer_LAPPDOffset_minus_ps", Buffer_LAPPDOffset_minus_ps);
   if (!gotBuffer_LAPPDTimestamp_ns || !gotBuffer_LAPPDData || !gotBuffer_LAPPDBeamgate_ns || !gotBuffer_LAPPDOffset || !gotBuffer_LAPPDBeamgate_Raw || !gotBuffer_LAPPDTimestamp_Raw || !gotBuffer_LAPPDBGCorrection || !gotBuffer_LAPPDTSCorrection || !gotBuffer_LAPPDOffset_minus_ps)
     Log("EBSaver: Failed to get some LAPPD data from buffer", v_message, verbosityEBSaver);
+  bool gotBuffer_LAPPDBG_PPSBefore = m_data->CStore.Get("Buffer_LAPPDBG_PPSBefore", Buffer_LAPPDBG_PPSBefore);
+  bool gotBuffer_LAPPDBG_PPSAfter = m_data->CStore.Get("Buffer_LAPPDBG_PPSAfter", Buffer_LAPPDBG_PPSAfter);
+  bool gotBuffer_LAPPDBG_PPSDiff = m_data->CStore.Get("Buffer_LAPPDBG_PPSDiff", Buffer_LAPPDBG_PPSDiff);
+  bool gotBuffer_LAPPDBG_PPSMissing = m_data->CStore.Get("Buffer_LAPPDBG_PPSMissing", Buffer_LAPPDBG_PPSMissing);
+  bool gotBuffer_LAPPDTS_PPSBefore = m_data->CStore.Get("Buffer_LAPPDTS_PPSBefore", Buffer_LAPPDTS_PPSBefore);
+  bool gotBuffer_LAPPDTS_PPSAfter = m_data->CStore.Get("Buffer_LAPPDTS_PPSAfter", Buffer_LAPPDTS_PPSAfter);
+  bool gotBuffer_LAPPDTS_PPSDiff = m_data->CStore.Get("Buffer_LAPPDTS_PPSDiff", Buffer_LAPPDTS_PPSDiff);
+  bool gotBuffer_LAPPDTS_PPSMissing = m_data->CStore.Get("Buffer_LAPPDTS_PPSMissing", Buffer_LAPPDTS_PPSMissing);
+  if(!gotBuffer_LAPPDBG_PPSBefore || !gotBuffer_LAPPDBG_PPSAfter || !gotBuffer_LAPPDBG_PPSDiff || !gotBuffer_LAPPDBG_PPSMissing || !gotBuffer_LAPPDTS_PPSBefore || !gotBuffer_LAPPDTS_PPSAfter || !gotBuffer_LAPPDTS_PPSDiff || !gotBuffer_LAPPDTS_PPSMissing)
+    Log("EBSaver: Failed to get LAPPD PPS data from buffer", v_message, verbosityEBSaver);
+  
   // got LAPPD match info
   bool gotPairedLAPPDTriggerTimestamp = m_data->CStore.Get("PairedLAPPDTriggerTimestamp", PairedLAPPDTriggerTimestamp);
   bool gotPairedLAPPDTimeStamps = m_data->CStore.Get("PairedLAPPDTimeStamps", PairedLAPPDTimeStamps);
@@ -1094,6 +1195,8 @@ void EBSaver::SetDataObjects()
   m_data->CStore.Set("InProgressHitsAux", InProgressHitsAux);
   m_data->CStore.Set("InProgressRecoADCHitsAux", InProgressRecoADCHitsAux);
   m_data->CStore.Set("FinishedRawAcqSize", FinishedRawAcqSize);
+  m_data->CStore.Set("RWMRawWaveforms", RWMRawWaveforms);
+  m_data->CStore.Set("BRFRawWaveforms", BRFRawWaveforms);
   // set PMT match info
   m_data->CStore.Set("PairedPMTTriggerTimestamp", PairedPMTTriggerTimestamp);
   m_data->CStore.Set("PairedPMTTimeStamps", PairedPMTTimeStamps);
@@ -1119,6 +1222,14 @@ void EBSaver::SetDataObjects()
   m_data->CStore.Set("Buffer_LAPPDBGCorrection", Buffer_LAPPDBGCorrection);
   m_data->CStore.Set("Buffer_LAPPDTSCorrection", Buffer_LAPPDTSCorrection);
   m_data->CStore.Set("Buffer_LAPPDOffset_minus_ps", Buffer_LAPPDOffset_minus_ps);
+  m_data->CStore.Set("Buffer_LAPPDBG_PPSBefore", Buffer_LAPPDBG_PPSBefore);
+  m_data->CStore.Set("Buffer_LAPPDBG_PPSAfter", Buffer_LAPPDBG_PPSAfter);
+  m_data->CStore.Set("Buffer_LAPPDBG_PPSDiff", Buffer_LAPPDBG_PPSDiff);
+  m_data->CStore.Set("Buffer_LAPPDBG_PPSMissing", Buffer_LAPPDBG_PPSMissing);
+  m_data->CStore.Set("Buffer_LAPPDTS_PPSBefore", Buffer_LAPPDTS_PPSBefore);
+  m_data->CStore.Set("Buffer_LAPPDTS_PPSAfter", Buffer_LAPPDTS_PPSAfter);
+  m_data->CStore.Set("Buffer_LAPPDTS_PPSDiff", Buffer_LAPPDTS_PPSDiff);
+  m_data->CStore.Set("Buffer_LAPPDTS_PPSMissing", Buffer_LAPPDTS_PPSMissing);
   // set LAPPD match info
   m_data->CStore.Set("PairedLAPPDTriggerTimestamp", PairedLAPPDTriggerTimestamp);
   m_data->CStore.Set("PairedLAPPDTimeStamps", PairedLAPPDTimeStamps);
@@ -1165,6 +1276,14 @@ void EBSaver::BuildEmptyLAPPDData()
   std::map<uint64_t, int> LAPPDTSCorrection;
   std::map<uint64_t, int> LAPPDBGCorrection;
   std::map<uint64_t, int> LAPPDOSInMinusPS;
+  std::map<uint64_t, uint64_t> LAPPDBG_PPSBefore;
+  std::map<uint64_t, uint64_t> LAPPDBG_PPSAfter;
+  std::map<uint64_t, uint64_t> LAPPDBG_PPSDiff;
+  std::map<uint64_t, int> LAPPDBG_PPSMissing;
+  std::map<uint64_t, uint64_t> LAPPDTS_PPSBefore;
+  std::map<uint64_t, uint64_t> LAPPDTS_PPSAfter;
+  std::map<uint64_t, uint64_t> LAPPDTS_PPSDiff;
+  std::map<uint64_t, int> LAPPDTS_PPSMissing;
 
   ANNIEEvent->Set("LAPPDDataMap", LAPPDDataMap);
   ANNIEEvent->Set("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
@@ -1175,6 +1294,14 @@ void EBSaver::BuildEmptyLAPPDData()
   ANNIEEvent->Set("LAPPDTSCorrection", LAPPDTSCorrection);
   ANNIEEvent->Set("LAPPDBGCorrection", LAPPDBGCorrection);
   ANNIEEvent->Set("LAPPDOSInMinusPS", LAPPDOSInMinusPS);
+  ANNIEEvent->Set("LAPPDBG_PPSBefore", LAPPDBG_PPSBefore);
+  ANNIEEvent->Set("LAPPDBG_PPSAfter", LAPPDBG_PPSAfter);
+  ANNIEEvent->Set("LAPPDBG_PPSDiff", LAPPDBG_PPSDiff);
+  ANNIEEvent->Set("LAPPDBG_PPSMissing", LAPPDBG_PPSMissing);
+  ANNIEEvent->Set("LAPPDTS_PPSBefore", LAPPDTS_PPSBefore);
+  ANNIEEvent->Set("LAPPDTS_PPSAfter", LAPPDTS_PPSAfter);
+  ANNIEEvent->Set("LAPPDTS_PPSDiff", LAPPDTS_PPSDiff);
+  ANNIEEvent->Set("LAPPDTS_PPSMissing", LAPPDTS_PPSMissing);
 }
 
 void EBSaver::LoadBeamInfo()

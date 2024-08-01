@@ -57,9 +57,9 @@ bool LAPPDStoreReorder::Execute()
     m_data->Stores["ANNIEEvent"]->Set(OutputWavLabel, reordereddata);
 
     if (LAPPDReorderVerbosityLevel > 1)
-        {
-            cout<<"LAPPDStoreReorder, reordered data size is "<<reordereddata.size()<<endl;
-        }
+    {
+        cout << "LAPPDStoreReorder, reordered data size is " << reordereddata.size() << endl;
+    }
 
     if (LAPPDReorderVerbosityLevel > 3)
         cout << "LAPPDStoreReorder::Execute() done" << endl;
@@ -91,9 +91,10 @@ bool LAPPDStoreReorder::DoReorder()
     {
         Smeta26.push_back(acdcmetadata.at((meta26 * NUM_VECTOR_METADATA) + 10));
         if (LAPPDReorderVerbosityLevel > 1)
-            {cout << "Metaword entry " << meta26 << " is " << Smeta26[meta26] << endl;
-            cout<<"pushed meta26 = "<< meta26<<", with value at "<<(meta26 * NUM_VECTOR_METADATA) + 10<<" is "<<acdcmetadata.at((meta26 * NUM_VECTOR_METADATA) + 10)<<endl;
-            }
+        {
+            cout << "Metaword entry " << meta26 << " is " << Smeta26[meta26] << endl;
+            cout << "pushed meta26 = " << meta26 << ", with value at " << (meta26 * NUM_VECTOR_METADATA) + 10 << " is " << acdcmetadata.at((meta26 * NUM_VECTOR_METADATA) + 10) << endl;
+        }
     }
     if (LAPPDReorderVerbosityLevel > 2)
         cout << "REORDER TIME!!!!   " << acdcmetadata.size() << " " << acdcmetadata.at(10) << " " << acdcmetadata.at(102) << " lappd data size is " << lappddata.size() << ", reordereddata size is " << reordereddata.size() << endl;
@@ -117,11 +118,23 @@ bool LAPPDStoreReorder::DoReorder()
         int switchbit = 0;
         // Get the current board and the respective meta word
         int bi = (int)channelno / 30;
-        int LAPPDID = static_cast<int>((channelno%1000)/60);
-        int beginningBoardIDofThisLAPPDID = NReadBoards.at(std::distance(ACDCReadedLAPPDID.begin(), std::find(ACDCReadedLAPPDID.begin(), ACDCReadedLAPPDID.end(), LAPPDID)));
-        if(LoadLAPPDMap)
+        int LAPPDID = static_cast<int>((channelno % 1000) / 60);
+      //  if (LoadLAPPDMap)
+       // {
+            int beginningBoardIDofThisLAPPDID = NReadBoards.at(std::distance(ACDCReadedLAPPDID.begin(), std::find(ACDCReadedLAPPDID.begin(), ACDCReadedLAPPDID.end(), LAPPDID)));
+            bi = beginningBoardIDofThisLAPPDID + bi % 2;
+       // }else{
+       //     bi = bi%2;
+      //  }
+        if(LAPPDReorderVerbosityLevel>5)
         {
-            bi = beginningBoardIDofThisLAPPDID + bi%2;
+            //print the elements in NReadBoards, print LAPPDID;
+            cout << "NReadBoards size is " << NReadBoards.size() << endl;
+            for(int i = 0; i < NReadBoards.size(); i++)
+            {
+                cout << "NReadBoards[" << i << "] = " << NReadBoards[i] << endl;
+            }
+            cout << "LAPPDID = " << LAPPDID << endl;
         }
         unsigned short switchword = Smeta26[std::distance(NReadBoards.begin(), std::find(NReadBoards.begin(), NReadBoards.end(), bi))];
         // Smeta26, 0 or 1, so switchword is the first timestmap or the second
@@ -156,7 +169,7 @@ bool LAPPDStoreReorder::DoReorder()
                 if (ibin > 255)
                     ibin = ibin - 255;
                 double nsamp = rwav.GetSamples()->at(ibin);
-                //cout << "ibin before shift is " << j << " value is " << rwav.GetSamples()->at(j) << ", after shift is " << ibin << " value is " << nsamp << endl;
+                // cout << "ibin before shift is " << j << " value is " << rwav.GetSamples()->at(j) << ", after shift is " << ibin << " value is " << nsamp << endl;
                 rwavCorr.PushSample(nsamp);
             }
 
@@ -164,12 +177,12 @@ bool LAPPDStoreReorder::DoReorder()
         }
 
         reordereddata.insert(pair<unsigned long, vector<Waveform<double>>>(LAPPDchannelOffset + channelno, Vrwav));
-        if(LAPPDReorderVerbosityLevel>2)
-            cout<<"inserted channelno: "<<LAPPDchannelOffset + channelno<<", current reorded data size is "<<reordereddata.size()<<endl;
+        if (LAPPDReorderVerbosityLevel > 2)
+            cout << "inserted channelno: " << LAPPDchannelOffset + channelno << ", current reorded data size is " << reordereddata.size() << endl;
     }
-    if(LAPPDReorderVerbosityLevel>1)
+    if (LAPPDReorderVerbosityLevel > 1)
     {
-        cout<<"LAPPDStoreReorder, reordered data size is "<<reordereddata.size()<<endl;
+        cout << "LAPPDStoreReorder, reordered data size is " << reordereddata.size() << endl;
     }
 
     return true;

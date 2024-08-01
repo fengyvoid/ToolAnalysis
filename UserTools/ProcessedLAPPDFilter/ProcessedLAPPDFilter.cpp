@@ -22,6 +22,8 @@ bool ProcessedLAPPDFilter::Initialise(std::string configfile, DataModel &data)
 
   saveAllLAPPDEvents = false;
   m_variables.Get("saveAllLAPPDEvents", saveAllLAPPDEvents);
+  savePMTClusterEvents = false;
+  m_variables.Get("savePMTClusterEvents", savePMTClusterEvents);
 
   MRDDataName = "FilteredMRDData";
   MRDNoVetoDataName = "FilteredMRDNoVetoData";
@@ -30,14 +32,17 @@ bool ProcessedLAPPDFilter::Initialise(std::string configfile, DataModel &data)
 
   AllLAPPDDataName = "FilteredAllLAPPDData";
   m_variables.Get("AllLAPPDDataName", AllLAPPDDataName);
+  PMTClusterDataName = "FilteredPMTClusterData";
+  m_variables.Get("PMTClusterDataName", PMTClusterDataName);
 
   filterType = "MRDtrack"; // MRDtrack and pmt cluster
   // filterType = "PMTCluster"; // pmt cluster only
   m_variables.Get("filterType", filterType);
 
-  FilteredMRD = new BoostStore(false, 2);       // all events with MRD in it //if gotEventMRD = true;
-  FilteredMRDNoVeto = new BoostStore(false, 2); // all events with MRD but no veto// if gotEventMRD && gotEventMRDNoVeto = true
-  FilteredAllLAPPD = new BoostStore(false, 2);  // all events with LAPPD data
+  FilteredMRD = new BoostStore(false, 2);        // all events with MRD in it //if gotEventMRD = true;
+  FilteredMRDNoVeto = new BoostStore(false, 2);  // all events with MRD but no veto// if gotEventMRD && gotEventMRDNoVeto = true
+  FilteredAllLAPPD = new BoostStore(false, 2);   // all events with LAPPD data
+  FilteredPMTCluster = new BoostStore(false, 2); // all events with PMT cluster
 
   gotEventMRD = false;
   gotEventMRDNoVeto = false;
@@ -49,6 +54,7 @@ bool ProcessedLAPPDFilter::Initialise(std::string configfile, DataModel &data)
   CurrentExeNumber = 0;
   pairedEventNumber = 0;
   PsecDataNumber = 0;
+  PMTClusterEventNum = 0;
 
   return true;
 }
@@ -67,39 +73,44 @@ bool ProcessedLAPPDFilter::Execute()
     cout << endl;
   }
 
-  if (DataStreams["LAPPD"] == false)
-  {
-    return true;
-  }
-
   if (filterType == "MRDtrack")
   {
-
-    CurrentExeNumber += 1;
-
     gotEventMRD = false;
     gotEventPMTCluster = false;
+
+    std::map<double, std::vector<Hit>> *m_all_clusters = nullptr;
+    bool get_clusters = m_data->CStore.Get("ClusterMap", m_all_clusters);
+    if (!get_clusters)
+    {
+      std::cout << "ProcessedLAPPDFilter tool: No clusters found!" << std::endl;
+      return false;
+    }
+    if ((int)m_all_clusters->size() > 0)
+      gotEventPMTCluster = true;
+
+    if (savePMTClusterEvents && gotEventPMTCluster)
+    {
+      GotANNIEEventAndSave(FilteredPMTCluster, PMTClusterDataName);
+      PMTClusterEventNum += 1;
+    }
+
+    if (DataStreams["LAPPD"] == false)
+    {
+      return true;
+    }
+
+    CurrentExeNumber += 1;
 
     std::map<uint64_t, uint64_t> LAPPDBeamgate_ns;
     m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
     PsecDataNumber += LAPPDBeamgate_ns.size();
     m_data->Stores["ANNIEEvent"]->Set("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
 
-    std::map<double, std::vector<Hit>> *m_all_clusters = nullptr;
-    bool get_clusters = m_data->CStore.Get("ClusterMap", m_all_clusters);
-    if (!get_clusters)
-    {
-      std::cout << "FiltStage1Event tool: No clusters found!" << std::endl;
-      return false;
-    }
-    if ((int)m_all_clusters->size() > 0)
-      gotEventPMTCluster = true;
-
     std::vector<std::vector<int>> MrdTimeClusters;
     bool get_clusters_mrd = m_data->CStore.Get("MrdTimeClusters", MrdTimeClusters);
     if (!get_clusters_mrd)
     {
-      std::cout << "FiltStage1Event tool: No MRD clusters found! Did you run the TimeClustering tool?" << std::endl;
+      std::cout << "ProcessedLAPPDFilter tool: No MRD clusters found! Did you run the TimeClustering tool?" << std::endl;
       return false;
     }
     if (MrdTimeClusters.size() > 0)
@@ -139,7 +150,7 @@ bool ProcessedLAPPDFilter::Execute()
 
       if (CurrentExeNumber % 10 == 0)
       {
-        cout << "Filter event number: " << CurrentExeNumber << ", PsecDataNumber " << PsecDataNumber << ", events with PMT clusters: " << EventPMTClusterNumber << ", also with MRD tracks: " << EventMRDNumber << ", also with MRD tracks and no veto: " << EventMRDNoVetoNumber << endl;
+        cout << "Filter event number: " << CurrentExeNumber << ", PsecDataNumber " << PsecDataNumber << ", LAPPD events with PMT clusters: " << EventPMTClusterNumber << ", also with MRD tracks: " << EventMRDNumber << ", also with MRD tracks and no veto: " << EventMRDNoVetoNumber << ", events with PMT cluster (may not have LAPPD): " << PMTClusterEventNum << endl;
       }
 
       m_data->Stores["ANNIEEvent"]->Get("RunNumber", currentRunNumber);
@@ -159,7 +170,7 @@ bool ProcessedLAPPDFilter::Execute()
     bool get_clusters = m_data->CStore.Get("ClusterMap", m_all_clusters);
     if (!get_clusters)
     {
-      std::cout << "FiltStage1Event tool: No clusters found!" << std::endl;
+      std::cout << "ProcessedLAPPDFilter tool: No clusters found!" << std::endl;
       return false;
     }
     if ((int)m_all_clusters->size() > 0)
@@ -222,21 +233,26 @@ bool ProcessedLAPPDFilter::Finalise()
   FilteredMRD->Close();
   FilteredMRDNoVeto->Close();
   FilteredAllLAPPD->Close();
+  FilteredPMTCluster->Close();
 
   FilteredMRD->Delete();
   FilteredMRDNoVeto->Delete();
   FilteredAllLAPPD->Delete();
+  FilteredPMTCluster->Delete();
 
   if (filterType == "MRDtrack")
   {
     cout << "Current Run " << currentRunNumber << endl;
     cout << "Filter got " << CurrentExeNumber << " events in total" << endl; // this is the total number of events
-    cout << "Got " << PsecDataNumber << " psec data objects on all LAPPD"<<endl;
+    cout << "Got " << PsecDataNumber << " psec data objects on all LAPPD" << endl;
     cout << "Got " << EventPMTClusterNumber << " events with PMT clusters" << endl;
     cout << "Got " << EventMRDNumber << " events with PMT clusters and MRD hits" << endl;
     cout << "Got " << EventMRDNoVetoNumber << " events with PMT clusters and MRD hits and no veto" << endl;
+    cout << "Got " << PMTClusterEventNum << " events with PMT clusters and saved" << endl;
     cout << "Saved " << MRDDataName << " successfully" << endl;
     cout << "Saved " << MRDNoVetoDataName << " successfully" << endl;
+    cout << "Saved " << AllLAPPDDataName << " successfully" << endl;
+    cout << "Saved " << PMTClusterDataName << " successfully" << endl;
 
     std::ofstream file("FilterStat.txt", std::ios::app);
     file << currentRunNumber << " " << CurrentExeNumber << " " << EventPMTClusterNumber << " " << EventMRDNumber << " " << EventMRDNoVetoNumber << " "
@@ -420,6 +436,40 @@ bool ProcessedLAPPDFilter::GotANNIEEventAndSave(BoostStore *BS, string savePath)
   BS->Set("beam_BTH2T2", BTH2T2);
   m_data->Stores["ANNIEEvent"]->Get("beam_good", beam_good);
   BS->Set("beam_good", beam_good);
+
+  std::vector<uint16_t> RWMRawWaveform;
+  std::vector<uint16_t> BRFRawWaveform;
+
+  m_data->Stores["ANNIEEvent"]->Get("RWMRawWaveform", RWMRawWaveform);
+  BS->Set("RWMRawWaveform", RWMRawWaveform);
+  m_data->Stores["ANNIEEvent"]->Get("BRFRawWaveform", BRFRawWaveform);
+  BS->Set("BRFRawWaveform", BRFRawWaveform);
+
+  std::map<uint64_t, uint64_t> LAPPDBG_PPSBefore;
+  std::map<uint64_t, uint64_t> LAPPDBG_PPSAfter;
+  std::map<uint64_t, uint64_t> LAPPDBG_PPSDiff;
+  std::map<uint64_t, int> LAPPDBG_PPSMissing;
+  std::map<uint64_t, uint64_t> LAPPDTS_PPSBefore;
+  std::map<uint64_t, uint64_t> LAPPDTS_PPSAfter;
+  std::map<uint64_t, uint64_t> LAPPDTS_PPSDiff;
+  std::map<uint64_t, int> LAPPDTS_PPSMissing;
+
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBG_PPSBefore", LAPPDBG_PPSBefore);
+  BS->Set("LAPPDBG_PPSBefore", LAPPDBG_PPSBefore);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBG_PPSAfter", LAPPDBG_PPSAfter);
+  BS->Set("LAPPDBG_PPSAfter", LAPPDBG_PPSAfter);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBG_PPSDiff", LAPPDBG_PPSDiff);
+  BS->Set("LAPPDBG_PPSDiff", LAPPDBG_PPSDiff);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDBG_PPSMissing", LAPPDBG_PPSMissing);
+  BS->Set("LAPPDBG_PPSMissing", LAPPDBG_PPSMissing);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSBefore", LAPPDTS_PPSBefore);
+  BS->Set("LAPPDTS_PPSBefore", LAPPDTS_PPSBefore);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSAfter", LAPPDTS_PPSAfter);
+  BS->Set("LAPPDTS_PPSAfter", LAPPDTS_PPSAfter);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSDiff", LAPPDTS_PPSDiff);
+  BS->Set("LAPPDTS_PPSDiff", LAPPDTS_PPSDiff);
+  m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSMissing", LAPPDTS_PPSMissing);
+  BS->Set("LAPPDTS_PPSMissing", LAPPDTS_PPSMissing);
 
   BS->Save(savePath);
   if (FilterVerbosity > 2)

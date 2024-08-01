@@ -41,6 +41,10 @@ bool LAPPDTimeAlignment::Initialise(std::string configfile, DataModel &data)
 
 bool LAPPDTimeAlignment::Execute()
 {
+  bool LAPPDana = false;
+  m_data->CStore.Get("LAPPDana", LAPPDana);
+  if (!LAPPDana)
+    return true;
 
   oldLaser = 0;
   m_data->Stores["ANNIEEvent"]->Get("oldLaser", oldLaser);
@@ -82,7 +86,7 @@ bool LAPPDTimeAlignment::Execute()
   vector<int> ACDCReadedLAPPDID;
   m_data->Stores["ANNIEEvent"]->Get("ACDCReadedLAPPDID", ACDCReadedLAPPDID);
 
-  //print NReadBoards
+  // print NReadBoards
   if (FindT0VerbosityLevel > 0)
   {
     cout << "NReadBoards: ";
@@ -93,7 +97,7 @@ bool LAPPDTimeAlignment::Execute()
     cout << endl;
   }
   // print ACDCReadedLAPPDID
-  if (FindT0VerbosityLevel > 0)
+  if (FindT0VerbosityLevel > 0 && LoadLAPPDMap)
   {
     cout << "ACDCReadedLAPPDID: ";
     for (int i = 0; i < ACDCReadedLAPPDID.size(); i++)
@@ -108,12 +112,14 @@ bool LAPPDTimeAlignment::Execute()
   for (int i = 0; i < NReadBoards.size(); i++)
   {
     int bi = NReadBoards.at(i);
-    int thisLAPPDID = ACDCReadedLAPPDID.at(i);
 
-    //TrigChannel is 5;
+    int thisLAPPDID = 0;
+
+    // TrigChannel is 5;
     T0channelNo = LAPPDchannelOffset + (30 * bi) + TrigChannel;
     if (LoadLAPPDMap)
     {
+      thisLAPPDID = ACDCReadedLAPPDID.at(i);
       T0channelNo = 1000 + (30 * (bi % 2)) + 60 * thisLAPPDID + TrigChannel;
     }
 
@@ -122,8 +128,17 @@ bool LAPPDTimeAlignment::Execute()
 
     if (FindT0VerbosityLevel > 0)
       cout << "In LAPPDTimeAlignment, T0 channel:" << T0channelNo << " , InputWavlabel: " << InputWavLabel << " , LAPPDdata.size()=" << lappddata.size() << endl;
+    bool channelthere = lappddata.count((unsigned long)T0channelNo);
     if (FindT0VerbosityLevel > 1)
-      cout << "is the channel there? " << lappddata.count((unsigned long)T0channelNo) << endl;
+      cout << "is the channel there? " << channelthere << endl;
+    if (!channelthere)
+    {
+      int LAPPD_ID = 0;
+      m_data->CStore.Get("LAPPD_ID", LAPPD_ID);
+      T0channelNo = 1000 + (30 * (bi % 2)) + 60 * LAPPD_ID + TrigChannel;
+      if (FindT0VerbosityLevel > 0)
+        cout << " channel number " << T0channelNo << " not found, use LAPPD ID " << LAPPD_ID << " to find channel No " << T0channelNo << endl;
+    }
 
     itr_bi = lappddata.find((unsigned long)T0channelNo);
     Waveform<double> bwav = (itr_bi->second).at(0);
@@ -139,7 +154,7 @@ bool LAPPDTimeAlignment::Execute()
     vec_deltaT.push_back(deltaT);
     vec_T0signalInWindow.push_back(T0signalInWindow);
     vec_T0Bin.push_back(switchbit);
-    fittedBoardIDInMap.push_back(static_cast<int>((T0channelNo-1000)/30));
+    fittedBoardIDInMap.push_back(static_cast<int>((T0channelNo - 1000) / 30));
 
     if (FindT0VerbosityLevel > 0)
       cout << "Done finding the time, switchbit:" << switchbit << " , deltaT: " << deltaT << " , inwindow: " << T0signalInWindow << endl;
@@ -170,18 +185,18 @@ bool LAPPDTimeAlignment::Execute()
     vector<Waveform<double>> Vwavs = itr->second;
     vector<Waveform<double>> Vrwav;
     int bi = (int)(channelno - LAPPDchannelOffset) / 30 % 2; // TODO: fix this, why loading data with board 2 and 3 have channel from 0 to 120?
-    int thisBoardID = static_cast<int>((channelno-1000)/30);
-    if(LoadLAPPDMap)
+    int thisBoardID = static_cast<int>((channelno - 1000) / 30);
+    if (LoadLAPPDMap)
     {
       int index = std::distance(fittedBoardIDInMap.begin(), std::find(fittedBoardIDInMap.begin(), fittedBoardIDInMap.end(), thisBoardID));
       bi = index;
-      if(FindT0VerbosityLevel>5 && printcount<5)
+      if (FindT0VerbosityLevel > 5 && printcount < 5)
       {
         cout << "thisBoardID: " << thisBoardID << " , index: " << index << " , bi: " << bi << endl;
         printcount++;
       }
     }
-    
+
     int countnumber = (channelno % 1000) % 60;
     if (FindT0VerbosityLevel > 2)
       cout << "Looping with channelno: " << channelno << " , bi: " << bi << " , countnumber: " << countnumber << endl;
@@ -196,9 +211,8 @@ bool LAPPDTimeAlignment::Execute()
       Waveform<double> rwavShift;
 
       int sb = vec_T0Bin[bi] + T0offset + AnalogBoardShift[countnumber];
-      if(LoadLAPPDMap)
+      if (LoadLAPPDMap)
       {
-
       }
 
       countnumber++;

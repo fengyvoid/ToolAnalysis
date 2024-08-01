@@ -26,6 +26,13 @@ bool EBPMT::Initialise(std::string configfile, DataModel &data)
   NumWavesInCompleteSet = 140;
 
   FinishedHits = new std::map<uint64_t, std::map<unsigned long, std::vector<Hit>> *>();
+  RWMRawWaveforms = new std::map<uint64_t, std::vector<uint16_t>>();
+  BRFRawWaveforms = new std::map<uint64_t, std::vector<uint16_t>>();
+
+  saveRWMWaveforms = true;
+  saveBRFWaveforms = true;
+  m_variables.Get("saveRWMWaveforms", saveRWMWaveforms);
+  m_variables.Get("saveBRFWaveforms", saveBRFWaveforms);
 
   return true;
 }
@@ -36,20 +43,28 @@ bool EBPMT::Execute()
   bool gotHits = m_data->CStore.Get("InProgressHits", InProgressHits);
   bool gotChkey = m_data->CStore.Get("InProgressChkey", InProgressChkey);
 
-  if (exeNum % 80 == 0 && exeNum!=0)
+  m_data->CStore.Get("RWMRawWaveforms", RWMRawWaveforms);
+  m_data->CStore.Get("BRFRawWaveforms", BRFRawWaveforms);
+  Log("EBPMT: Got RWMRawWaveforms size: " + std::to_string(RWMRawWaveforms->size()), v_message, verbosityEBPMT);
+  Log("EBPMT: Got BRFRawWaveforms size: " + std::to_string(BRFRawWaveforms->size()), v_message, verbosityEBPMT);
+
+  if (exeNum % 80 == 0 && exeNum != 0)
   {
-    //80 is arbitrary, because 6*80 = 480 around, close, and smaller than the pairing exe number, exePerMatch default 500
+    // 80 is arbitrary, because 6*80 = 480 around, close, and smaller than the pairing exe number, exePerMatch default 500
     Log("EBPMT: exeNum: " + std::to_string(exeNum) + " Before loading, apply a VMEOffset correction", v_message, verbosityEBPMT);
     Log("EBPMT: before apply the VME offset correction, the size of FinishedHits is " + std::to_string(FinishedHits->size()), v_message, verbosityEBPMT);
     m_data->CStore.Get("InProgressHitsAux", InProgressHitsAux);
     m_data->CStore.Get("InProgressRecoADCHits", InProgressRecoADCHits);
     m_data->CStore.Get("InProgressRecoADCHitsAux", InProgressRecoADCHitsAux);
+
     CorrectVMEOffset();
     m_data->CStore.Set("InProgressHits", InProgressHits);
     m_data->CStore.Set("InProgressChkey", InProgressChkey);
     m_data->CStore.Set("InProgressHitsAux", InProgressHitsAux);
     m_data->CStore.Set("InProgressRecoADCHits", InProgressRecoADCHits);
     m_data->CStore.Set("InProgressRecoADCHitsAux", InProgressRecoADCHitsAux);
+    m_data->CStore.Set("RWMRawWaveforms", RWMRawWaveforms);
+    m_data->CStore.Set("BRFRawWaveforms", BRFRawWaveforms);
   }
 
   m_data->CStore.Get("PairedPMTTriggerTimestamp", PairedCTCTimeStamps);
@@ -67,6 +82,8 @@ bool EBPMT::Execute()
   Log("EBPMT: got inprogress hits and chkey with size " + std::to_string(InProgressHits->size()) + " and " + std::to_string(InProgressChkey->size()), v_message, verbosityEBPMT);
 
   vector<uint64_t> PMTEmplacedHitTimes;
+  vector<uint64_t> RWMEmplacedTimes;
+  vector<uint64_t> BRFEmplacedTimes;
 
   for (std::pair<uint64_t, std::map<unsigned long, std::vector<Hit>> *> p : *InProgressHits)
   {
@@ -174,7 +191,6 @@ bool EBPMT::Execute()
   {
     Log("EBPMT: after apply the VME offset correction and loading, the size of FinishedHits is " + std::to_string(FinishedHits->size()), v_message, verbosityEBPMT);
   }
-
 
   exeNum++;
 
@@ -317,6 +333,24 @@ bool EBPMT::Matching(int targetTrigger, int matchToTrack)
   for (uint64_t PMTCounterTimeNs : matchedHitTimes)
   {
     FinishedHits->erase(PMTCounterTimeNs);
+
+    if (saveRWMWaveforms)
+    {
+      // check does RWMRawWaveforms have key PMTCounterTimeNs, if not, print a log waring and skip
+      if (RWMRawWaveforms->find(PMTCounterTimeNs) == RWMRawWaveforms->end())
+      {
+        Log("EBPMT: After matching, RWMRawWaveforms does not have key PMTCounterTimeNs: " + std::to_string(PMTCounterTimeNs), v_warning, verbosityEBPMT);
+      }
+    }
+
+    if (saveBRFWaveforms)
+    {
+      // check does BRFRawWaveforms have key PMTCounterTimeNs, if not, print a log waring and skip
+      if (BRFRawWaveforms->find(PMTCounterTimeNs) == BRFRawWaveforms->end())
+      {
+        Log("EBPMT: After matching, BRFRawWaveforms does not have key PMTCounterTimeNs: " + std::to_string(PMTCounterTimeNs), v_warning, verbosityEBPMT);
+      }
+    }
   }
   Log("EBPMT: after erase, left number of unfinished hitmaps in FinishedHits: " + std::to_string(FinishedHits->size()), v_message, verbosityEBPMT);
 
@@ -329,14 +363,14 @@ void EBPMT::CorrectVMEOffset()
   vector<uint64_t> timestamps;                      // all current timestamps
   std::map<uint64_t, uint64_t> timestamps_to_shift; // timestamps need to be shifted
 
-  //if InProgressHits size is 0, return
+  // if InProgressHits size is 0, return
   if (InProgressHits->size() == 0)
   {
     Log("EBPMT: InProgressHits size is 0, return", v_message, verbosityEBPMT);
     return;
   }
 
-  //insert the key of std::map<uint64_t, std::map<unsigned long, std::vector<Hit>> *> *InProgressHits; to timestamps
+  // insert the key of std::map<uint64_t, std::map<unsigned long, std::vector<Hit>> *> *InProgressHits; to timestamps
   for (std::pair<uint64_t, std::map<unsigned long, std::vector<Hit>> *> p : *InProgressHits)
   {
     timestamps.push_back(p.first);
@@ -377,6 +411,7 @@ void EBPMT::CorrectVMEOffset()
   Log("EBPMT: Found " + std::to_string(timestamps_to_shift.size()) + " timestamps to shift", v_message, verbosityEBPMT);
   // go through timestamps_to_shift, for each pair, shift the hit map in the first smaller timestamp to the second larger timestamp
   // apply on InProgressHits, InProgressHitsAux, InProgressChkey, InProgressRecoADCHits, InProgressRecoADCHitsAux
+  // also need to apply on RWMRawWaveforms and BRFRawWaveforms
   if (InProgressHitsAux != NULL && InProgressRecoADCHitsAux != NULL)
   { // InProgressHitsAux,InProgressRecoADCHitsAux may not exist yet
     for (std::map<uint64_t, uint64_t>::iterator it = timestamps_to_shift.begin(); it != timestamps_to_shift.end(); it++)
@@ -418,7 +453,26 @@ void EBPMT::CorrectVMEOffset()
       (*InProgressRecoADCHitsAux)[LargerMapTS] = SecondRecoADCHitsAux;
       InProgressRecoADCHitsAux->erase(SmallerMapTS);
 
-      correctionApplied++;
+      if (saveRWMWaveforms)
+      {
+        // if found SmallerMapTS in RWMRawWaveforms, then change it to LargerMapTS
+        if (RWMRawWaveforms->find(SmallerMapTS) != RWMRawWaveforms->end())
+        {
+          (*RWMRawWaveforms)[LargerMapTS] = (*RWMRawWaveforms)[SmallerMapTS];
+          RWMRawWaveforms->erase(SmallerMapTS);
+        }
+      }
+      if (saveBRFWaveforms)
+      {
+        // if found SmallerMapTS in BRFRawWaveforms, then change it to LargerMapTS
+        if (BRFRawWaveforms->find(SmallerMapTS) != BRFRawWaveforms->end())
+        {
+          (*BRFRawWaveforms)[LargerMapTS] = (*BRFRawWaveforms)[SmallerMapTS];
+          BRFRawWaveforms->erase(SmallerMapTS);
+        }
+
+        correctionApplied++;
+      }
     }
   }
   Log("EBPMT: Corrected VME Offset for " + std::to_string(correctionApplied) + " timestamps", v_message, verbosityEBPMT);

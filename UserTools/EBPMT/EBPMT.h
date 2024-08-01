@@ -34,25 +34,27 @@ private:
     uint64_t matchTolerance_ns;
 
     int currentRunCode;
- 
-    std::map<uint64_t, std::map<unsigned long,std::vector<Hit>>*> *FinishedHits;        //Key: {MTCTime}, value: map of  Hit distributions
 
-    std::map<uint64_t,int> AlmostCompleteWaveforms;
+    std::map<uint64_t, std::map<unsigned long, std::vector<Hit>> *> *FinishedHits; // Key: {MTCTime}, value: map of  Hit distributions
+    std::map<uint64_t, vector<uint16_t>> *FinishedRWMWaveforms;                       // Key: {MTCTime}, value: RWM waveform
+    std::map<uint64_t, vector<uint16_t>> *FinishedBRFWaveforms;                       // Key: {MTCTime}, value: BRF waveform
+
+    std::map<uint64_t, int> AlmostCompleteWaveforms;
 
     std::map<uint64_t, std::map<unsigned long, std::vector<Hit>> *> *InProgressHits; // Key: {MTCTime}, value: map of  Hit distributions
     std::map<uint64_t, std::vector<unsigned long>> *InProgressChkey;                 // Key: {MTCTime}, value: vector of in progress chankeys
 
-    //only used for VME offset correction
+    // only used for VME offset correction
     std::map<uint64_t, std::map<unsigned long, std::vector<Hit>> *> *InProgressHitsAux;                        // Key: {MTCTime}, value: map of  Hit distributions
     std::map<uint64_t, std::map<unsigned long, std::vector<std::vector<ADCPulse>>>> *InProgressRecoADCHits;    // Key: {MTCTime}, value: map of found pulses
     std::map<uint64_t, std::map<unsigned long, std::vector<std::vector<ADCPulse>>>> *InProgressRecoADCHitsAux; // Key: {MTCTime}, value: map of found pulses
+    std::map<uint64_t, std::vector<uint16_t>> *RWMRawWaveforms;                                                // Key: MTCTime, Value: RWM waveform
+    std::map<uint64_t, std::vector<uint16_t>> *BRFRawWaveforms;                                                // Key: MTCTime, Value: BRF waveform
 
-
-    std::map<int,vector<uint64_t>> PairedCTCTimeStamps;
-    std::map<int,vector<int>> PairedPMT_TriggerIndex;
-    std::map<int,vector<uint64_t>> PairedPMTTimeStamps;
-   std::map<uint64_t, int> PMTHitmapRunCode; // Key: {MTCTime}, value: RunCode
-
+    std::map<int, vector<uint64_t>> PairedCTCTimeStamps;
+    std::map<int, vector<int>> PairedPMT_TriggerIndex;
+    std::map<int, vector<uint64_t>> PairedPMTTimeStamps;
+    std::map<uint64_t, int> PMTHitmapRunCode; // Key: {MTCTime}, value: RunCode
 
     int v_message = 1;
     int v_warning = 2;
@@ -68,6 +70,9 @@ private:
     int thisRunNum;
     int exePerMatch = 500;
     bool matchToAllTriggers;
+
+    bool saveRWMWaveforms;
+    bool saveBRFWaveforms;
 };
 
 #endif

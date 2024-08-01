@@ -381,6 +381,15 @@ vector<vector<ULong64_t>> fitInThisReset(
     vector<long long> LAPPD_PPS_missing_ticks;
     vector<ULong64_t> LAPPD_PPS_interval_ticks;
 
+    vector<ULong64_t> BG_PPSBefore;
+    vector<ULong64_t> BG_PPSAfter;
+    vector<ULong64_t> BG_PPSDiff;
+    vector<ULong64_t> BG_PPSMiss;
+    vector<ULong64_t> TS_PPSBefore;
+    vector<ULong64_t> TS_PPSAfter;
+    vector<ULong64_t> TS_PPSDiff;
+    vector<ULong64_t> TS_PPSMiss;
+
     // calculate the missing ticks for each LAPPD PPS
     PPS_tick_correction.push_back(0);
     LAPPD_PPS_missing_ticks.push_back(0);
@@ -466,6 +475,11 @@ vector<vector<ULong64_t>> fitInThisReset(
 
     // loop all data events, plus the offset, save the event time and beamgate time
     // fing the closest CTC trigger, also save all information
+    cout << "Start saving results. PPS size: " << LAPPD_PPS.size() << ", beamgate size: " << LAPPDDataBeamgateUL.size() << endl;
+    cout << "First PPS: " << LAPPD_PPS.at(0) / 3125 << ", Last PPS: " << LAPPD_PPS.at(LAPPD_PPS.size() - 1) / 3125 << endl;
+    cout << "First BG: " << LAPPDDataBeamgateUL.at(0) / 3125 << ", Last BG: " << LAPPDDataBeamgateUL.at(LAPPDDataBeamgateUL.size() - 1) / 3125 << endl;
+    cout << "First TS: " << LAPPDDataTimeStampUL.at(0) / 3125 << ", Last TS: " << LAPPDDataTimeStampUL.at(LAPPDDataTimeStampUL.size() - 1) / 3125 << endl;
+
     for (int l = 0; l < LAPPDDataTimeStampUL.size(); l++)
     {
         ULong64_t TS_ns = LAPPDDataTimeStampUL.at(l) / 1000;
@@ -571,6 +585,100 @@ vector<vector<ULong64_t>> fitInThisReset(
         cout << "TimeStamp_correction_tick at " << l << ": " << TimeStamp_correction_tick.at(l) << endl;
         */
 
+        // for this LAPPDDataBeamgateUL.at(l), in the LAPPD_PPS vector, find it's closest PPS before and after, and also calculate the time difference between them, and the missing tick between them.
+        // save as BG_PPSBefore_tick, BG_PPSAfter_tick, BG_PPSDiff_tick, BG_PPSMissing_tick
+        // Do the same thing for LAPPDDataTimeStampUL.at(l), save as TS_PPSBefore_tick, TS_PPSAfter_tick, TS_PPSDiff_tick, TS_PPSMissing_tick
+
+        ULong64_t BG_PPSBefore_tick = 0;
+        ULong64_t BG_PPSAfter_tick = 0;
+        ULong64_t BG_PPSDiff_tick = 0;
+        ULong64_t BG_PPSMissing_tick = 0;
+
+        ULong64_t TS_PPSBefore_tick = 0;
+        ULong64_t TS_PPSAfter_tick = 0;
+        ULong64_t TS_PPSDiff_tick = 0;
+        ULong64_t TS_PPSMissing_tick = 0;
+        // if the first PPS is later than beamgate, then set before = 0, after is the first, diff is the first, missing is the first
+
+        cout << "Start finding PPS before and after the beamgate" << endl;
+
+        if ((LAPPD_PPS.at(0) / 3125 > LAPPDDataBeamgateUL.at(l) / 3125) || (LAPPD_PPS.at(LAPPD_PPS.size() - 1) / 3125 < LAPPDDataBeamgateUL.at(l) / 3125))
+        {
+            if (LAPPD_PPS.at(0) / 3125 > LAPPDDataBeamgateUL.at(l) / 3125)
+            {
+                BG_PPSBefore_tick = 0;
+                BG_PPSAfter_tick = LAPPD_PPS.at(0) / 3125;
+                BG_PPSDiff_tick = LAPPD_PPS.at(0) / 3125;
+                BG_PPSMissing_tick = LAPPD_PPS.at(0) / 3125;
+                cout << "First PPS is later than beamgate, before is 0, after is the first, diff is the first, missing is the first" << endl;
+            }
+            // if the last PPS is earlier than beamgate, then set before is the last, after = 0, diff is the last, missing is the last
+            if (LAPPD_PPS.at(LAPPD_PPS.size() - 1) / 3125 < LAPPDDataBeamgateUL.at(l) / 3125)
+            {
+                BG_PPSBefore_tick = LAPPD_PPS.at(LAPPD_PPS.size() - 1) / 3125;
+                BG_PPSAfter_tick = 0;
+                BG_PPSDiff_tick = LAPPD_PPS.at(LAPPD_PPS.size() - 1) / 3125;
+                BG_PPSMissing_tick = LAPPD_PPS.at(LAPPD_PPS.size() - 1) / 3125;
+                cout << "Last PPS is earlier than beamgate, before is the last, after is 0, diff is the last, missing is the last" << endl;
+            }
+        }
+        else
+        {
+            // if the first PPS is earlier than beamgate, and the last PPS is later than beamgate, then find the closest PPS before and after
+            for (int i = 0; i < LAPPD_PPS.size() - 1; i++)
+            {
+                if (LAPPD_PPS.at(i) / 3125 < LAPPDDataBeamgateUL.at(l) / 3125 && LAPPD_PPS.at(i + 1) / 3125 > LAPPDDataBeamgateUL.at(l) / 3125)
+                {
+                    BG_PPSBefore_tick = LAPPD_PPS.at(i) / 3125;
+                    BG_PPSAfter_tick = LAPPD_PPS.at(i + 1) / 3125;
+                    BG_PPSDiff_tick = LAPPD_PPS.at(i + 1) / 3125 - LAPPD_PPS.at(i) / 3125;
+                    ULong64_t DiffTick = (LAPPD_PPS.at(i + 1) - LAPPD_PPS.at(i)) / 3125 - 1000;
+                    BG_PPSMissing_tick = 3200000000 - DiffTick;
+                    cout << "Found PPS before and after the beamgate, before: " << BG_PPSBefore_tick << ", after: " << BG_PPSAfter_tick << ", diff: " << BG_PPSDiff_tick << ", missing: " << BG_PPSMissing_tick << endl;
+                    break;
+                }
+            }
+        }
+
+        // do the samething for timestamp
+        cout << "Start finding PPS before and after the timestamp" << endl;
+
+        if ((LAPPD_PPS.at(0) / 3125 > LAPPDDataTimeStampUL.at(l) / 3125) || (LAPPD_PPS.at(LAPPD_PPS.size() - 1) / 3125 < LAPPDDataTimeStampUL.at(l) / 3125))
+        {
+            if (LAPPD_PPS.at(0) / 3125 > LAPPDDataTimeStampUL.at(l) / 3125)
+            {
+                TS_PPSBefore_tick = 0;
+                TS_PPSAfter_tick = LAPPD_PPS.at(0) / 3125;
+                TS_PPSDiff_tick = LAPPD_PPS.at(0) / 3125;
+                TS_PPSMissing_tick = LAPPD_PPS.at(0) / 3125;
+                cout << "First PPS is later than timestamp, before is 0, after is the first, diff is the first, missing is the first" << endl;
+            }
+            if (LAPPD_PPS.at(LAPPD_PPS.size() - 1) / 3125 < LAPPDDataTimeStampUL.at(l) / 3125)
+            {
+                TS_PPSBefore_tick = LAPPD_PPS.at(LAPPD_PPS.size() - 1) / 3125;
+                TS_PPSAfter_tick = 0;
+                TS_PPSDiff_tick = LAPPD_PPS.at(LAPPD_PPS.size() - 1) / 3125;
+                TS_PPSMissing_tick = LAPPD_PPS.at(LAPPD_PPS.size() - 1) / 3125;
+                cout << "Last PPS is earlier than timestamp, before is the last, after is 0, diff is the last, missing is the last" << endl;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < LAPPD_PPS.size() - 1; i++)
+            {
+                if (LAPPD_PPS.at(i) / 3125 < LAPPDDataTimeStampUL.at(l) / 3125 && LAPPD_PPS.at(i + 1) / 3125 > LAPPDDataTimeStampUL.at(l) / 3125)
+                {
+                    TS_PPSBefore_tick = LAPPD_PPS.at(i) / 3125;
+                    TS_PPSAfter_tick = LAPPD_PPS.at(i + 1) / 3125;
+                    TS_PPSDiff_tick = LAPPD_PPS.at(i + 1) / 3125 - LAPPD_PPS.at(i) / 3125;
+                    ULong64_t DiffTick = (LAPPD_PPS.at(i + 1) - LAPPD_PPS.at(i)) / 3125 - 1000;
+                    TS_PPSMissing_tick = 3200000000 - DiffTick;
+                    cout << "Found PPS before and after the timestamp, before: " << TS_PPSBefore_tick << ", after: " << TS_PPSAfter_tick << ", diff: " << TS_PPSDiff_tick << ", missing: " << TS_PPSMissing_tick << endl;
+                    break;
+                }
+            }
+        }
+
         TimeStampRaw.push_back(LAPPDDataTimeStampUL.at(l) / 3125);
         BeamGateRaw.push_back(LAPPDDataBeamgateUL.at(l) / 3125);
         TimeStamp_ns.push_back(DriftCorrectedTS_ns);
@@ -582,6 +690,15 @@ vector<vector<ULong64_t>> fitInThisReset(
         // to get ps, should minus the TS_truncated_ps
         CTCTriggerIndex.push_back(matchedIndex);
         CTCTriggerTimeStamp_ns.push_back(CTCTrigger.at(matchedIndex));
+
+        BG_PPSBefore.push_back(BG_PPSBefore_tick);
+        BG_PPSAfter.push_back(BG_PPSAfter_tick);
+        BG_PPSDiff.push_back(BG_PPSDiff_tick);
+        BG_PPSMiss.push_back(BG_PPSMissing_tick);
+        TS_PPSBefore.push_back(TS_PPSBefore_tick);
+        TS_PPSAfter.push_back(TS_PPSAfter_tick);
+        TS_PPSDiff.push_back(TS_PPSDiff_tick);
+        TS_PPSMiss.push_back(TS_PPSMissing_tick);
     }
     ULong64_t totalEventNumber = LAPPDDataTimeStampUL.size();
     ULong64_t gotOrphanCount_out = gotOrphanCount;
@@ -594,7 +711,7 @@ vector<vector<ULong64_t>> fitInThisReset(
 
     vector<ULong64_t> FitInfo = {final_offset_ns, final_offset_ps_negative, gotOrphanCount_out, gotMin_mean_dev_noOrphan_out, increament_times_out, min_mean_dev_out, final_i_out, final_j_out, totalEventNumber, drift_out};
 
-    vector<vector<ULong64_t>> Result = {FitInfo, TimeStampRaw, BeamGateRaw, TimeStamp_ns, BeamGate_ns, TimeStamp_ps, BeamGate_ps, EventIndex, EventDeviation_ns, CTCTriggerIndex, CTCTriggerTimeStamp_ns, BeamGate_correction_tick, TimeStamp_correction_tick, LAPPD_PPS_interval_ticks};
+    vector<vector<ULong64_t>> Result = {FitInfo, TimeStampRaw, BeamGateRaw, TimeStamp_ns, BeamGate_ns, TimeStamp_ps, BeamGate_ps, EventIndex, EventDeviation_ns, CTCTriggerIndex, CTCTriggerTimeStamp_ns, BeamGate_correction_tick, TimeStamp_correction_tick, LAPPD_PPS_interval_ticks, BG_PPSBefore, BG_PPSAfter, BG_PPSDiff, BG_PPSMiss, TS_PPSBefore, TS_PPSAfter, TS_PPSDiff, TS_PPSMiss};
     return Result;
 }
 
@@ -993,6 +1110,14 @@ void offsetFit_MultipleLAPPD(string fileName, int fitTargetTriggerWord, bool tri
     long long BGCorrection_tick;
     long long TSCorrection_tick;
     ULong64_t LAPPD_PPS_interval_ticks;
+    ULong64_t BG_PPSBefore_tick;
+    ULong64_t BG_PPSAfter_tick;
+    ULong64_t BG_PPSDiff_tick;
+    ULong64_t BG_PPSMissing_tick;
+    ULong64_t TS_PPSBefore_tick;
+    ULong64_t TS_PPSAfter_tick;
+    ULong64_t TS_PPSDiff_tick;
+    ULong64_t TS_PPSMissing_tick;
     tOut->Branch("runNumber", &runNumber_out, "runNumber/I");
     tOut->Branch("subRunNumber", &subRunNumber_out, "subRunNumber/I");
     tOut->Branch("partFileNumber", &partFileNumber_out, "partFileNumber/I");
@@ -1025,6 +1150,14 @@ void offsetFit_MultipleLAPPD(string fileName, int fitTargetTriggerWord, bool tri
     tOut->Branch("BGCorrection_tick", &BGCorrection_tick, "BGCorrection_tick/l");
     tOut->Branch("TSCorrection_tick", &TSCorrection_tick, "TSCorrection_tick/l");
     tOut->Branch("LAPPD_PPS_interval_ticks", &LAPPD_PPS_interval_ticks, "LAPPD_PPS_interval_ticks/l");
+    tOut->Branch("BG_PPSBefore_tick", &BG_PPSBefore_tick, "BG_PPSBefore_tick/l");
+    tOut->Branch("BG_PPSAfter_tick", &BG_PPSAfter_tick, "BG_PPSAfter_tick/l");
+    tOut->Branch("BG_PPSDiff_tick", &BG_PPSDiff_tick, "BG_PPSDiff_tick/l");
+    tOut->Branch("BG_PPSMissing_tick", &BG_PPSMissing_tick, "BG_PPSMissing_tick/l");
+    tOut->Branch("TS_PPSBefore_tick", &TS_PPSBefore_tick, "TS_PPSBefore_tick/l");
+    tOut->Branch("TS_PPSAfter_tick", &TS_PPSAfter_tick, "TS_PPSAfter_tick/l");
+    tOut->Branch("TS_PPSDiff_tick", &TS_PPSDiff_tick, "TS_PPSDiff_tick/l");
+    tOut->Branch("TS_PPSMissing_tick", &TS_PPSMissing_tick, "TS_PPSMissing_tick/l");
     std::ofstream outputEvents("outputEvents.txt");
     for (auto it = ResultMap.begin(); it != ResultMap.end(); it++)
     {
@@ -1039,19 +1172,22 @@ void offsetFit_MultipleLAPPD(string fileName, int fitTargetTriggerWord, bool tri
         partFileNumber_out = std::stoi(key.substr(key.find("_", key.find("_") + 1) + 1, key.find("_", key.find("_", key.find("_") + 1) + 1) - key.find("_", key.find("_") + 1) - 1));
         LAPPD_ID_out = std::stoi(key.substr(key.find("_", key.find("_", key.find("_") + 1) + 1) + 1, key.size() - key.find("_", key.find("_", key.find("_") + 1) + 1) - 1));
         final_offset_ns_0 = Result[0][0];
-        final_offset_ns_1 = Result[14][0];
+        final_offset_ns_1 = Result[22][0];
         final_offset_ps_negative_0 = Result[0][1];
-        final_offset_ps_negative_1 = Result[14][1];
+        final_offset_ps_negative_1 = Result[22][1];
         gotOrphanCount_0 = Result[0][2];
-        gotOrphanCount_1 = Result[14][2];
+        gotOrphanCount_1 = Result[22][2];
         gotMin_mean_dev_noOrphan_0 = Result[0][3];
-        gotMin_mean_dev_noOrphan_1 = Result[14][3];
+        gotMin_mean_dev_noOrphan_1 = Result[22][3];
         increament_times_0 = Result[0][4];
-        increament_times_1 = Result[14][4];
+        increament_times_1 = Result[22][4];
         min_mean_dev_0 = Result[0][5];
-        min_mean_dev_1 = Result[14][5];
+        min_mean_dev_1 = Result[22][5];
         EventNumberInThisPartFile = Result[0][8];
 
+        //                                      0           1           2           3           4               5               6           7           8                    9           10                     11                          12                          13                      14              15          16          17          18          19              20          21
+        // vector<vector<ULong64_t>> Result = {FitInfo, TimeStampRaw, BeamGateRaw, TimeStamp_ns, BeamGate_ns, TimeStamp_ps, BeamGate_ps, EventIndex, EventDeviation_ns, CTCTriggerIndex, CTCTriggerTimeStamp_ns, BeamGate_correction_tick, TimeStamp_correction_tick, LAPPD_PPS_interval_ticks, BG_PPSBefore, BG_PPSAfter, BG_PPSDiff, BG_PPSMiss, TS_PPSBefore, TS_PPSAfter, TS_PPSDiff, TS_PPSMiss};
+        // any Result[x] , if x>13, x = x + 8
         for (int j = 0; j < Result[1].size(); j++)
         {
             long long BGTdiff = Result[4][j] - Result[10][j] - 325250;
@@ -1068,11 +1204,19 @@ void offsetFit_MultipleLAPPD(string fileName, int fitTargetTriggerWord, bool tri
             CTCTriggerIndex = Result[9][j];
             CTCTriggerTimeStamp_ns = Result[10][j];
             EventDeviation_ns_0 = Result[8][j];
-            EventDeviation_ns_1 = Result[20][j];
+            EventDeviation_ns_1 = Result[28][j];
             BGMinusTrigger_ns = BGTdiff;
             BGCorrection_tick = Result[11][j];
             TSCorrection_tick = Result[12][j];
             LAPPD_PPS_interval_ticks = Result[13][j];
+            BG_PPSBefore_tick = Result[14][j];
+            BG_PPSAfter_tick = Result[15][j];
+            BG_PPSDiff_tick = Result[16][j];
+            BG_PPSMissing_tick = Result[17][j];
+            TS_PPSBefore_tick = Result[18][j];
+            TS_PPSAfter_tick = Result[19][j];
+            TS_PPSDiff_tick = Result[20][j];
+            TS_PPSMissing_tick = Result[21][j];
             tOut->Fill();
         }
         outputOffset << runNumber_out << "\t" << subRunNumber_out << "\t" << partFileNumber_out << "\t" << 0 << "\t" << LAPPD_ID_out << "\t" << final_offset_ns_0 << "\t" << final_offset_ns_1 << "\t" << final_offset_ps_negative_0 << "\t" << final_offset_ps_negative_1 << "\t" << gotOrphanCount_0 << "\t" << gotOrphanCount_1 << "\t" << EventNumberInThisPartFile << "\t" << gotMin_mean_dev_noOrphan_0 << "\t" << gotMin_mean_dev_noOrphan_1 << "\t" << increament_times_0 << "\t" << increament_times_1 << "\t" << min_mean_dev_0 << "\t" << min_mean_dev_1 << std::endl;

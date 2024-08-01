@@ -133,4 +133,4 @@ printEventNumber 0
 printLAPPDNumber 1
 printEventWaveform 1
 
-
+LoadLAPPDMap 1

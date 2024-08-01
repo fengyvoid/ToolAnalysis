@@ -14,4 +14,7 @@ LAPPDTimeAlignment LAPPDTimeAlignment configfiles/LAPPDProcessedAna/ConfigPrePro
 LAPPDBaseline LAPPDBaseline configfiles/LAPPDProcessedAna/ConfigPreProcess
 LAPPDThresReco LAPPDThresReco configfiles/LAPPDProcessedAna/ConfigPlot
 
-myPhaseIITreeMaker PhaseIITreeMaker ./configfiles/BeamClusterAnalysis/PhaseIITreeMakerConfig
+FitRWMWaveform FitRWMWaveform ./configfiles/BeamClusterAnalysis/FitRWMWaveformConfig
+
+ANNIEEventTreeMaker ANNIEEventTreeMaker ./configfiles/BeamClusterAnalysis/ANNIEEventTreeMakerConfig
+#myPhaseIITreeMaker PhaseIITreeMaker ./configfiles/BeamClusterAnalysis/PhaseIITreeMakerConfig
