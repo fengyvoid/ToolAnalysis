@@ -221,6 +221,8 @@ private:
     vector<uint64_t> fLAPPD_TSPPSAfter;
     vector<uint64_t> fLAPPD_TSPPSDiff;
     vector<int> fLAPPD_TSPPSMissing;
+    vector<int> fLAPPD_BG_switchBit0;
+    vector<int> fLAPPD_BG_switchBit1;
 
     // LAPPD Reco Fill
     vector<uint64_t> fLAPPDPulseTimeStampUL;
@@ -228,6 +230,7 @@ private:
     vector<int> fLAPPD_IDs;
     vector<int> fChannelID;
     vector<double> fPulsePeakTime;
+    vector<double> fPulseHalfHeightTime;
     vector<double> fPulseCharge;
     vector<double> fPulsePeakAmp;
     vector<double> fPulseStart;
@@ -254,6 +257,10 @@ private:
     vector<double> fLAPPDHitP2PeakTime;
     vector<double> fLAPPDHitP1PeakAmp;
     vector<double> fLAPPDHitP2PeakAmp;
+    vector<double> fLAPPDHitP1HalfHeightTime;
+    vector<double> fLAPPDHitP2HalfHeightTime;
+    vector<double> fLAPPDHitP1HalfEndTime;
+    vector<double> fLAPPDHitP2HalfEndTime;
 
     // waveform
     vector<int> LAPPDWaveformChankey;
@@ -499,6 +506,7 @@ private:
     std::map<uint64_t, uint64_t> LAPPDTS_PPSAfter;
     std::map<uint64_t, uint64_t> LAPPDTS_PPSDiff;
     std::map<uint64_t, int> LAPPDTS_PPSMissing;
+    std::map<int, vector<int>> SwitchBitBG; 
 
     std::map<unsigned long, vector<vector<LAPPDPulse>>> lappdPulses;
     std::map<unsigned long, vector<LAPPDHit>> lappdHits;

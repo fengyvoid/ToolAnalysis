@@ -181,16 +181,19 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
     fANNIETree->Branch("LAPPD_TSCorrection", &fLAPPD_TSCorrection);
     fANNIETree->Branch("LAPPD_BGCorrection", &fLAPPD_BGCorrection);
     fANNIETree->Branch("LAPPD_OSInMinusPS", &fLAPPD_OSInMinusPS);
-    if(LAPPD_PPS_fill){
-    fANNIETree->Branch("LAPPD_BGPPSBefore", &fLAPPD_BGPPSBefore);
-    fANNIETree->Branch("LAPPD_BGPPSAfter", &fLAPPD_BGPPSAfter);
-    fANNIETree->Branch("LAPPD_BGPPSDiff", &fLAPPD_BGPPSDiff);
-    fANNIETree->Branch("LAPPD_BGPPSMissing", &fLAPPD_BGPPSMissing);
-    fANNIETree->Branch("LAPPD_TSPPSBefore", &fLAPPD_TSPPSBefore);
-    fANNIETree->Branch("LAPPD_TSPPSAfter", &fLAPPD_TSPPSAfter);
-    fANNIETree->Branch("LAPPD_TSPPSDiff", &fLAPPD_TSPPSDiff);
-    fANNIETree->Branch("LAPPD_TSPPSMissing", &fLAPPD_TSPPSMissing);
+    if (LAPPD_PPS_fill)
+    {
+      fANNIETree->Branch("LAPPD_BGPPSBefore", &fLAPPD_BGPPSBefore);
+      fANNIETree->Branch("LAPPD_BGPPSAfter", &fLAPPD_BGPPSAfter);
+      fANNIETree->Branch("LAPPD_BGPPSDiff", &fLAPPD_BGPPSDiff);
+      fANNIETree->Branch("LAPPD_BGPPSMissing", &fLAPPD_BGPPSMissing);
+      fANNIETree->Branch("LAPPD_TSPPSBefore", &fLAPPD_TSPPSBefore);
+      fANNIETree->Branch("LAPPD_TSPPSAfter", &fLAPPD_TSPPSAfter);
+      fANNIETree->Branch("LAPPD_TSPPSDiff", &fLAPPD_TSPPSDiff);
+      fANNIETree->Branch("LAPPD_TSPPSMissing", &fLAPPD_TSPPSMissing);
     }
+    fANNIETree->Branch("LAPPD_BG_switchBit0", &fLAPPD_BG_switchBit0);
+    fANNIETree->Branch("LAPPD_BG_switchBit1", &fLAPPD_BG_switchBit1);
   }
 
   // LAPPD reconstruction information
@@ -205,6 +208,7 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
     fANNIETree->Branch("LAPPD_PulseIDs", &fLAPPD_IDs);
     fANNIETree->Branch("LAPPD_ChannelID", &fChannelID);
     fANNIETree->Branch("LAPPD_PeakTime", &fPulsePeakTime);
+    fANNIETree->Branch("LAPPD_PulseHalfHeightTime", &fPulseHalfHeightTime);
     fANNIETree->Branch("LAPPD_PeakAmp", &fPulsePeakAmp);
     fANNIETree->Branch("LAPPD_Charge", &fPulseCharge);
     fANNIETree->Branch("LAPPD_PulseStart", &fPulseStart);
@@ -232,6 +236,10 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
     fANNIETree->Branch("LAPPDHitP2PeakTime", &fLAPPDHitP2PeakTime);
     fANNIETree->Branch("LAPPDHitP1PeakAmp", &fLAPPDHitP1PeakAmp);
     fANNIETree->Branch("LAPPDHitP2PeakAmp", &fLAPPDHitP2PeakAmp);
+    fANNIETree->Branch("LAPPDHitP1HalfHeightTime", &fLAPPDHitP1HalfHeightTime);
+    fANNIETree->Branch("LAPPDHitP2HalfHeightTime", &fLAPPDHitP2HalfHeightTime);
+    fANNIETree->Branch("LAPPDHitP1HalfEndTime", &fLAPPDHitP1HalfEndTime);
+    fANNIETree->Branch("LAPPDHitP2HalfEndTime", &fLAPPDHitP2HalfEndTime);
 
     /*
     fANNIETree->Branch("LAPPDWaveformChankey", &LAPPDWaveformChankey, "LAPPDWaveformChankey/I");
@@ -633,6 +641,8 @@ void ANNIEEventTreeMaker::ResetVariables()
   fLAPPD_TSCorrection.clear();
   fLAPPD_BGCorrection.clear();
   fLAPPD_OSInMinusPS.clear();
+  fLAPPD_BG_switchBit0.clear();
+  fLAPPD_BG_switchBit1.clear();
   // LAPPD_PPS_fill
   fLAPPD_BGPPSBefore.clear();
   fLAPPD_BGPPSAfter.clear();
@@ -649,6 +659,7 @@ void ANNIEEventTreeMaker::ResetVariables()
   fLAPPD_IDs.clear();
   fChannelID.clear();
   fPulsePeakTime.clear();
+  fPulseHalfHeightTime.clear();
   fPulseCharge.clear();
   fPulsePeakAmp.clear();
   fPulseStart.clear();
@@ -675,6 +686,10 @@ void ANNIEEventTreeMaker::ResetVariables()
   fLAPPDHitP2PeakTime.clear();
   fLAPPDHitP1PeakAmp.clear();
   fLAPPDHitP2PeakAmp.clear();
+  fLAPPDHitP1HalfHeightTime.clear();
+  fLAPPDHitP2HalfHeightTime.clear();
+  fLAPPDHitP1HalfEndTime.clear();
+  fLAPPDHitP2HalfEndTime.clear();
 
   LAPPDWaveformChankey.clear();
   waveformMaxValue.clear();
@@ -900,6 +915,7 @@ void ANNIEEventTreeMaker::ResetVariables()
   LAPPDTSCorrection.clear();
   LAPPDBGCorrection.clear();
   LAPPDOSInMinusPS.clear();
+  SwitchBitBG.clear();
   // LAPPD_PPS_fill
   LAPPDBG_PPSBefore.clear();
   LAPPDBG_PPSAfter.clear();
@@ -927,7 +943,15 @@ bool ANNIEEventTreeMaker::LoadEventInfo()
   m_data->Stores["ANNIEEvent"]->Get("RunNumber", fRunNumber);
   m_data->Stores["ANNIEEvent"]->Get("SubRunNumber", fSubrunNumber);
   m_data->Stores["ANNIEEvent"]->Get("PartNumber", fPartFileNumber);
-  m_data->Stores["ANNIEEvent"]->Get("EventNumber", fEventNumber);
+  bool gotEventNumber = m_data->Stores["ANNIEEvent"]->Get("EventNumber", fEventNumber);
+  if (!gotEventNumber)
+  {
+    uint32_t enm = 9998;
+    m_data->CStore.Get("EventNumberTree", enm);
+    cout << "ANNIEEventTreeMaker Tool: Not get the event number from ANNIEEvent, get from CStore: " << enm << endl;
+    fEventNumber = static_cast<int>(enm);
+  }
+
   m_data->Stores["ANNIEEvent"]->Get("PrimaryTriggerWord", fPrimaryTriggerWord);
   if (fPrimaryTriggerWord == 14)
     trigword = 5;
@@ -1226,6 +1250,7 @@ void ANNIEEventTreeMaker::LoadLAPPDInfo()
   m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSAfter", LAPPDTS_PPSAfter);
   m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSDiff", LAPPDTS_PPSDiff);
   m_data->Stores["ANNIEEvent"]->Get("LAPPDTS_PPSMissing", LAPPDTS_PPSMissing);
+  m_data->Stores["ANNIEEvent"]->Get("SwitchBitBG", SwitchBitBG);
 
   if (LAPPDDataMap.size() != 0)
   {
@@ -1264,6 +1289,18 @@ void ANNIEEventTreeMaker::FillLAPPDInfo()
     fLAPPD_TSPPSAfter.push_back(LAPPDTS_PPSAfter[key]);
     fLAPPD_TSPPSDiff.push_back(LAPPDTS_PPSDiff[key]);
     fLAPPD_TSPPSMissing.push_back(LAPPDTS_PPSMissing[key]);
+    // check if SwitchBitBG has the key
+    if (SwitchBitBG.find(psecData.LAPPD_ID) != SwitchBitBG.end())
+    {
+      if(SwitchBitBG[psecData.LAPPD_ID].size() != 2)
+      {
+        cout<<"ANNIEEventTreeMaker: SwitchBitBG size is not 2, LAPPD_ID: "<<psecData.LAPPD_ID<<", size: "<<SwitchBitBG[psecData.LAPPD_ID].size()<<endl;
+        continue;
+      }
+      fLAPPD_BG_switchBit0.push_back(SwitchBitBG[psecData.LAPPD_ID][0]);
+      fLAPPD_BG_switchBit1.push_back(SwitchBitBG[psecData.LAPPD_ID][1]);
+      continue;
+    }
   }
 }
 
@@ -1289,6 +1326,7 @@ void ANNIEEventTreeMaker::FillLAPPDPulse()
         fChannelID.push_back(thisPulse.GetChannelID());
         fPulseStripNum.push_back(stripno);
         fPulsePeakTime.push_back(thisPulse.GetTime());
+        fPulseHalfHeightTime.push_back(thisPulse.GetHalfHeightTime());
         fPulseCharge.push_back(thisPulse.GetCharge());
         fPulsePeakAmp.push_back(thisPulse.GetPeak());
         fPulseStart.push_back(thisPulse.GetLowRange());
@@ -1303,6 +1341,7 @@ void ANNIEEventTreeMaker::FillLAPPDPulse()
         fChannelID.push_back(thisPulse.GetChannelID());
         fPulseStripNum.push_back(stripno);
         fPulsePeakTime.push_back(thisPulse.GetTime());
+        fPulseHalfHeightTime.push_back(thisPulse.GetHalfHeightTime());
         fPulseCharge.push_back(thisPulse.GetCharge());
         fPulsePeakAmp.push_back(thisPulse.GetPeak());
         fPulseStart.push_back(thisPulse.GetLowRange());
@@ -1345,7 +1384,7 @@ void ANNIEEventTreeMaker::FillLAPPDHit()
         // fLAPPDHitP2StartTime.push_back(thisHit.GetPulse2StartTime());
         // fLAPPDHitP1EndTime.push_back(thisHit.GetPulse1LastTime());
         // fLAPPDHitP2EndTime.push_back(thisHit.GetPulse2LastTime());
-        //cout<<"Pulse 1 start time: "<<p1.GetLowRange()<<", Pulse 2 start time: "<<p2.GetLowRange()<<endl;
+        // cout<<"Pulse 1 start time: "<<p1.GetLowRange()<<", Pulse 2 start time: "<<p2.GetLowRange()<<endl;
         fLAPPDHitP1StartTime.push_back(p1.GetLowRange());
         fLAPPDHitP2StartTime.push_back(p2.GetLowRange());
         fLAPPDHitP1EndTime.push_back(p1.GetHiRange());
@@ -1355,6 +1394,12 @@ void ANNIEEventTreeMaker::FillLAPPDHit()
         fLAPPDHitP2PeakTime.push_back(p2.GetTime());
         fLAPPDHitP1PeakAmp.push_back(p1.GetPeak());
         fLAPPDHitP2PeakAmp.push_back(p2.GetPeak());
+
+        fLAPPDHitP1HalfHeightTime.push_back(p1.GetHalfHeightTime());
+        fLAPPDHitP2HalfHeightTime.push_back(p2.GetHalfHeightTime());
+
+        fLAPPDHitP1HalfEndTime.push_back(p1.GetHalfEndTime());
+        fLAPPDHitP2HalfEndTime.push_back(p2.GetHalfEndTime());
       }
     }
   }

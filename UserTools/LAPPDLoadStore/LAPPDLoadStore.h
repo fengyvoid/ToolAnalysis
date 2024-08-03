@@ -64,6 +64,7 @@ private:
     bool MultiLAPPDMap; // loading map of multiple LAPPDs from ANNIEEvent
     bool loadOffsets;
     bool LoadBuiltPPSInfo;
+    bool loadFromStoreDirectly;
     // Variables that you need in the tool
     int retval; // track the data parsing and meta parsing status
     int eventNo;
