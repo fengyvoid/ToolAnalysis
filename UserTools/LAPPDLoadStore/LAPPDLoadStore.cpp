@@ -43,6 +43,8 @@ bool LAPPDLoadStore::Initialise(std::string configfile, DataModel &data)
     m_variables.Get("loadOffsets", loadOffsets);
     LoadBuiltPPSInfo = true;
     m_variables.Get("LoadBuiltPPSInfo", LoadBuiltPPSInfo);
+    loadFromStoreDirectly = false;
+    m_variables.Get("loadFromStoreDirectly", loadFromStoreDirectly);
     // Control variables in this tool, initialized in this tool
     NonEmptyEvents = 0;
     NonEmptyDataEvents = 0;
@@ -78,6 +80,7 @@ bool LAPPDLoadStore::Initialise(std::string configfile, DataModel &data)
     ReadStore = 0;
 
     // get data file
+    /*
     if (ReadStore == 1)
     {
         // get data from a StoreFile in ANNIEEvent format
@@ -88,12 +91,12 @@ bool LAPPDLoadStore::Initialise(std::string configfile, DataModel &data)
     else if (ReadStore == 0)
     { // get data from previous chain, or m_data
         cout << "LAPPDStoreReadIn Using ANNIEevent or CStore" << endl;
-    }
+    }*/
     // Grab all pedestal files and prepare the map channel|pedestal-vector for substraction
     if (DoPedSubtract == 1)
     {
         PedestalValues = new std::map<unsigned long, vector<int>>;
-        if (ReadStorePdeFile)
+        /*if (ReadStorePdeFile)
         {
             m_data->Stores["PedestalFile"] = new BoostStore(false, 2);
             bool ret = false;
@@ -113,7 +116,7 @@ bool LAPPDLoadStore::Initialise(std::string configfile, DataModel &data)
                 m_data->Stores["PedestalFile"]->Get("PedestalMap", PedestalValues);
             }
         }
-        else
+        else*/
         {
             for (int i = 0; i < Nboards; i++)
             {
@@ -186,7 +189,7 @@ bool LAPPDLoadStore::Execute()
 
     if (MultiLAPPDMap)
     {
-        bool gotDataStream = m_data->Stores.at("ANNIEEvent")->Get("DataStreams", DataStreams);
+        bool gotDataStream = m_data->Stores["ANNIEEvent"]->Get("DataStreams", DataStreams);
         bool getMap = m_data->Stores["ANNIEEvent"]->Get("LAPPDDataMap", LAPPDDataMap);
         if (getMap && DataStreams["LAPPD"] == true && LAPPDDataMap.size() > 0)
         {
@@ -331,19 +334,6 @@ bool LAPPDLoadStore::Execute()
         // assume we only have PSEC data in ANNIEEvent, no PPS event.
         // loop the map, for each PSEC data, do the same loading and parsing.
         // load the waveform by using LAPPD_ID * board_number * channel_number as the key
-
-        /*
-        the format saved in the processed data file of ANNIEEvent is:
-            std::map<uint64_t, PsecData> LAPPDDataMap;
-            std::map<uint64_t, uint64_t> LAPPDBeamgate_ns;
-            std::map<uint64_t, uint64_t> LAPPDTimeStamps_ns; // data and key are the same
-            std::map<uint64_t, uint64_t> LAPPDTimeStampsRaw;
-            std::map<uint64_t, uint64_t> LAPPDBeamgatesRaw;
-            std::map<uint64_t, uint64_t> LAPPDOffsets;
-            std::map<uint64_t, int> LAPPDTSCorrection;
-            std::map<uint64_t, int> LAPPDBGCorrection;
-            std::map<uint64_t, int> LAPPDOSInMinusPS;
-        */
 
         // data was already loaded in the LoadData()
 
@@ -802,7 +792,8 @@ bool LAPPDLoadStore::LoadData()
     // so we need to loop the map to get all data and waveforms, using the LAPPD_ID, board number, channel number to form a global channel-waveform map
     // then loop all waveforms based on channel number
 
-    m_data->Stores["ANNIEEvent"]->GetEntry(eventNo);
+    if (loadFromStoreDirectly)
+        m_data->Stores["ANNIEEvent"]->GetEntry(eventNo);
     if (LAPPDStoreReadInVerbosity > 2)
         cout << "Got eventNo " << eventNo << endl;
 
@@ -814,14 +805,6 @@ bool LAPPDLoadStore::LoadData()
         m_data->vars.Set("StopLoop", 1);
         return false;
     }
-
-    // bool gotDataStream = m_data->Stores.at("ANNIEEvent")->Get("DataStreams", DataStreams);
-    // cout << "Inside, Got DataStreams = " << gotDataStream << ", ";
-    /*for (auto it = DataStreams.begin(); it != DataStreams.end(); ++it)
-    {
-        cout << "DataStream: " << it->first << " " << it->second << ", ";
-    }
-    cout << endl;*/
 
     // if (mergedEvent)
     //     DataStreams["LAPPD"] = true;
@@ -1574,7 +1557,6 @@ void LAPPDLoadStore::LoadOffsetsAndCorrections()
         Offsets_minus_ps[key][EventIndex] = static_cast<int>(final_offset_ps_negative_0);
         BGCorrections[key][EventIndex] = static_cast<int>(BGCorrection_tick) - 1000;
         TSCorrections[key][EventIndex] = static_cast<int>(TSCorrection_tick) - 1000;
-
 
         BG_PPSBefore_loaded[key][EventIndex] = BG_PPSBefore_tick;
         BG_PPSAfter_loaded[key][EventIndex] = BG_PPSAfter_tick;

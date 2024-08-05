@@ -263,7 +263,7 @@ void LAPPDThresReco::FillLAPPDPulse()
     if (LoadLAPPDMapInfo)
       LAPPD_ID = static_cast<int>((channel - 1000) / 60);
 
-    //cout << "FillLAPPDPulse LAPPD_ID: " << LAPPD_ID << " channel: " << channel << endl;
+    // cout << "FillLAPPDPulse LAPPD_ID: " << LAPPD_ID << " channel: " << channel << endl;
 
     // for this channel, find the pulses
     vector<LAPPDPulse> pulses = FindPulses(wave, LAPPD_ID, channel);
@@ -409,17 +409,87 @@ vector<LAPPDPulse> LAPPDThresReco::FindPulses(vector<double> wave, int LAPPD_ID,
         if (pulseSize > minPulseWidth)
         { // if the pulse is long enough
           double peakBinGaus = GaussianFit(binNumbers, amplitudes);
+          // use a linear interpolation to find the half peak time, from wave.at(pulseStart) to wave.at(peakBin), divide each bin 0.1 ns to 100 parts, 1ps per bin,find the bin number that the amplitude is half of the peakAmp
+          double halfPeakBin = pulseStart;
+          if (pulseStart > 10)
+            halfPeakBin = pulseStart - 10;
+          else
+            halfPeakBin = 0;
+          double targetAmp = peakAmp / 2;
+          for (int j = halfPeakBin; j < peakBin + 1; j++)
+          {
+            if (wave.at(j + 1) > targetAmp)
+            {
+              halfPeakBin = j;
+              break;
+            }
+          }
+          int halfPeak_ps = 0;
+          for (int j = 1; j < 100; j++)
+          {
+            double interpAmp = wave.at(halfPeakBin) + (wave.at(halfPeakBin + 1) - wave.at(halfPeakBin)) * (j / 100.0);
+            if (interpAmp > targetAmp)
+            {
+              double prevInterAmp = wave.at(halfPeakBin) + (wave.at(halfPeakBin + 1) - wave.at(halfPeakBin)) * ((j - 1) / 100.0);
+              if (abs(interpAmp - targetAmp) < abs(prevInterAmp - targetAmp))
+              {
+                halfPeak_ps = j;
+                break;
+              }
+              else
+              {
+                halfPeak_ps = j - 1;
+                break;
+              }
+            }
+          }
+
+          //from the peak bin, find half end time
+          double halfEndBin = peakBin;
+          for (int j = peakBin; j < wave.size(); j++)
+          {
+            if (wave.at(j) < targetAmp)
+            {
+              halfEndBin = j;
+              break;
+            }
+          }
+          int halfEnd_ps = 0;
+          for(int j = 1; j < 100; j++)
+          {
+            double interpAmp = wave.at(halfEndBin) + (wave.at(halfEndBin + 1) - wave.at(halfEndBin)) * (j / 100.0);
+            if (interpAmp < targetAmp)
+            {
+              double prevInterAmp = wave.at(halfEndBin) + (wave.at(halfEndBin + 1) - wave.at(halfEndBin)) * ((j - 1) / 100.0);
+              if (abs(interpAmp - targetAmp) < abs(prevInterAmp - targetAmp))
+              {
+                halfEnd_ps = j;
+                break;
+              }
+              else
+              {
+                halfEnd_ps = j - 1;
+                break;
+              }
+            }
+          }
 
           if (LAPPDThresRecoVerbosity > 1)
             cout << "inserting pulse on LAPPD ID =" << LAPPD_ID << " at time: " << peakBin * (25. / 256.) << "(" << peakBinGaus << ") with peakAmp: " << peakAmp << " from " << pulseStart << " to " << pulseStart + pulseSize << endl;
           if (useMaxTime)
           {
             LAPPDPulse thisPulse(LAPPD_ID, channel, peakBin * (25. / 256.), Q, peakAmp, pulseStart, pulseStart + pulseSize);
+            thisPulse.SetHalfHeightTime(halfPeakBin * (25. / 256.) + halfPeak_ps * 0.001 * 25 / 25.6);
+            thisPulse.SetHalfEndTime(halfEndBin * (25. / 256.) + halfEnd_ps * 0.001 * 25 / 25.6);
+            thisPulse.SetBaseline(0);
             pulses.push_back(thisPulse);
           }
           else
           {
             LAPPDPulse thisPulse(LAPPD_ID, channel, peakBinGaus * (25. / 256.), Q, peakAmp, pulseStart, pulseStart + pulseSize);
+            thisPulse.SetHalfHeightTime(halfPeakBin * (25. / 256.) + halfPeak_ps * 0.001 * 25 / 25.6);
+            thisPulse.SetHalfEndTime(halfEndBin * (25. / 256.) + halfEnd_ps * 0.001 * 25 / 25.6);
+            thisPulse.SetBaseline(0);
             pulses.push_back(thisPulse);
           }
           // tube ID: LAPPD_ID

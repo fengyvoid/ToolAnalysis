@@ -293,7 +293,9 @@ bool LoadANNIEEvent::Execute() {
  
 
 
-  if (global_evnr && !has_local){ m_data->Stores["ANNIEEvent"]->Set("EventNumber",global_ev); }
+  if (global_evnr && !has_local){ m_data->Stores["ANNIEEvent"]->Set("EventNumber",global_ev); 
+  m_data->CStore.Set("EventNumberTree",global_ev);
+  }
   global_ev++; 
 
   if ( current_entry_ >= total_entries_in_file_ ) {

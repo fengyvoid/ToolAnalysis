@@ -28,7 +28,6 @@ Pedinputfile2 ../Pedestals/PEDS_ACDC_board1.txt
 
 #LAPPDReorderData
 LAPPDReorderVerbosityLevel 0
-ReorderVerbosityLevel 0
 ReorderInputWavLabel RawLAPPDData
 ReorderOutputWavLabel LAPPDWaveforms
 DelayOffset 0

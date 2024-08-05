@@ -96,6 +96,21 @@ bool LAPPDStoreReorder::DoReorder()
             cout << "pushed meta26 = " << meta26 << ", with value at " << (meta26 * NUM_VECTOR_METADATA) + 10 << " is " << acdcmetadata.at((meta26 * NUM_VECTOR_METADATA) + 10) << endl;
         }
     }
+
+    vector<int> Smeta_BG;
+    for (int meta_bg = 0; meta_bg < NReadBoards.size(); meta_bg++)
+    {
+        unsigned short metaBG = acdcmetadata.at((meta_bg * NUM_VECTOR_METADATA) + 67);
+        Smeta_BG.push_back((metaBG & 0x7));
+        if (LAPPDReorderVerbosityLevel > 1)
+        {
+            cout << "Metaword entry " << meta_bg << " is " << Smeta_BG[meta_bg] << endl;
+            cout << "pushed meta_bg = " << meta_bg << ", with value at " << (meta_bg * NUM_VECTOR_METADATA) + 67 << " is " << acdcmetadata.at((meta_bg * NUM_VECTOR_METADATA) + 67) << endl;
+        }
+    }
+
+    std::map<int, vector<int>> Smeta_BG_map; // key is id, value is the switch bit for beamgate
+
     if (LAPPDReorderVerbosityLevel > 2)
         cout << "REORDER TIME!!!!   " << acdcmetadata.size() << " " << acdcmetadata.at(10) << " " << acdcmetadata.at(102) << " lappd data size is " << lappddata.size() << ", reordereddata size is " << reordereddata.size() << endl;
     map<unsigned long, vector<Waveform<double>>>::iterator itr;
@@ -119,24 +134,33 @@ bool LAPPDStoreReorder::DoReorder()
         // Get the current board and the respective meta word
         int bi = (int)channelno / 30;
         int LAPPDID = static_cast<int>((channelno % 1000) / 60);
-      //  if (LoadLAPPDMap)
-       // {
-            int beginningBoardIDofThisLAPPDID = NReadBoards.at(std::distance(ACDCReadedLAPPDID.begin(), std::find(ACDCReadedLAPPDID.begin(), ACDCReadedLAPPDID.end(), LAPPDID)));
-            bi = beginningBoardIDofThisLAPPDID + bi % 2;
-       // }else{
-       //     bi = bi%2;
-      //  }
-        if(LAPPDReorderVerbosityLevel>5)
+        //  if (LoadLAPPDMap)
+        // {
+        int beginningBoardIDofThisLAPPDID = NReadBoards.at(std::distance(ACDCReadedLAPPDID.begin(), std::find(ACDCReadedLAPPDID.begin(), ACDCReadedLAPPDID.end(), LAPPDID)));
+        bi = beginningBoardIDofThisLAPPDID + bi % 2;
+        // }else{
+        //     bi = bi%2;
+        //  }
+        if (LAPPDReorderVerbosityLevel > 5)
         {
-            //print the elements in NReadBoards, print LAPPDID;
+            // print the elements in NReadBoards, print LAPPDID;
             cout << "NReadBoards size is " << NReadBoards.size() << endl;
-            for(int i = 0; i < NReadBoards.size(); i++)
+            for (int i = 0; i < NReadBoards.size(); i++)
             {
                 cout << "NReadBoards[" << i << "] = " << NReadBoards[i] << endl;
             }
             cout << "LAPPDID = " << LAPPDID << endl;
         }
         unsigned short switchword = Smeta26[std::distance(NReadBoards.begin(), std::find(NReadBoards.begin(), NReadBoards.end(), bi))];
+        int switchBitBG = Smeta_BG[std::distance(NReadBoards.begin(), std::find(NReadBoards.begin(), NReadBoards.end(), bi))];
+
+        //check if key LAPPDID is already exist in Smeta_BG_map, if not, resize that vector to size 2
+        if (Smeta_BG_map.find(LAPPDID) == Smeta_BG_map.end())
+        {
+            Smeta_BG_map[LAPPDID] = vector<int>(2);
+        }
+        Smeta_BG_map[LAPPDID][bi%2] = switchBitBG;
+
         // Smeta26, 0 or 1, so switchword is the first timestmap or the second
         // Set the switchbit
         switchbit = (switchword & 0x7) * 32;
@@ -183,6 +207,12 @@ bool LAPPDStoreReorder::DoReorder()
     if (LAPPDReorderVerbosityLevel > 1)
     {
         cout << "LAPPDStoreReorder, reordered data size is " << reordereddata.size() << endl;
+    }
+
+    m_data->Stores["ANNIEEvent"]->Set("SwitchBitBG", Smeta_BG_map);
+    if(LAPPDReorderVerbosityLevel>0)
+    {
+        cout << "LAPPDStoreReorder:: insert SwitchBitBG map size is " << Smeta_BG_map.size() << endl;
     }
 
     return true;
