@@ -1,25 +1,12 @@
-# Configure files
-
 ***********************
-#Description
+# RingCounting
 **********************
 
-Configure files are simple text files for passing variables to the Tools.
+A ToolChain that classifies (MC) events as Single- or Multi-Ring. The RingCounting tool can also be used as
+a stand-alone tool, when loading events from csv files, produced by the CNNImage tool. 
 
-Text files are read by the Store class (src/Store) and automatically assigned to an internal map for the relevant Tool to use.
+All other tools used in the tool chain are prerequisites for the CNNImage tool.
 
+See UserTools/RingCounting and UserTools/CNNImage for more information.
 
-************************
-#Usage
-************************
-
-Any line starting with a "#" will be ignored by the Store, as will blank lines.
-
-Variables should be stored one per line as follows:
-
-
-Name Value #Comments 
-
-
-Note: Only one value is permitted per name and they are stored in a string stream and template cast back to the type given.
 
