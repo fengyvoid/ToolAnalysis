@@ -12,7 +12,7 @@ file.write('fillAllTriggers 1\n')
 file.write('fill_singleTrigger 0\n')
 file.write('fillLAPPDEventsOnly 0\n')
 file.write('TankCluster_fill 1\n')
-file.write('cluster_TankHitInfo_fill 1\n'
+file.write('cluster_TankHitInfo_fill 1\n')
 file.write('\n')
 file.write('OutputFile BeamCluster_' + str(run) + '_' + str(pi) + '_' + str(pf) + '.ntuple.root\n')
 file.write('TankClusterProcessing 1\n')
