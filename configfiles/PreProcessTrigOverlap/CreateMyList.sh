@@ -1,4 +1,4 @@
-if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 1 ]; then
       echo "Usage: ./CreateMyList.sh RUN"
       echo "Specified input variable must contain the run number"
       exit 1
@@ -7,9 +7,9 @@ fi
 RUN=$1
 DIR=/pnfs/annie/persistent/raw/raw/
 
-NUMFILES=$(ls -1q ${FILEDIR}/RAWDataR${RUN}* | wc -l)
+NUMFILES=$(ls -1q ${DIR}${RUN}/RAWDataR${RUN}* | wc -l)
 
-echo "NUMBER OF FILES IN ${FILEDIR}: ${NUMFILES}"
+echo "NUMBER OF FILES IN ${DIR}${RUN}: ${NUMFILES}"
 
 rm my_files.txt
 
