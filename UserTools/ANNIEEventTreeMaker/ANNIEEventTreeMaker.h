@@ -261,6 +261,8 @@ private:
     vector<double> fLAPPDHitP2HalfHeightTime;
     vector<double> fLAPPDHitP1HalfEndTime;
     vector<double> fLAPPDHitP2HalfEndTime;
+    vector<double> fLAPPDHitP1Charge;
+    vector<double> fLAPPDHitP2Charge;
 
     // waveform
     vector<int> LAPPDWaveformChankey;

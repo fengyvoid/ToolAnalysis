@@ -870,6 +870,11 @@ bool LAPPDLoadStore::LoadData()
                 }
                 ReadBoards = dat.BoardIndex;
                 Raw_buffer = dat.RawWaveform;
+                if(Raw_buffer.size() == 0 || ReadBoards.size() == 0)
+                {
+                    cout << "LAPPD Load Store, find Raw buffer size == 0 or ReadBoards size == 0" << endl;
+                    return false;
+                }
                 LAPPD_ID = dat.LAPPD_ID;
                 if (LAPPD_ID != SelectedLAPPD && SelectSingleLAPPD)
                     return false;
