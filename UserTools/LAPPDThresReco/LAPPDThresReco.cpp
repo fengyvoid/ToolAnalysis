@@ -180,16 +180,16 @@ bool LAPPDThresReco::Execute()
   // get the input LAPPD Data waveform;
   m_data->Stores["ANNIEEvent"]->Get(ThresRecoInputWaveLabel, lappdData);
 
-  if (LAPPDThresRecoVerbosity > 0)
+  if (LAPPDThresRecoVerbosity > 1)
     cout << "Start WaveformMaximaFinding" << endl;
   WaveformMaximaFinding(); // find the maxima of the waveforms
-  if (LAPPDThresRecoVerbosity > 0)
+  if (LAPPDThresRecoVerbosity > 1)
     cout << "Start FillLAPPDPulse" << endl;
   FillLAPPDPulse(); // find pulses
-  if (LAPPDThresRecoVerbosity > 0)
+  if (LAPPDThresRecoVerbosity > 1)
     cout << "Start FillLAPPDHit" << endl;
   FillLAPPDHit(); // find hits
-  if (LAPPDThresRecoVerbosity > 0)
+  if (LAPPDThresRecoVerbosity > 1)
     cout << "Reco Finished, start filling" << endl;
 
   m_data->Stores["ANNIEEvent"]->Set(ThresRecoOutputPulseLabel, lappdPulses);
@@ -201,7 +201,7 @@ bool LAPPDThresReco::Execute()
   m_data->Stores["ANNIEEvent"]->Set("waveformMaxTimeBin", waveformMaxTimeBin);
   eventNumber++; // operation in this loop finished, increase the event number
 
-  if (LAPPDThresRecoVerbosity > 0)
+  if (LAPPDThresRecoVerbosity > 1)
     cout << "Filling finished, printing to txt" << endl;
   if (printHitsTXT)
     PrintHitsToTXT(); // print hits to a txt file
@@ -299,7 +299,7 @@ void LAPPDThresReco::FillLAPPDHit()
     lappdHits[stripno] = lHits;
     numberOfHits += lHits.size();
   }
-  if (LAPPDThresRecoVerbosity > 0)
+  if (LAPPDThresRecoVerbosity > 1)
     cout << "LAPPDThresReco found hits: " << numberOfHits << endl;
 }
 
@@ -335,7 +335,7 @@ void LAPPDThresReco::PrintMRDinfoToTXT()
   int fNumClusterTracks = 0;
   for (int i = 0; i < (int)MrdTimeClusters.size(); i++)
     fNumClusterTracks += this->LoadMRDTrackReco(i);
-  if (LAPPDThresRecoVerbosity > 0)
+  if (LAPPDThresRecoVerbosity > 1)
     cout << "LAPPDThresReco found MRD tracks: " << fNumClusterTracks << endl;
   for (int i = 0; i < fMRDTrackAngle.size(); i++)
   {
@@ -371,7 +371,7 @@ vector<LAPPDPulse> LAPPDThresReco::FindPulses(vector<double> wave, int LAPPD_ID,
   vector<double> binNumbers;
   vector<double> amplitudes;
 
-  for (int i = 0; i < wave.size(); i++)
+  for (int i = 1; i < wave.size(); i++)
   {
     currentSig = wave.at(i);
     if (wave.at(i) > threshold)
@@ -379,7 +379,7 @@ vector<LAPPDPulse> LAPPDThresReco::FindPulses(vector<double> wave, int LAPPD_ID,
       if (!inPulse)
       {
         inPulse = true;
-        pulseStart = i;
+        pulseStart = i - 1;
         pulseSize = 1;
         peakBin = i;
         peakAmp = currentSig;
@@ -410,21 +410,27 @@ vector<LAPPDPulse> LAPPDThresReco::FindPulses(vector<double> wave, int LAPPD_ID,
         { // if the pulse is long enough
           double peakBinGaus = GaussianFit(binNumbers, amplitudes);
           // use a linear interpolation to find the half peak time, from wave.at(pulseStart) to wave.at(peakBin), divide each bin 0.1 ns to 100 parts, 1ps per bin,find the bin number that the amplitude is half of the peakAmp
-          double halfPeakBin = pulseStart;
+          double startBin = pulseStart;
           if (pulseStart > 10)
-            halfPeakBin = pulseStart - 10;
+            startBin = pulseStart - 10;
           else
-            halfPeakBin = 0;
+            startBin = 1;
           double targetAmp = peakAmp / 2;
-          for (int j = halfPeakBin; j < peakBin + 1; j++)
+          int stopBin = wave.size() - 1;
+          if (peakBin < wave.size() - 1)
+            stopBin = peakBin;
+
+          double halfPeakBin = startBin;
+          for (int j = startBin; j < stopBin; j++)
           {
-            if (wave.at(j + 1) > targetAmp)
+            halfPeakBin = j - 1;
+            if (wave.at(j) > targetAmp)
             {
-              halfPeakBin = j;
               break;
             }
           }
           int halfPeak_ps = 0;
+          double halfHeightAmp = 0;
           for (int j = 1; j < 100; j++)
           {
             double interpAmp = wave.at(halfPeakBin) + (wave.at(halfPeakBin + 1) - wave.at(halfPeakBin)) * (j / 100.0);
@@ -434,28 +440,32 @@ vector<LAPPDPulse> LAPPDThresReco::FindPulses(vector<double> wave, int LAPPD_ID,
               if (abs(interpAmp - targetAmp) < abs(prevInterAmp - targetAmp))
               {
                 halfPeak_ps = j;
+                halfHeightAmp = interpAmp;
                 break;
               }
               else
               {
                 halfPeak_ps = j - 1;
+                halfHeightAmp = prevInterAmp;
                 break;
               }
             }
           }
+          if (LAPPDThresRecoVerbosity > 0)
+            cout << "LAPPDThresReco: thres: " << threshold << " thres Start: " << pulseStart << " pulseStart Amp: " << wave.at(pulseStart) << " halfPeakBin: " << halfPeakBin << " halfPeakBin Amp: " << wave.at(halfPeakBin) << " peakBin: " << peakBin << " peakBin Amp: " << wave.at(peakBin) << " half height time: " << (halfPeakBin * (25. / 256.) + halfPeak_ps * 0.001 * 25 / 25.6) << " halfHeightAmp: " << halfHeightAmp << endl;
 
-          //from the peak bin, find half end time
+          // from the peak bin, find half end time
           double halfEndBin = peakBin;
-          for (int j = peakBin; j < wave.size(); j++)
+          for (int j = peakBin; j < wave.size() - 1; j++)
           {
+            halfEndBin = j - 1;
             if (wave.at(j) < targetAmp)
             {
-              halfEndBin = j;
               break;
             }
           }
           int halfEnd_ps = 0;
-          for(int j = 1; j < 100; j++)
+          for (int j = 1; j < 100; j++)
           {
             double interpAmp = wave.at(halfEndBin) + (wave.at(halfEndBin + 1) - wave.at(halfEndBin)) * (j / 100.0);
             if (interpAmp < targetAmp)
@@ -621,7 +631,7 @@ LAPPDHit LAPPDThresReco::MakeHit(LAPPDPulse pulse0, LAPPDPulse pulse1)
   double averageAmp = (pulse1.GetPeak() + pulse0.GetPeak()) / 2;
   double averageQ = (pulse1.GetCharge() + pulse0.GetCharge()) / 2;
 
-  if (LAPPDThresRecoVerbosity > 0)
+  if (LAPPDThresRecoVerbosity > 1)
   {
     cout << "Making Hit: " << endl;
     cout << "Pulse0: " << endl;
@@ -640,7 +650,7 @@ LAPPDHit LAPPDThresReco::MakeHit(LAPPDPulse pulse0, LAPPDPulse pulse1)
   int stripno1 = chan1->GetStripNum();
   if (stripno0 != stripno1)
   {
-    if (LAPPDThresRecoVerbosity > 0)
+    if (LAPPDThresRecoVerbosity > 1)
       cout << "Error: the two pulses are not on the same strip!" << endl;
     LAPPDHit hit;
     return hit;
@@ -656,7 +666,7 @@ LAPPDHit LAPPDThresReco::MakeHit(LAPPDPulse pulse0, LAPPDPulse pulse1)
     double transversePos = LAPPDEdgeWidth + stripWidth * (stripno0);
 
     // use the center position of the strip in mm
-    if (LAPPDThresRecoVerbosity > 0)
+    if (LAPPDThresRecoVerbosity > 1)
     {
       cout << "making hit from pulse0 on channel " << pulse0.GetChannelID() << ", strip " << stripno0 << endl;
       cout << "making hit from pulse1 on channel " << pulse1.GetChannelID() << ", strip " << stripno1 << endl;
@@ -675,7 +685,7 @@ LAPPDHit LAPPDThresReco::MakeHit(LAPPDPulse pulse0, LAPPDPulse pulse1)
 
     double arrivalTime = t0 - (t0 - t1 + 1) * 0.5;
 
-    if (LAPPDThresRecoVerbosity > 0)
+    if (LAPPDThresRecoVerbosity > 1)
       cout << "Position on LAPPD: " << parallelPos << " " << transversePos << endl;
 
     vector<double> positionOnLAPPD = {parallelPos, transversePos};
@@ -692,7 +702,7 @@ LAPPDHit LAPPDThresReco::MakeHit(LAPPDPulse pulse0, LAPPDPulse pulse1)
     double pulse1StartTime = pulse0.GetLowRange();
     double pulse2StartTime = pulse1.GetLowRange();
     // print tubeID
-    if (LAPPDThresRecoVerbosity > 0)
+    if (LAPPDThresRecoVerbosity > 1)
     {
       cout << "TubeID: " << tubeID << endl;
       cout << "average charge is " << averageQ << ", q/amplitude is " << averageQ / averageAmp << endl;

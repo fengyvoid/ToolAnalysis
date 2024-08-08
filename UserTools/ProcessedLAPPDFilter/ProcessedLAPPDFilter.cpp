@@ -289,8 +289,25 @@ bool ProcessedLAPPDFilter::GotANNIEEventAndSave(BoostStore *BS, string savePath)
   std::map<unsigned long, std::vector<Hit>> *HitsOriginal = nullptr;
   m_data->Stores["ANNIEEvent"]->Get("AuxHits", AuxHitsOriginal);
   m_data->Stores["ANNIEEvent"]->Get("Hits", HitsOriginal);
-  auto AuxHitsCopy = new std::map<unsigned long, std::vector<Hit>>(*AuxHitsOriginal);
-  auto HitsCopy = new std::map<unsigned long, std::vector<Hit>>(*HitsOriginal);
+
+  std::map<unsigned long, std::vector<Hit>> *AuxHitsCopy = nullptr;
+  if (!m_data->Stores["ANNIEEvent"]->Get("AuxHits", AuxHitsOriginal) )
+  {
+    std::cerr << "Warning: Could not retrieve AuxHits from ANNIEEvent or AuxHitsOriginal is nullptr. Creating empty AuxHits map." << std::endl;
+    AuxHitsCopy = new std::map<unsigned long, std::vector<Hit>>();
+  }else{
+    AuxHitsCopy = new std::map<unsigned long, std::vector<Hit>>(*AuxHitsOriginal);
+  }
+  std::map<unsigned long, std::vector<Hit>> *HitsCopy = nullptr;
+  if (!m_data->Stores["ANNIEEvent"]->Get("Hits", HitsOriginal))
+  {
+    std::cerr << "Warning: Could not retrieve Hits from ANNIEEvent or HitsOriginal is nullptr. Creating empty Hits map." << std::endl;
+    HitsCopy = new std::map<unsigned long, std::vector<Hit>>();
+  }else{
+    HitsCopy = new std::map<unsigned long, std::vector<Hit>>(*HitsOriginal);
+  }
+
+  
   BS->Set("AuxHits", AuxHitsCopy);
   BS->Set("Hits", HitsCopy);
 

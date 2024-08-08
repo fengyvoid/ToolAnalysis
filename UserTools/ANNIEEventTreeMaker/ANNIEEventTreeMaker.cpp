@@ -240,6 +240,8 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
     fANNIETree->Branch("LAPPDHitP2HalfHeightTime", &fLAPPDHitP2HalfHeightTime);
     fANNIETree->Branch("LAPPDHitP1HalfEndTime", &fLAPPDHitP1HalfEndTime);
     fANNIETree->Branch("LAPPDHitP2HalfEndTime", &fLAPPDHitP2HalfEndTime);
+    fANNIETree->Branch("LAPPDHitP1Charge", &fLAPPDHitP1Charge);
+    fANNIETree->Branch("LAPPDHitP2Charge", &fLAPPDHitP2Charge);
 
     /*
     fANNIETree->Branch("LAPPDWaveformChankey", &LAPPDWaveformChankey, "LAPPDWaveformChankey/I");
@@ -690,6 +692,8 @@ void ANNIEEventTreeMaker::ResetVariables()
   fLAPPDHitP2HalfHeightTime.clear();
   fLAPPDHitP1HalfEndTime.clear();
   fLAPPDHitP2HalfEndTime.clear();
+  fLAPPDHitP1Charge.clear();
+  fLAPPDHitP2Charge.clear();
 
   LAPPDWaveformChankey.clear();
   waveformMaxValue.clear();
@@ -1400,6 +1404,9 @@ void ANNIEEventTreeMaker::FillLAPPDHit()
 
         fLAPPDHitP1HalfEndTime.push_back(p1.GetHalfEndTime());
         fLAPPDHitP2HalfEndTime.push_back(p2.GetHalfEndTime());
+
+        fLAPPDHitP1Charge.push_back(p1.GetCharge());
+        fLAPPDHitP2Charge.push_back(p2.GetCharge());
       }
     }
   }
