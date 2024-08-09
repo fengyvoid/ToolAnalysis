@@ -21,7 +21,7 @@ stopEntries 10000000000
 
 DoPedSubtraction 1
 Nboards 6 #Number of pedestal files to be read in
-PedinputfileTXT ../Pedestals/LAPPD645839/P
+PedinputfileTXT ./Pedestals/LAPPD645839/P
 PSECinputfile /pnfs/annie/persistent/processed/LAPPD40Merged/FinalVersion_withRawTS/FilteredData_PMT_MRDtrack_noveto_15mV_7strips_3xxx_104
 
 ReadStorePdeFile 0
