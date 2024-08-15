@@ -46,6 +46,12 @@ bool LAPPDGausBaselineSubtraction::Execute(){
         vector<Waveform<double>> Vfwavs;
         int bi = (int)(channelno-LAPPDchannelOffset)/30;
 
+        // leave trigger channels unchanged
+        if (channelno == 1005 || channelno == 1035){
+            blsublappddata.insert(pair <int,vector<Waveform<double>>> (channelno,Vwavs));
+            continue;
+        }
+
         //loop over all Waveforms
         for(int i=0; i<Vwavs.size(); i++){
 		Waveform<double> bwav = Vwavs.at(i);

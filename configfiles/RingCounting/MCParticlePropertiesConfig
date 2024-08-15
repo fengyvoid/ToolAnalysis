@@ -1,0 +1,4 @@
+# MCParticleProperties configuration file
+
+verbosity 0
+hasGENIE true

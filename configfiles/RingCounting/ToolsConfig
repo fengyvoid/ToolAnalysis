@@ -1,1 +1,14 @@
+myLoadGeometry LoadGeometry ./configfiles/LoadGeometry/LoadGeometryConfig
+myLoadWCSim LoadWCSim ./configfiles/RingCounting/LoadWCSimConfig
+#myLoadWCSimLAPPD LoadWCSimLAPPD ./configfiles/RingCounting/LoadWCSimLAPPDConfig
+myLoadGenieEvent LoadGenieEvent ./configfiles/RingCounting/LoadGenieEventConfig
+myMCParticleProperties MCParticleProperties ./configfiles/RingCounting/MCParticlePropertiesConfig
+myMCRecoEventLoader MCRecoEventLoader ./configfiles/RingCounting/MCRecoEventLoaderConfig
+myDigitBuilder DigitBuilder ./configfiles/RingCounting/DigitBuilderConfig
+myTimeClustering TimeClustering ./configfiles/RingCounting/TimeClusteringConfig
+myFindMrdTracks FindMrdTracks ./configfiles/RingCounting/FindMrdTracksConfig
+myClusterFinder ClusterFinder ./configfiles/RingCounting/ClusterFinderConfig
+myClusterClassifiers ClusterClassifiers ./configfiles/RingCounting/ClusterClassifiersConfig
+myEventSelector EventSelector ./configfiles/RingCounting/EventSelectorConfig
+myCNNImage CNNImage ./configfiles/RingCounting/CNNImageConfig
 myRingCounting PythonScript configfiles/RingCounting/RingCountingConfig
