@@ -35,7 +35,7 @@ loadFromStoreDirectly 0
 #LAPPDLoadTXT
 
 DoPedSubtract 1
-LAPPDLoadTXTVerbosity 0
+LAPPDLoadTXTVerbosity 1
 #PedFileNameTXT ../Pedestals/LAPPD40/P
 PedFileNameTXT /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/PEDS_ACDC_board
 #DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2023-10-24/2023-10-24/LaserON_2300V_strip28/Ascii20232410_135201.txt

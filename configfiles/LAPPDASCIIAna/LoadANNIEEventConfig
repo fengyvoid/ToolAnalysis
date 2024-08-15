@@ -1,6 +1,0 @@
-verbose 1
-
-FileForListOfInputs configfiles/LAPPDProcessedAna/list.txt
-
-EventOffset 0
-GlobalEvNr 1

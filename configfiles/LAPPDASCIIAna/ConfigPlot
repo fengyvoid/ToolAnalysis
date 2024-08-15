@@ -129,7 +129,7 @@ BinHistNumber 100
 CanvasWidth 1000
 CanvasHeight 500
 
-maxDrawEventNumber 200
+maxDrawEventNumber 100
 
 DrawBinHist 1
 printEventNumber 0
