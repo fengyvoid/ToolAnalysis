@@ -74,7 +74,7 @@ bool LAPPDLoadTXT::Initialise(std::string configfile, DataModel &data)
 
 bool LAPPDLoadTXT::Execute()
 {
-  Log("LAPPDLoadTXT: Reading data file", v_message, LAPPDLoadTXTVerbosity);
+  Log("LAPPDLoadTXT: Reading data file", v_debug, LAPPDLoadTXTVerbosity);
   bool isFiltered = false;
   m_data->Stores["ANNIEEvent"]->Set("isFiltered", isFiltered);
   bool isBLsub = false;
@@ -235,8 +235,8 @@ void LAPPDLoadTXT::ReadData()
       }
 
       int pedsubValue = tempValue - theped;
-      if(LAPPDLoadTXTVerbosity>11)
-        cout<<"LAPPDLoadTXT: data value: "<<tempValue<<" pedestal value: "<<theped<<" pedsub value: "<<pedsubValue<<", inserted "<< 0.3 * ((double)pedsubValue)<<endl;
+      if (LAPPDLoadTXTVerbosity > 11)
+        cout << "LAPPDLoadTXT: data value: " << tempValue << " pedestal value: " << theped << " pedsub value: " << pedsubValue << ", inserted " << 0.3 * ((double)pedsubValue) << endl;
 
       if (sampleNo == 0)
       {
@@ -257,7 +257,12 @@ void LAPPDLoadTXT::ReadData()
     lineNumber++;
     if (sampleNo == 255)
     {
-      Log("LAPPDLoadTXT: Event " + std::to_string(eventNo) + " loaded", v_message, LAPPDLoadTXTVerbosity);
+      Log("LAPPDLoadTXT: Event " + std::to_string(eventNo) + " loaded", v_debug, LAPPDLoadTXTVerbosity);
+      if (DataFile.peek() == EOF) // 检查下一个字符是否为EOF
+      {
+        m_data->vars.Set("StopLoop", 1);
+        Log("LAPPDLoadTXT: End of data file reached, setting StopLoop to 1", 0, LAPPDLoadTXTVerbosity);
+      }
       break;
     }
   }

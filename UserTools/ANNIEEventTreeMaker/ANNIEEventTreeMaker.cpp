@@ -302,11 +302,8 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
     fANNIETree->Branch("MRDThrough", &fMRDThrough);
   }
 
-  if (fillCleanEventsOnly)
-  {
-    fANNIETree->Branch("eventStatusApplied", &fEventStatusApplied, "eventStatusApplied/I");
-    fANNIETree->Branch("eventStatusFlagged", &fEventStatusFlagged, "eventStatusFlagged/I");
-  }
+  fANNIETree->Branch("eventStatusApplied", &fEventStatusApplied, "eventStatusApplied/I");
+  fANNIETree->Branch("eventStatusFlagged", &fEventStatusFlagged, "eventStatusFlagged/I");
 
   // MC truth information for muons
   // Output to tree when MCTruth_fill = 1 in config
@@ -468,10 +465,11 @@ bool ANNIEEventTreeMaker::Execute()
 
   //****************************** fillCleanEventsOnly *************************************//
   //  If only clean events are built, return true for dirty events
+  auto get_flagsapp = m_data->Stores.at("RecoEvent")->Get("EventFlagApplied", fEventStatusApplied);
+  auto get_flags = m_data->Stores.at("RecoEvent")->Get("EventFlagged", fEventStatusFlagged);
+
   if (fillCleanEventsOnly)
   {
-    auto get_flagsapp = m_data->Stores.at("RecoEvent")->Get("EventFlagApplied", fEventStatusApplied);
-    auto get_flags = m_data->Stores.at("RecoEvent")->Get("EventFlagged", fEventStatusFlagged);
     // auto get_cutstatus = m_data->Stores.at("RecoEvent")->Get("EventCutStatus",fEventCutStatus);
     if (!get_flagsapp || !get_flags)
     {
@@ -1822,7 +1820,7 @@ void ANNIEEventTreeMaker::LoadMRDCluster()
       unsigned long detkey = thedetector->GetDetectorID();
 
       fMRDHitT.push_back(mrddigittimesthisevent.at(ThisClusterIndices.at(j)));
-      fMRDHitClusterIndex.push_back(i);  
+      fMRDHitClusterIndex.push_back(i);
       fMRDHitCharge.push_back(mrddigitchargesthisevent.at(ThisClusterIndices.at(j)));
       fMRDHitDigitPMT.push_back(mrddigitpmtsthisevent.at(ThisClusterIndices.at(j)));
       fMRDHitDetID.push_back(detkey);
