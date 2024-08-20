@@ -39,10 +39,10 @@ LAPPDLoadTXTVerbosity 1
 #PedFileNameTXT ../Pedestals/LAPPD40/P
 PedFileNameTXT /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/PEDS_ACDC_board
 #DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2023-10-24/2023-10-24/LaserON_2300V_strip28/Ascii20232410_135201.txt
-DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD1.0/Ascii20221702_100345.txt
+#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD1.0/Ascii20221702_100345.txt
 #DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD2.0/Ascii20221702_101913.txt
 #DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD3.0/Ascii20221702_103605.txt
-#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD3.5/Ascii20221702_142206.txt
+DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD3.5/Ascii20221702_142206.txt
 
 #LAPPDReorderData
 ReorderVerbosityLevel 0
