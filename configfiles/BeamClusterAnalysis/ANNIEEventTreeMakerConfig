@@ -8,7 +8,7 @@ cluster_TankHitInfo_fill 1
 
 TankReco_fill 0
 
-OutputFile ANNIETree.root
+OutputFile ANNIETree.ntuple.root
 TankClusterProcessing 1
 MRDClusterProcessing 1
 TriggerProcessing 1

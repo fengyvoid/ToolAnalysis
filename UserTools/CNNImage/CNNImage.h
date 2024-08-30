@@ -3,6 +3,10 @@
 
 #include <string>
 #include <fstream>
+#include <iostream>
+#include <vector>
+
+#include <boost/tokenizer.hpp>
 
 #include "TH2F.h"
 #include "TMath.h"
@@ -12,9 +16,11 @@
 
 
 /**
- * \class CNNImage
- *
- * The tool CNNImage is supposed to create custom csv input files for CNN classification processes. The framework relies on the EventDisplay tool and basically feeds that geometric information of the hit pattern into a matrix format
+* \class CNNImage
+*
+* The tool CNNImage is supposed to create custom csv input files for CNN classification processes.
+*    The framework relies on the EventDisplay tool and basically feeds that geometric information of the hit pattern
+*    into a matrix format
 *
 * $Author: M.Nieslony $
 * $Date: 2019/08/09 10:44:00 $
@@ -22,8 +28,6 @@
 */
 
 class CNNImage: public Tool {
-
-
  public:
 
   CNNImage(); ///< constructor for CNNImage class
@@ -35,6 +39,18 @@ class CNNImage: public Tool {
   void ConvertPositionTo2D_Top(Position xyz_pos, double &x, double &y); ///<Convert 3D position into 2D rolled up coordinates (top PMTs only)
   void ConvertPositionTo2D_Bottom(Position xyz_pos, double &x, double &y); ///<Convert 3D position into 2D rolled up coordinates (bottom PMTs only)
 
+  void GetPMTPositions(std::map<std::string, std::map<unsigned long, Detector*> >* Detectors);
+  void OrderPMTPositions();
+
+  void GetLAPPDPositions(std::map<std::string, std::map<unsigned long, Detector*> >* Detectors);
+  void OrderLAPPDPositions();
+
+  void StaticPMTBinning(std::map<unsigned long, std::pair<int, int> >&m);
+  void GeometricPMTBinning(std::map<unsigned long, std::pair<int, int> > &m, TH2F *geometric_hist);
+
+  void ReadoutMRD();
+
+  void PopulateHistInFilePMT(ofstream &outfile, TH2F* hist, int binX, int binY);
 
  private:
 
@@ -43,12 +59,19 @@ class CNNImage: public Tool {
   std::string detector_config;
   std::string data_mode;  //Charge, Time
   std::string save_mode;  //How is the PMT information supposed to be written out? Geometric/PMT-wise
+  bool use_LAPPDs;
+  bool write_to_file;
   int dimensionX;        //dimension of the CNN image in x-direction
   int dimensionY;        //dimension of the CNN image in y-direction
   int dimensionLAPPD;    //dimension of LAPPD CNN images (both directions, square)
   bool includeTopBottom;
-  bool isData; 
+
+  std::map<unsigned long, std::pair<int, int> > static_pmt_mapping;
+  std::map<unsigned long, std::pair<int, int> > geometric_pmt_mapping;
+
+  bool isData;
   int verbosity;
+
 
   // ANNIEEvent variables
   int runnumber;
@@ -70,6 +93,20 @@ class CNNImage: public Tool {
 
   // RecoEvent variables
   int nrings;
+
+  // Hists
+  TH2F *hist_cnn;
+  TH2F *hist_cnn_abs;
+  TH2F *hist_cnn_time;
+  TH2F *hist_cnn_time_first;
+  TH2F *hist_cnn_time_abs;
+  TH2F *hist_cnn_time_first_abs;
+  TH2F *hist_cnn_pmtwise;
+  TH2F *hist_cnn_abs_pmtwise;
+  TH2F *hist_cnn_time_pmtwise;
+  TH2F *hist_cnn_time_first_pmtwise;
+  TH2F *hist_cnn_time_abs_pmtwise;
+  TH2F *hist_cnn_time_first_abs_pmtwise;
 
   // Geometry variables
   double tank_radius;
@@ -97,6 +134,15 @@ class CNNImage: public Tool {
   int total_hits_pmts, total_hits_lappds;
   double min_time_pmts, max_time_pmts, min_time_lappds, max_time_lappds;
   double min_time_first_pmts, max_time_first_pmts, min_time_first_lappds, max_time_first_lappds;
+
+  // MRD information
+  int num_mrd_paddles_cluster=0;
+  int num_mrd_layers_cluster=0;
+  int num_mrd_conslayers_cluster=0;
+  int num_mrd_adjacent_cluster=0;
+  double mrd_padperlayer_cluster=0.;
+  bool layer_occupied_cluster[11] = {0};
+  double mrd_paddlesize_cluster[11];
 
   // Detectorkey layout organization
   std::map<unsigned long, int> channelkey_to_pmtid;
