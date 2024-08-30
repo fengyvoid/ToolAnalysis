@@ -282,7 +282,7 @@ double LAPPDTimeAlignment::Tfit(std::vector<double> *wf)
 
     if (oldLaser == 1)
     {
-      if (firstcross && pvol > T0signalmax && ppre < T0signalmax && i > 5 && i < 250)
+      if (firstcross && pvol > T0signalmax && ppre < T0signalmax && i > 1 && i < 255)
       { // trigger up to +200 2020 data
         if (FindT0VerbosityLevel > 1)
           cout << "Old t0 bin: " << i << endl;
@@ -310,13 +310,37 @@ double LAPPDTimeAlignment::Tfit(std::vector<double> *wf)
     else
     {
 
-      if (firstcross && pvol < T0signalmax && ppre > T0signalmax && i > 7 && i < 249)
+      if (firstcross && pvol < T0signalmax && ppre > T0signalmax && i > 1 && i < 255)
       {
 
         if (FindT0VerbosityLevel > 1)
           cout << "New t0 bin: " << i << endl;
 
         TGraph *edge = new TGraph();
+        int start = -7;
+        if(i<7) start = -i;
+        for (int j = start; j < 1; j++)
+        {
+          edge->SetPoint(j -start, (i + j) * 100., (wf->at(i + j)));
+        }
+
+        bool firstthreshcross = true;
+        for (int k = (i +start) * 100; k < (i + 1) * 100; k += 10)
+        {
+
+          if (FindT0VerbosityLevel == 3)
+            cout << k << " " << (edge->Eval((double)k, 0, "S")) << endl;
+
+          if (((edge->Eval((double)k, 0, "S")) < T0signalthreshold) && firstthreshcross)
+          {
+            if (FindT0VerbosityLevel > 2)
+              cout << "time: " << k << endl;
+            ttime = (double)k;
+            firstthreshcross = false;
+          }
+        }
+
+        /*
         for (int j = -7; j < 1; j++)
         {
           edge->SetPoint(j + 7, (i + j) * 100., (wf->at(i + j)));
@@ -337,6 +361,7 @@ double LAPPDTimeAlignment::Tfit(std::vector<double> *wf)
             firstthreshcross = false;
           }
         }
+        */
 
         firstcross = false;
       }

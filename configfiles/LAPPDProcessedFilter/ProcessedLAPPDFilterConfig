@@ -1,7 +1,7 @@
-FilterVerbosity 0
+FilterVerbosity 2
 
 saveAllLAPPDEvents 1
-savePMTClusterEvents 0
+savePMTClusterEvents 1
 
 filterType MRDtrack
 

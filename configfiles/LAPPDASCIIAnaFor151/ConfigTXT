@@ -42,8 +42,16 @@ LAPPDLoadTXTVerbosity 1
 #DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD3.0/Ascii20221702_103605.txt
 #DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD3.5/Ascii20221702_142206.txt
 
+
+# LAPPD 151
 PedFileNameTXT /pnfs/annie/persistent/processed/processed_EBV2_LAPPDFiltered/Pedestal/LAPPD151/pedestal_2024_8_15/P
-DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD151/2024-08-21/forcedTrigger_nd1p8/Ascii20240408_124303.txt
+#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD151/2024-08-21/forcedTrigger_nd1p8/Ascii20240408_124303.txt
+#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD151/2024-08-21/forcedTrigger_nd2p2/Ascii20240408_112022.txt
+#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD151/2024-08-21/forcedTrigger_nd2p0/Ascii20240408_114859.txt
+DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD151/2024-08-22/forcedTrigger_nd3p5/Ascii20240508_144350.txt
+#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD151/2024-08-22/forcedTrigger_nd4p5/Ascii20240508_153057.txt
+
+oldLaser 0
 
 #LAPPDReorderData
 ReorderVerbosityLevel 0

@@ -579,6 +579,16 @@ bool EBLoadRaw::LoadNextPMTData()
   m_data->CStore.Set("TankEntryNum", PMTEntryNum);
   PMTEntryNum++;
 
+  if(PMTEntryNum == PMTTotalEntries || PMTEntryNum > PMTTotalEntries)
+  {
+    Log("EBLoadRaw: PMTEntriesCompleted, force PMT matching", v_message, verbosityEBLoadRaw);
+    bool ForcePMTMatching = true;
+    m_data->CStore.Set("ForcePMTMatching", ForcePMTMatching);
+  }else{
+    bool ForcePMTMatching = false;
+    m_data->CStore.Set("ForcePMTMatching", ForcePMTMatching);
+  }
+
   return true;
 }
 

@@ -111,7 +111,7 @@ bool EBPMT::Execute()
 
     if (ChannelKey.size() == (NumWavesInCompleteSet - 1))
     {
-      Log("EBPMT: ChannelKey.size() = " + std::to_string(ChannelKey.size()) + " == NumWavesInCompleteSet - 1 = " + std::to_string(NumWavesInCompleteSet - 1), v_debug, verbosityEBPMT);
+      Log("EBPMT: ChannelKey.size() == (NumWavesInCompleteSet - 1), ChannelKey.size() = " + std::to_string(ChannelKey.size()) + " == NumWavesInCompleteSet - 1 = " + std::to_string(NumWavesInCompleteSet - 1), v_debug, verbosityEBPMT);
       if (AlmostCompleteWaveforms.find(PMTCounterTimeNs) != AlmostCompleteWaveforms.end())
       {
         Log("EBPMT: AlmostCompleteWaveforms size = " + std::to_string(AlmostCompleteWaveforms.size()), v_debug, verbosityEBPMT);
@@ -201,9 +201,14 @@ bool EBPMT::Execute()
 
   bool stopLoop = false;
   m_data->vars.Get("StopLoop", stopLoop);
-  int runNum = thisRunNum;
-  m_data->vars.Get("RunNumber", thisRunNum);
-  if (exeNum % exePerMatch == 0 || runNum != thisRunNum || stopLoop)
+  int runNum = thisRunNum; // run number saved in buffer as the previous run number
+  //m_data->vars.Get("RunNumber", thisRunNum);
+  m_data->CStore.Get("runNumber", thisRunNum);
+
+  bool ForcePMTMatching = false;
+  m_data->CStore.Get("ForcePMTMatching", ForcePMTMatching);
+  
+  if (exeNum % exePerMatch == 0 || runNum != thisRunNum || stopLoop || ForcePMTMatching)
   {
     Log("EBPMT: exeNum: " + std::to_string(exeNum) + " Doing Matching", v_message, verbosityEBPMT);
     if (matchToAllTriggers)

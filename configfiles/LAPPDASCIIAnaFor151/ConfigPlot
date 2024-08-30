@@ -18,7 +18,7 @@ FiltPeakInputWavLabel FiltLAPPDData
 RawPeakInputWavLabel LAPPDWaveforms
 BLSPeakInputWavLabel ABLSLAPPDData
 FindPeakOutLabel SimpleRecoLAPPDPulses
-TotThreshold 7.
+TotThreshold 15.
 MinimumTot 900.
 Deltat 100.
 
@@ -27,14 +27,6 @@ Nsamples 256
 SampleSize 100
 NChannels 60
 
-#LAPPDPlotWaveForms
-requireT0signal 0
-SaveByChannel 1
-#PlotWavLabel RawLAPPDData
-#PlotWavLabel LAPPDWaveforms
-PlotWavLabel BLsubtractedLAPPDData
-#PlotWavLabel AlignedLAPPDData
-switchBit 0
 
 outfile WaveForms_ablsub.root
 NHistos 200
@@ -69,7 +61,7 @@ LAPPDThresRecoVerbosity 0
 verbosity 0
 printHitsTXT 0
 threshold 10
-minPulseWidth 5
+minPulseWidth 10
 #thresRecoInputWaveLabel AlignedLAPPDData
 ThresRecoInputWaveLabel BLsubtractedLAPPDData
 #thresRecoInputWaveLabel LAPPDWaveforms
@@ -112,24 +104,29 @@ treeMakerOutputFileName LAPPDTree.root
 
 
 #LAPPDPlots
-LAPPDPlotInputWaveLabel BLsubtractedLAPPDData
+#LAPPDPlotInputWaveLabel BLsubtractedLAPPDData
 #LAPPDPlotInputWaveLabel LAPPDWaveforms
 #LAPPDPlotInputWaveLabel AlignedLAPPDData
 #LAPPDPlotInputWaveLabel RawLAPPDData
+LAPPDPlotInputWaveLabel BLandTALAPPDData
+
 LAPPDPlotsVerbosity 0
 CanvasXSubPlotNumber 2
 CanvasYSubPlotNumber 2
 canvasMargin 0.1
 drawHighThreshold 50
 drawLowThreshold -20
+BinHistMin -30
+BinHistMax  200
+BinHistNumber 100
 
 CanvasWidth 1000
 CanvasHeight 500
 
-maxDrawEventNumber 200
+maxDrawEventNumber 1000
 
 DrawBinHist 1
-printEventNumber 0
+printEventNumber 1000
 printLAPPDNumber 1
 printEventWaveform 1
 

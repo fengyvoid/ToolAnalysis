@@ -62,9 +62,18 @@ bool ProcessedLAPPDFilter::Initialise(std::string configfile, DataModel &data)
 bool ProcessedLAPPDFilter::Execute()
 {
 
+  uint64_t ETT = 0;
+  bool gotETT = m_data->Stores["ANNIEEvent"]->Get("EventTimeTank", ETT);
+  int pTW = 0;
+  bool gotpTW = m_data->Stores["ANNIEEvent"]->Get("PrimaryTriggerWord", pTW);
+  uint64_t pTT = 0;
+  bool gotpTT = m_data->Stores["ANNIEEvent"]->Get("PrimaryTriggerTime", pTT);
+  
+  Log("ProcessedLAPPDFilter: Got ETT: " + std::to_string(ETT) + "(" + std::to_string(gotETT) + "), pTW: " + std::to_string(pTW) + "(" + std::to_string(gotpTW) + "), pTT: " + std::to_string(pTT) + "(" + std::to_string(gotpTT) + ")", 1, FilterVerbosity);
+
   m_data->Stores.at("ANNIEEvent")->Get("DataStreams", DataStreams);
 
-  if (FilterVerbosity > 2)
+  if (FilterVerbosity > 3)
   {
     for (auto it = DataStreams.begin(); it != DataStreams.end(); ++it)
     {
@@ -338,8 +347,12 @@ bool ProcessedLAPPDFilter::GotANNIEEventAndSave(BoostStore *BS, string savePath)
   BS->Set("TriggerWord", TriggerWord);
   m_data->Stores["ANNIEEvent"]->Get("EventTimeMRD", EventTimeMRD);
   BS->Set("EventTimeMRD", EventTimeMRD);
+
   m_data->Stores["ANNIEEvent"]->Get("EventTimeTank", EventTimeTank);
+  Log("ProcessedLAPPDFilter: Got EventTimeTank: " + std::to_string(EventTimeTank), 1, FilterVerbosity);
   BS->Set("EventTimeTank", EventTimeTank);
+  Log("ProcessedLAPPDFilter: Set EventTimeTank: " + std::to_string(EventTimeTank), 1, FilterVerbosity);
+  
   m_data->Stores["ANNIEEvent"]->Get("MRDLoopbackTDC", MRDLoopbackTDC);
   BS->Set("MRDLoopbackTDC", MRDLoopbackTDC);
   m_data->Stores["ANNIEEvent"]->Get("MRDTriggerType", MRDTriggerType);

@@ -116,7 +116,7 @@ bool LAPPDStoreReorder::DoReorder()
     map<unsigned long, vector<Waveform<double>>>::iterator itr;
     for (itr = lappddata.begin(); itr != lappddata.end(); ++itr)
     {
-        if (LAPPDReorderVerbosityLevel > 1)
+        if (LAPPDReorderVerbosityLevel > 4)
             cout << "reordering channelno= " << itr->first << endl;
         unsigned long channelno = itr->first;
         int channelHere = channelno;
@@ -124,7 +124,7 @@ bool LAPPDStoreReorder::DoReorder()
         Channel *chan = _geom->GetChannel(channelHere);
         int stripno = chan->GetStripNum();
         vector<Waveform<double>> Vwavs = itr->second;
-        if (LAPPDReorderVerbosityLevel > 1)
+        if (LAPPDReorderVerbosityLevel > 5)
         {
             cout << "this channel has " << Vwavs.size() << " waveforms" << endl;
             if (Vwavs.size() > 0)
@@ -141,7 +141,7 @@ bool LAPPDStoreReorder::DoReorder()
         // }else{
         //     bi = bi%2;
         //  }
-        if (LAPPDReorderVerbosityLevel > 5)
+        if (LAPPDReorderVerbosityLevel > 6)
         {
             // print the elements in NReadBoards, print LAPPDID;
             cout << "NReadBoards size is " << NReadBoards.size() << endl;
@@ -201,16 +201,16 @@ bool LAPPDStoreReorder::DoReorder()
         }
 
         reordereddata.insert(pair<unsigned long, vector<Waveform<double>>>(LAPPDchannelOffset + channelno, Vrwav));
-        if (LAPPDReorderVerbosityLevel > 2)
-            cout << "inserted channelno: " << LAPPDchannelOffset + channelno << ", current reorded data size is " << reordereddata.size() << endl;
+        if (LAPPDReorderVerbosityLevel > 4)
+            cout << "inserted channelno: " << LAPPDchannelOffset + channelno << ", current reorded data size is " << reordereddata.size() << ", switchword = " << switchword << ", switchbit = " << switchbit << endl;
     }
-    if (LAPPDReorderVerbosityLevel > 1)
+    if (LAPPDReorderVerbosityLevel > 4)
     {
         cout << "LAPPDStoreReorder, reordered data size is " << reordereddata.size() << endl;
     }
 
     m_data->Stores["ANNIEEvent"]->Set("SwitchBitBG", Smeta_BG_map);
-    if(LAPPDReorderVerbosityLevel>0)
+    if(LAPPDReorderVerbosityLevel>3)
     {
         cout << "LAPPDStoreReorder:: insert SwitchBitBG map size is " << Smeta_BG_map.size() << endl;
     }

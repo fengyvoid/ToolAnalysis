@@ -16,16 +16,17 @@ BLSInputWavLabel AlignedLAPPDData
 
 LowBLfitrange 0
 HiBLfitrange  60
-TrigLowBLfitrange 110
-TrigHiBLfitrange  160
+TrigLowBLfitrange 50
+TrigHiBLfitrange  150
 BLSOutputWavLabel BLsubtractedLAPPDData
 oldLaserTrigAmpRange 40
 
 #LAPPDFindT0
 FindT0Verbosity 0
-#FindT0InputWavLabel BLsubtractedLAPPDData
+FindT0InputWavLabel BLsubtractedLAPPDData
 #FindT0InputWavLabel RawLAPPDData
-FindT0InputWavLabel LAPPDWaveforms
+#FindT0InputWavLabel LAPPDWaveforms
+
 OneBoardShift 0
 OneBoardShiftValue 16
 LoadLAPPDMap 1
@@ -40,10 +41,10 @@ T0signalthreshold -50.
 T0signalmaxOld 50. #Older data uses a positive going signal
 T0signalthresholdOld 80. #Older data uses a positive going signal
 T0offset  0
-FindT0OutputWavLabel AlignedLAPPDData
-GlobalShiftT0 0  # for 2023 data
-#GlobalShiftT0 80 # for 2024 data
+#FindT0OutputWavLabel AlignedLAPPDData
+FindT0OutputWavLabel BLandTALAPPDData
 
+GlobalShiftT0 80
 #Added by Marc
 Triggerdefault 5
 LAPPDOffset 1000

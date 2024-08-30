@@ -11,6 +11,7 @@ LAPPDStoreReorder LAPPDStoreReorder configfiles/LAPPDProcessedAna/ConfigStoreRea
 LAPPDTimeAlignment LAPPDTimeAlignment configfiles/LAPPDProcessedAna/ConfigPreProcess
 LAPPDBaseline LAPPDBaseline configfiles/LAPPDProcessedAna/ConfigPreProcess
 LAPPDThresReco LAPPDThresReco configfiles/LAPPDProcessedAna/ConfigPlot
+#LAPPDPlots LAPPDPlots configfiles/LAPPDProcessedAna/ConfigPlot
 
 FitRWMWaveform FitRWMWaveform ./configfiles/BeamClusterAnalysis/FitRWMWaveformConfig
 
