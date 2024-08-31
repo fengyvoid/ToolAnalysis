@@ -1,5 +1,5 @@
-verbosity 2
-TriggerMaskFile ./configfiles/EventBuilder/DefaultTriggerMask.txt
+verbosity 0
+#TriggerMaskFile ./configfiles/EventBuilder/DefaultTriggerMask.txt
 StoreTrigOverlap 1
 ReadTrigOverlap 0
 UseCStore 0
