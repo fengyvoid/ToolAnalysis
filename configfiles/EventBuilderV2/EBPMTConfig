@@ -1,0 +1,5 @@
+verbosityEBPMT 1
+matchTargetTrigger 5
+#matchTargetTrigger 46
+matchTolerance_ns 100
+matchToAllTriggers 1
