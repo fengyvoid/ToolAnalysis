@@ -177,3 +177,12 @@
 #include "SaveConfigInfo.h"
 #include "ReadConfigInfo.h"
 #include "BackTracker.h"
+#include "LAPPDLoadStore.h"
+#include "EBLoadRaw.h"
+#include "EBTriggerGrouper.h"
+#include "EBLAPPD.h"
+#include "EBPMT.h"
+#include "EBMRD.h"
+#include "EBSaver.h"
+#include "LAPPDTreeMaker.h"
+

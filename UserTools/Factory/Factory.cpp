@@ -169,5 +169,13 @@ if (tool=="PlotsTrackLengthAndEnergy") ret=new PlotsTrackLengthAndEnergy;
 if (tool=="SaveConfigInfo") ret=new SaveConfigInfo;
 if (tool=="ReadConfigInfo") ret=new ReadConfigInfo;
 if (tool=="BackTracker") ret=new BackTracker;
+if (tool=="EBLoadRaw") ret=new EBLoadRaw;
+if (tool=="EBTriggerGrouper") ret=new EBTriggerGrouper;
+if (tool=="EBLAPPD") ret=new EBLAPPD;
+if (tool=="EBPMT") ret=new EBPMT;
+if (tool=="EBMRD") ret=new EBMRD;
+if (tool=="EBSaver") ret=new EBSaver;
+if (tool=="LAPPDLoadStore") ret=new LAPPDLoadStore;
+if (tool=="LAPPDTreeMaker") ret=new LAPPDTreeMaker;
 return ret;
 }
