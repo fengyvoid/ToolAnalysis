@@ -177,5 +177,6 @@ if (tool=="EBMRD") ret=new EBMRD;
 if (tool=="EBSaver") ret=new EBSaver;
 if (tool=="LAPPDLoadStore") ret=new LAPPDLoadStore;
 if (tool=="LAPPDTreeMaker") ret=new LAPPDTreeMaker;
+if (tool=="ANNIEEventTreeMaker") ret=new ANNIEEventTreeMaker;
 return ret;
 }
