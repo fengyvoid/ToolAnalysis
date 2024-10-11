@@ -1,0 +1,5 @@
+LoadGeometry LoadGeometry configfiles/LAPPD_EB/ConfigGeo
+LoadRawData LoadRawData configfiles/LAPPD_EB/LoadRawDataConfig
+TriggerDataDecoder TriggerDataDecoder configfiles/LAPPD_EB/TriggerDataDecoderConfig
+LAPPDLoadStore LAPPDLoadStore configfiles/LAPPD_EB/Configs
+LAPPDTreeMaker LAPPDTreeMaker configfiles/LAPPD_EB/Configs
