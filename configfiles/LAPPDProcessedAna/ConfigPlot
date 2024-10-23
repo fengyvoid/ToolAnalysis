@@ -68,8 +68,8 @@ colorPalette 112
 LAPPDThresRecoVerbosity 0
 verbosity 0
 printHitsTXT 0
-threshold 10
-minPulseWidth 5
+threshold 15
+minPulseWidth 10
 #thresRecoInputWaveLabel AlignedLAPPDData
 ThresRecoInputWaveLabel BLsubtractedLAPPDData
 #thresRecoInputWaveLabel LAPPDWaveforms

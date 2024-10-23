@@ -7,6 +7,7 @@ groupBeam 1
 BeamTolerance 25000000
 
 groupCosmic 1
+CosmicTriggerMain 36
 
 groupLaser 1
 LaserTolerance 10000
@@ -15,7 +16,9 @@ groupLED 1
 #LEDTriggerMain 31
 #LEDTolerance 10000
 
-groupAmBe 0
+groupAmBe 1
+AmBeTolerance 10000 # 10us for testing
+AmBeTriggerMain 11
 
 groupPPS 0
 

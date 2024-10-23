@@ -1,11 +1,1 @@
-/pnfs/annie/persistent/users/yuefeng/EventBuildingV2/combined_v2/FilteredData/FilteredMRDNoVetoData_4804
-/pnfs/annie/persistent/users/yuefeng/EventBuildingV2/combined_v2/FilteredData/FilteredMRDNoVetoData_4805
-/pnfs/annie/persistent/users/yuefeng/EventBuildingV2/combined_v2/FilteredData/FilteredMRDNoVetoData_4825
-/pnfs/annie/persistent/users/yuefeng/EventBuildingV2/combined_v2/FilteredData/FilteredMRDNoVetoData_4831
-/pnfs/annie/persistent/users/yuefeng/EventBuildingV2/combined_v2/FilteredData/FilteredMRDNoVetoData_4839
-/pnfs/annie/persistent/users/yuefeng/EventBuildingV2/combined_v2/FilteredData/FilteredMRDNoVetoData_4843
-/pnfs/annie/persistent/users/yuefeng/EventBuildingV2/combined_v2/FilteredData/FilteredMRDNoVetoData_4852
-/pnfs/annie/persistent/users/yuefeng/EventBuildingV2/combined_v2/FilteredData/FilteredMRDNoVetoData_4856
-/pnfs/annie/persistent/users/yuefeng/EventBuildingV2/combined_v2/FilteredData/FilteredMRDNoVetoData_4880
-/pnfs/annie/persistent/users/yuefeng/EventBuildingV2/combined_v2/FilteredData/FilteredMRDNoVetoData_4890
-/pnfs/annie/persistent/users/yuefeng/EventBuildingV2/combined_v2/FilteredData/FilteredMRDNoVetoData_4897
+/pnfs/annie/persistent/processed/processed_EBV2_LAPPDFiltered/AnalysisFile/FilteredLAPPD_BeamSelection_Pedestal2022

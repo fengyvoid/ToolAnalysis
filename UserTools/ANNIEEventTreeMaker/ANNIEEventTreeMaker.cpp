@@ -43,6 +43,7 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
   m_variables.Get("SiPMPulseInfo_fill", SiPMPulseInfo_fill);
   m_variables.Get("LAPPDReco_fill", LAPPDReco_fill);
   m_variables.Get("LAPPD_PPS_fill", LAPPD_PPS_fill);
+  m_variables.Get("LAPPD_Waveform_fill", LAPPD_Waveform_fill);
 
   std::string output_filename = "ANNIEEventTree.root";
   m_variables.Get("OutputFile", output_filename);
@@ -261,6 +262,14 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
     fANNIETree->Branch("waveformMaxFoundNear", &waveformMaxFoundNear, "waveformMaxFoundNear/O"); // O is boolean
     fANNIETree->Branch("WaveformMaxNearing", &waveformMaxNearingValue, "WaveformMaxNearing/D");
     */
+  }
+
+  LAPPDWaveformInputLabel = "BLsubtractedLAPPDData";
+  m_variables.Get("LAPPDWaveformInputLabel", LAPPDWaveformInputLabel);
+  if (LAPPD_Waveform_fill)
+  {
+    //Log("ANNIEEventTreeMaker Tool: LAPPDWaveformInputLabel = " + LAPPDWaveformInputLabel, 0, ANNIEEventTreeMakerVerbosity);
+    fANNIETree->Branch("LAPPDWaveform", &fLAPPDWaveforms);
   }
 
   if (MRDHitInfo_fill)
@@ -520,6 +529,10 @@ bool ANNIEEventTreeMaker::Execute()
   if (LAPPDData_fill)
   {
     LoadLAPPDInfo();
+  }
+  if (LAPPD_Waveform_fill)
+  {
+    FillLAPPDWaveform();
   }
 
   //****************************** Fill MRD Info *************************************//
@@ -2406,4 +2419,55 @@ void ANNIEEventTreeMaker::RecoSummary()
   std::cout << "  FOM = " << fRecoVtxFOM << std::endl;
   std::cout << "  RecoStatus = " << fRecoStatus << std::endl;
   std::cout << std::endl;
+}
+
+void ANNIEEventTreeMaker::FillLAPPDWaveform()
+{
+  //Log("ANNIEEventTreeMaker: Filling LAPPD Waveform", 0, ANNIEEventTreeMakerVerbosity);
+
+  fLAPPDWaveforms.clear();
+
+  fLAPPDWaveforms =  std::vector<std::vector<double>>(60*3, std::vector<double>(256, 0.0));
+
+  // m_data->Stores["ANNIEEvent"]->Print(false);
+
+  // cout<<"LAPPDWaveformInputLabel: "<<LAPPDWaveformInputLabel<<endl;
+
+  std::map<unsigned long, vector<Waveform<double>>> lappdData; // waveform data
+  m_data->Stores["ANNIEEvent"]->Get(LAPPDWaveformInputLabel, lappdData);
+
+  std::map<unsigned long, vector<Waveform<double>>>::iterator it;
+  for (it = lappdData.begin(); it != lappdData.end(); it++)
+  {
+
+    // get the waveforms from channel number
+    unsigned long channel = it->first;
+    channel = channel % 1000 + 1000;
+    if ((channel % 1000) % 30 == 5)
+      continue;
+    Waveform<double> waveforms = it->second.at(0);
+    vector<double> wav = *waveforms.GetSamples();
+    vector<double> wave = wav;
+    if (wave.size() != 256)
+    {
+      cout << "ANNIEEventTreeMaker: Found a bug waveform at channel " << channel << ", size is " << wave.size() << endl;
+      continue;
+    }
+
+    for (int i = 0; i < wave.size(); i++)
+    {
+      wave.at(i) = -wave.at(i);
+    }
+
+    int LAPPD_ID = static_cast<int>((channel - 1000) / 60);
+    Channel *chan = geom->GetChannel(channel);
+    int stripno = chan->GetStripNum();
+    int stripSide = chan->GetStripSide();
+
+    // fill this waveform to fLAPPDWaveforms[LAPPD_ID][stripno+stripSide*30][n]
+    for (int n = 0; n < 256; n++)
+    {
+      fLAPPDWaveforms[LAPPD_ID*60+stripno + stripSide * 30][n] = wave.at(n);
+    }
+  }
 }

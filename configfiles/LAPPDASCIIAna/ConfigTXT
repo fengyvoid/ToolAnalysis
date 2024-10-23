@@ -22,8 +22,8 @@ stopEntries 10000000000
 DoPedSubtraction 1
 Nboards 6 #Number of pedestal files to be read in
 #PedinputfileTXT ../Pedestals/LAPPD645839/P
-#PedinputfileTXT ../Pedestals/LAPPD40/P
-#PedinputfileTXT /pnfs/annie/persistent/processed/processed_EBV2_LAPPDFiltered/Pedestal/2023_LAPPD40/P
+#PedFileNameTXT ../Pedestals/LAPPD40/P
+#PedinputfileTXT /pnfs/annie/persistent/processed/processed_EBV2_LAPPDFiltered/Pedestal/2022_LAPPD40/P
 
 
 ReadStorePdeFile 0
@@ -35,15 +35,24 @@ loadFromStoreDirectly 0
 DoPedSubtract 1
 LAPPDLoadTXTVerbosity 1
 #PedFileNameTXT ../Pedestals/LAPPD40/P
+PedFileNameTXT /exp/annie/app/users/yuefeng/MyTools/Pedestals/pedTest/P
+DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/20210107_singlePE_500k_in_parts/Data_20210701_1.txt
+
+
 #PedFileNameTXT /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/PEDS_ACDC_board
 #DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2023-10-24/2023-10-24/LaserON_2300V_strip28/Ascii20232410_135201.txt
 #DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD1.0/Ascii20221702_100345.txt
 #DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD2.0/Ascii20221702_101913.txt
-#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD3.0/Ascii20221702_103605.txt
-#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD3.5/Ascii20221702_142206.txt
+#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD40/2022-02-17_LaserNDfilterScan/NDfilterScan_15mV/OD4.0/merged_file.txt
 
-PedFileNameTXT /pnfs/annie/persistent/processed/processed_EBV2_LAPPDFiltered/Pedestal/LAPPD151/pedestal_2024_8_15/P
-DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD151/2024-08-21/forcedTrigger_nd1p8/Ascii20240408_124303.txt
+
+#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD64/sPE/LAPPD64_singlePE_selfTrig_HiStat_2022-10-13/singlePE/forceTrig/merged_file.txt
+#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD64/sPE/LAPPD64_ND20abs_25abs_30abs_2022-08-30/OD3.0abs/merged_file.txt
+#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD64/sPE/LAPPD64_singlePE_selfTrig_HiStat_2022-10-13/singlePE/selfTrig_DAC0_1.253V/merged_file.txt
+#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD64/sPE/LAPPD64_ND37abs_47abs_2022-09-01/OD4.7abs/merged_file.txt
+#DataFileName /pnfs/annie/persistent/LAPPDData/LAPPD64/sPE/LAPPD64_ND35abs_40abs_45abs_2022-08-31/OD4.0abs/merged_file.txt
+#PedFileNameTXT /pnfs/annie/persistent/LAPPDData/LAPPD64/sPE/pedestal/P
+
 
 #LAPPDReorderData
 ReorderVerbosityLevel 0

@@ -24,15 +24,15 @@
 #include "PsecData.h"
 #include "LAPPDPulse.h"
 #include "LAPPDHit.h"
+#include "Geometry.h"
 
 /**
  * \class ANNIEEventTreeMaker
  *
- * This is a blank template for a Tool used by the script to generate a new custom tool. Please fill out the description and author information.
  *
- * $Author: B.Richards $
- * $Date: 2019/05/28 10:44:00 $
- * Contact: b.richards@qmul.ac.uk
+ * $Author: Yue Feng $
+ * $Date: 2024/8 $
+ * Contact: yuef@iastate.edu
  */
 class ANNIEEventTreeMaker : public Tool
 {
@@ -63,6 +63,7 @@ public:
     void LoadMRDInfo();
     void LoadLAPPDRecoInfo();
     void FillLAPPDRecoInfo();
+    void FillLAPPDWaveform();
 
     bool FillMCTruthInfo();
     bool FillTankRecoInfo();
@@ -111,6 +112,7 @@ private:
     bool LAPPDData_fill = 1;
     bool RWMBRF_fill = 1;
     bool LAPPD_PPS_fill = 1;
+    bool LAPPD_Waveform_fill = 1;
 
     // What reco information will be filled
     bool MCTruth_fill = 0; // Output the MC truth information
@@ -271,6 +273,10 @@ private:
     vector<bool> waveformMaxFoundNear;
     vector<double> waveformMaxNearingValue;
     vector<int> waveformMaxTimeBinValue;
+
+    // LAPPD waveform Fill
+    string LAPPDWaveformInputLabel;
+    vector<vector<double>> fLAPPDWaveforms;
 
     // finished ****************************************************
 

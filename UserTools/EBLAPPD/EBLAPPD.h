@@ -9,14 +9,14 @@
 #include "BoostStore.h"
 
 /**
- * \class EBLAPPD
+ * \class EBPMT
  *
- * This is a blank template for a Tool used by the script to generate a new custom tool. Please fill out the description and author information.
+ * $Author: Yue Feng $
+ * $Date: 2024/04 $
+ * Contact: yuef@iaistate.edu
  *
- * $Author: B.Richards $
- * $Date: 2019/05/28 10:44:00 $
- * Contact: b.richards@qmul.ac.uk
  */
+
 class EBLAPPD : public Tool
 {
 
@@ -51,7 +51,6 @@ private:
     uint64_t LAPPDTS_PPSAfter;
     uint64_t LAPPDTS_PPSDiff;
     int LAPPDTS_PPSMissing;
-
 
     vector<uint64_t> MatchBuffer_LAPPDTimestamp_ns; // used to indexing data for unmatched
 

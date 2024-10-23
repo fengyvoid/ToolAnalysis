@@ -316,6 +316,7 @@ void TriggerDataDecoder::CheckForRunChange()
      std::stringstream ss_trig_overlap;
      ss_trig_overlap << "TrigOverlap_R"<<RunNumber<<"S"<<SubRunNumber<<"p"<<PartNumber;
      bool store_exist = StoreTrigOverlap.Initialise(ss_trig_overlap.str().c_str());
+     std::cout<<"Saving to "<<ss_trig_overlap.str().c_str()<<"store_exist = " << store_exist << endl;
      StoreTrigOverlap.Set("c1",c1);
      StoreTrigOverlap.Set("c2",c2);
      StoreTrigOverlap.Save(ss_trig_overlap.str().c_str());

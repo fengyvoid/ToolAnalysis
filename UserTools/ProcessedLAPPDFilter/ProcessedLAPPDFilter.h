@@ -75,7 +75,10 @@ private:
     double requirePulsedAmp;
     int requirePulsedStripNumber;
 
+    int passCutEventNumber;
     int PMTClusterEventNum;
+    bool RequireNoVeto;
+    bool RequireCherenkovCover;
 
 
 };

@@ -153,9 +153,9 @@ bool EBLoadRaw::Execute()
   // this is an old option, why?
   if (MRDTotalEntries > PMTTotalEntries)
   {
-    //FileCompleted = true;
+    // FileCompleted = true;
     Log("EBLoadRaw: Jumping to next file due to MRD entry is more than PMT entry.", v_message, verbosityEBLoadRaw);
-    //return true;
+    // return true;
   }
 
   if (LoadPMT && PMTEntryNum == PMTTotalEntries)
@@ -579,12 +579,15 @@ bool EBLoadRaw::LoadNextPMTData()
   m_data->CStore.Set("TankEntryNum", PMTEntryNum);
   PMTEntryNum++;
 
-  if(PMTEntryNum == PMTTotalEntries || PMTEntryNum > PMTTotalEntries)
+  if (PMTEntryNum == PMTTotalEntries)
   {
+    // force the PMT matching when all PMT entries are completed or PMTEntryNum is greater than PMTTotalEntries
     Log("EBLoadRaw: PMTEntriesCompleted, force PMT matching", v_message, verbosityEBLoadRaw);
     bool ForcePMTMatching = true;
     m_data->CStore.Set("ForcePMTMatching", ForcePMTMatching);
-  }else{
+  }
+  else
+  {
     bool ForcePMTMatching = false;
     m_data->CStore.Set("ForcePMTMatching", ForcePMTMatching);
   }
@@ -600,6 +603,19 @@ bool EBLoadRaw::LoadNextMRDData()
   m_data->CStore.Set("MRDData", MData, true);
   m_data->CStore.Set("MRDEntryNum", MRDEntryNum);
   MRDEntryNum++;
+
+  if (MRDEntryNum == MRDTotalEntries)
+  {
+    Log("EBLoadRaw: MRDEntriesCompleted, force MRD matching", v_message, verbosityEBLoadRaw);
+    bool ForceMRDMatching = true;
+    m_data->CStore.Set("ForceMRDMatching", ForceMRDMatching);
+  }
+  else
+  {
+    bool ForceMRDMatching = false;
+    m_data->CStore.Set("ForceMRDMatching", ForceMRDMatching);
+  }
+
   return true;
 }
 
@@ -612,6 +628,19 @@ bool EBLoadRaw::LoadNextLAPPDData()
   m_data->CStore.Set("LAPPDEntryNum", LAPPDEntryNum);
   m_data->CStore.Set("LAPPDanaData", true);
   LAPPDEntryNum++;
+
+  if (LAPPDEntryNum == LAPPDTotalEntries)
+  {
+    Log("EBLoadRaw: LAPPDEntriesCompleted, force LAPPD matching", v_message, verbosityEBLoadRaw);
+    bool ForceLAPPDMatching = true;
+    m_data->CStore.Set("ForceLAPPDMatching", ForceLAPPDMatching);
+  }
+  else
+  {
+    bool ForceLAPPDMatching = false;
+    m_data->CStore.Set("ForceLAPPDMatching", ForceLAPPDMatching);
+  }
+
   return true;
 }
 

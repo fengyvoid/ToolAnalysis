@@ -7,14 +7,14 @@
 #include "Tool.h"
 
 /**
- * \class EBTriggerGrouper
+ * \class EBPMT
  *
- * This is a blank template for a Tool used by the script to generate a new custom tool. Please fill out the description and author information.
+ * $Author: Yue Feng $
+ * $Date: 2024/04 $
+ * Contact: yuef@iaistate.edu
  *
- * $Author: B.Richards $
- * $Date: 2019/05/28 10:44:00 $
- * Contact: b.richards@qmul.ac.uk
  */
+
 class EBTriggerGrouper : public Tool
 {
 
@@ -41,8 +41,8 @@ public:
     // for all triggers in the buffer, if the trigger word is in the vector, and in the range of main TrigWord - the tolerance
     // push the trigger into the map
 
-    int CleanTriggerBuffer(); //remove very early trigger in TrigTimeForGroup and TrigWordForGroup
-    //only leave the latest maxNumAllowedInBuffer elements
+    int CleanTriggerBuffer(); // remove very early trigger in TrigTimeForGroup and TrigWordForGroup
+    // only leave the latest maxNumAllowedInBuffer elements
 
 private:
     string savePath;
@@ -63,7 +63,7 @@ private:
     std::map<int, std::vector<std::map<uint64_t, uint32_t>>> GroupedTriggersInTotal; // each map is a group of triggers, with the key is the target trigger word
     std::map<int, std::vector<int>> RunCodeInTotal;                                  //!! RunCode goes with each group, always modify them together
 
-    std::map<int, int> SkippedDuplicateTriggers; //if the trigger was duplicated in multiple entries, skip it. this record the skipped number of groups
+    std::map<int, int> SkippedDuplicateTriggers; // if the trigger was duplicated in multiple entries, skip it. this record the skipped number of groups
 
     int verbosityEBTG;
 

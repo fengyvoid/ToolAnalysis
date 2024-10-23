@@ -72,18 +72,18 @@ bool EBTriggerGrouper::Initialise(std::string configfile, DataModel &data)
   LEDTriggers = {33, 22, 31, 43, 46}; // in run 4792 [[22, 33], [4160001224, 4160001664]]
   m_data->CStore.Set("LEDTriggersUsedForGroupping", LEDTriggers);
 
-  AmBeTriggerMain = 15; // TODO: need to check
+  AmBeTriggerMain = 11; // TODO: need to check
   m_variables.Get("AmBeTriggerMain", AmBeTriggerMain);
   AmBeTolerance = 5000; // 2336 in Ambe run 4707
   m_variables.Get("AmBeTolerance", AmBeTolerance);
-  AmBeTriggers = {11, 12, 15, 19}; // in run 4707 [[19, 12, 15, 11], [21275647928, 21275647936, 21275647952, 21275650264]]
+  AmBeTriggers = {11, 12, 15, 19, 46}; // in run 4707 [[19, 12, 15, 11], [21275647928, 21275647936, 21275647952, 21275650264]]
   m_data->CStore.Set("AmBeTriggersUsedForGroupping", AmBeTriggers);
 
   NuMITriggerMain = 42;
   m_variables.Get("NuMITriggerMain", NuMITriggerMain);
   NuMITolerance = 100; // 100ns
   m_variables.Get("NuMITolerance", NuMITolerance);
-  NuMITriggers = {42, 46}; // 
+  NuMITriggers = {42, 46}; //
   m_data->CStore.Set("NuMITriggersUsedForGroupping", NuMITriggers);
 
   StoreTotalEntry = 0;
@@ -629,8 +629,8 @@ int EBTriggerGrouper::GroupByTrigWord(uint32_t mainTrigWord, vector<uint32_t> Tr
         cout << "EBTG: saving grouped trigger with currentRunCode = " << currentRunCode << endl;
       if (!trackTriggerExist)
         RunCodeInTotal[mainTrigWord].push_back(currentRunCode);
-        else
-          Log("EBTG: Found a duplicated main trigger with word " + std::to_string(mainTrigWord) + " and time " + std::to_string(trackTriggerTime) + ", so skip adding run code vector", v_message, verbosityEBTG);
+      else
+        Log("EBTG: Found a duplicated main trigger with word " + std::to_string(mainTrigWord) + " and time " + std::to_string(trackTriggerTime) + ", so skip adding run code vector", v_message, verbosityEBTG);
       totalGroupedTriggerNumber += ThisGroup.size();
       ThisGroup.clear();
       found = false;
@@ -730,9 +730,9 @@ int EBTriggerGrouper::FillByTrigWord(uint32_t mainTrigWord, vector<uint32_t> Tri
 
 int EBTriggerGrouper::CleanTriggerBuffer()
 {
-  //remove very early trigger in TrigTimeForGroup and TrigWordForGroup
-    //only leave the latest maxNumAllowedInBuffer elements
-    int removedNumber = 0;
+  // remove very early trigger in TrigTimeForGroup and TrigWordForGroup
+  // only leave the latest maxNumAllowedInBuffer elements
+  int removedNumber = 0;
   if (TrigTimeForGroup.size() > maxNumAllowedInBuffer)
   {
     removedNumber = TrigTimeForGroup.size() - maxNumAllowedInBuffer;

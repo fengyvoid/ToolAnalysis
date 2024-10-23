@@ -1,20 +1,35 @@
 # EBMRD
 
-EBMRD
+EBMRD tool is a part of Event Building version 2 tool chain.
+For reference slides, see:
+https://annie-docdb.fnal.gov/cgi-bin/sso/ShowDocument?docid=5633
+
+EBMRD match the MRD timestamp to grouped trigger, and save the matching results to CStore for EBSaver.
 
 ## Data
 
-Describe any data formats EBMRD creates, destroys, changes, or analyzes. E.G.
 
-**RawLAPPDData** `map<Geometry, vector<Waveform<double>>>`
-* Takes this data from the `ANNIEEvent` store and finds the number of peaks
+**PairedCTCTimeStamps**
+After matching, the matched trigger timestamp will be saved here. The key is the main trigger word for each run type.
+Saved as PairedMRDTriggerTimestamp in CStore.
+
+**PairedMRDTimeStamps**
+After matching, the matched MRD timestamp will be saved here. The key is the main trigger word for each run type.
+This and PairedCTCTimeStamps have the same index. A little bit dangerous, but overall works well.
+Saved as PairedMRDTimeStamps in CStore
 
 
 ## Configuration
 
-Describe any configuration variables for EBMRD.
+**matchTargetTrigger** 
+This gives which trigger word that the MRD timestamps should be matched to.
 
-```
-param1 value1
-param2 value2
-```
+**matchTolerance_ns**
+This gives the maximum allowed time tolerance between the MRD timestmap and the target trigger timestamp.
+
+**exePerMatch** 
+This gives how many loops need to be past for one matching between MRD timestmaps and target trigger timestamps.
+500 is generally fine with beam runs. 100 would be better for AmBe runs
+
+**matchToAllTriggers**
+1 or 0. 1 means match MRD timestamps to all possible triggers, 0 means only match to the target trigger.

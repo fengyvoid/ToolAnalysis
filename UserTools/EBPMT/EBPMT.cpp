@@ -202,12 +202,12 @@ bool EBPMT::Execute()
   bool stopLoop = false;
   m_data->vars.Get("StopLoop", stopLoop);
   int runNum = thisRunNum; // run number saved in buffer as the previous run number
-  //m_data->vars.Get("RunNumber", thisRunNum);
+  // m_data->vars.Get("RunNumber", thisRunNum);
   m_data->CStore.Get("runNumber", thisRunNum);
 
   bool ForcePMTMatching = false;
   m_data->CStore.Get("ForcePMTMatching", ForcePMTMatching);
-  
+
   if (exeNum % exePerMatch == 0 || runNum != thisRunNum || stopLoop || ForcePMTMatching)
   {
     Log("EBPMT: exeNum: " + std::to_string(exeNum) + " Doing Matching", v_message, verbosityEBPMT);

@@ -39,6 +39,11 @@ bool ProcessedLAPPDFilter::Initialise(std::string configfile, DataModel &data)
   // filterType = "PMTCluster"; // pmt cluster only
   m_variables.Get("filterType", filterType);
 
+  RequireNoVeto = false;
+  m_variables.Get("RequireNoVeto", RequireNoVeto);
+  RequireCherenkovCover = false;
+  m_variables.Get("RequireCherenkovCover", RequireCherenkovCover);
+
   FilteredMRD = new BoostStore(false, 2);        // all events with MRD in it //if gotEventMRD = true;
   FilteredMRDNoVeto = new BoostStore(false, 2);  // all events with MRD but no veto// if gotEventMRD && gotEventMRDNoVeto = true
   FilteredAllLAPPD = new BoostStore(false, 2);   // all events with LAPPD data
@@ -56,6 +61,8 @@ bool ProcessedLAPPDFilter::Initialise(std::string configfile, DataModel &data)
   PsecDataNumber = 0;
   PMTClusterEventNum = 0;
 
+  passCutEventNumber = 0;
+
   return true;
 }
 
@@ -68,8 +75,8 @@ bool ProcessedLAPPDFilter::Execute()
   bool gotpTW = m_data->Stores["ANNIEEvent"]->Get("PrimaryTriggerWord", pTW);
   uint64_t pTT = 0;
   bool gotpTT = m_data->Stores["ANNIEEvent"]->Get("PrimaryTriggerTime", pTT);
-  
-  Log("ProcessedLAPPDFilter: Got ETT: " + std::to_string(ETT) + "(" + std::to_string(gotETT) + "), pTW: " + std::to_string(pTW) + "(" + std::to_string(gotpTW) + "), pTT: " + std::to_string(pTT) + "(" + std::to_string(gotpTT) + ")", 1, FilterVerbosity);
+
+  Log("ProcessedLAPPDFilter: Got ETT: " + std::to_string(ETT) + "(" + std::to_string(gotETT) + "), pTW: " + std::to_string(pTW) + "(" + std::to_string(gotpTW) + "), pTT: " + std::to_string(pTT) + "(" + std::to_string(gotpTT) + ")", 5, FilterVerbosity);
 
   m_data->Stores.at("ANNIEEvent")->Get("DataStreams", DataStreams);
 
@@ -80,6 +87,156 @@ bool ProcessedLAPPDFilter::Execute()
       cout << "DataStream: " << it->first << " " << it->second << ", ";
     }
     cout << endl;
+  }
+  CurrentExeNumber += 1;
+
+  if (filterType == "BeamSelection")
+  {
+
+    if (CurrentExeNumber % 1000 == 0)
+    {
+      cout << "ProcessedLAPPDFilter: CurrentExeNumber: " << CurrentExeNumber << ", passCutEventNumber: " << passCutEventNumber << endl;
+    }
+
+    // require beam_good
+    int beam_good = 0;
+    bool gotBeamGood = m_data->Stores["ANNIEEvent"]->Get("beam_good", beam_good);
+    if (!gotBeamGood || beam_good != 1)
+    {
+      Log("ProcessedLAPPDFilter: not good beam" + std::to_string(beam_good), 2, FilterVerbosity);
+      return true;
+    }
+    // require there is PMT cluster
+    std::map<double, std::vector<Hit>> *m_all_clusters = nullptr;
+    bool get_clusters = m_data->CStore.Get("ClusterMap", m_all_clusters);
+    if (!get_clusters)
+    {
+      std::cout << "ProcessedLAPPDFilter tool: No clusters!" << std::endl;
+      return false;
+    }
+    if (!(static_cast<int>(m_all_clusters->size()) > 0))
+    {
+      Log("ProcessedLAPPDFilter: No PMT cluster found!", 4, FilterVerbosity);
+      return true;
+    }
+    // require there is a cluster in the prompt window (2us)
+    vector<double> clusterTimes;
+    std::map<double, std::vector<Hit>>::iterator it_cluster_pair;
+    it_cluster_pair = (*m_all_clusters).begin();
+    bool loop_map = true;
+    while (loop_map)
+    {
+      std::vector<Hit> cluster_hits = it_cluster_pair->second;
+      double thisClusterTime = it_cluster_pair->first;
+      clusterTimes.push_back(thisClusterTime);
+
+      it_cluster_pair++;
+      if (it_cluster_pair == (*m_all_clusters).end())
+        loop_map = false;
+    }
+    // loop clusterTimes, if there is not any element < 2000, return true
+    bool found = false;
+    for (auto it = clusterTimes.begin(); it != clusterTimes.end(); ++it)
+    {
+      if (*it < 2000)
+      {
+        found = true;
+        break;
+      }
+    }
+    if (!found)
+    {
+      Log("ProcessedLAPPDFilter: No cluster in the prompt window!", 2, FilterVerbosity);
+      return true;
+    }
+
+    // require the brightest cluster in the prompt window have charge balance < 0.2
+    std::map<double, double> ClusterChargeBalances;
+    std::map<double, double> ClusterMaxPEs;
+
+    bool got_ccb = m_data->Stores.at("ANNIEEvent")->Get("ClusterChargeBalances", ClusterChargeBalances);
+    bool got_cmpe = m_data->Stores.at("ANNIEEvent")->Get("ClusterMaxPEs", ClusterMaxPEs);
+
+    double max_charge = 0;
+    double max_charge_cluster_time = 0;
+    double max_charge_cluster_CB = 1;
+    for (auto it = ClusterMaxPEs.begin(); it != ClusterMaxPEs.end(); ++it)
+    {
+      double cluster_time = it->first;
+      double charge_balance = ClusterChargeBalances.at(cluster_time);
+
+      if (it->second > max_charge)
+      {
+        max_charge = it->second;
+        max_charge_cluster_time = cluster_time;
+        max_charge_cluster_CB = charge_balance;
+      }
+    }
+    if (max_charge_cluster_CB > 0.2)
+    {
+      Log("ProcessedLAPPDFilter: The brightest cluster in the prompt window has charge balance > 0.2", 2, FilterVerbosity);
+      return true;
+    }
+
+    // require there is a MRD track, and the MRD coincidence is true
+    int numtracksinev = m_data->Stores["MRDTracks"]->Get("NumMrdTracks", numtracksinev);
+    if (numtracksinev < 1)
+    {
+      Log("ProcessedLAPPDFilter: No MRD track!", 2, FilterVerbosity);
+      return true;
+    }
+
+    bool pmtmrdcoinc;
+    bool gotCoinc = m_data->Stores["RecoEvent"]->Get("PMTMRDCoinc", pmtmrdcoinc);
+    if (!gotCoinc || !pmtmrdcoinc)
+    {
+      Log("ProcessedLAPPDFilter: No PMT MRD coincidence!", 2, FilterVerbosity);
+      return true;
+    }
+
+    // require there is no veto
+    if (RequireNoVeto)
+    {
+      bool noVeto = false;
+      bool gotNoVeto = m_data->Stores.at("RecoEvent")->Get("NoVeto", noVeto);
+      if (!gotNoVeto || !noVeto)
+      {
+        Log("ProcessedLAPPDFilter: There is veto!", 2, FilterVerbosity);
+        return true;
+      }
+    }
+
+    // require the Cherenkov light cover the center LAPPD
+    if (RequireCherenkovCover)
+    {
+      vector<vector<int>> PMT_ChannelKeys = {{462, 428, 406, 412}};
+      std::vector<Hit> brightestCluster = m_all_clusters->at(max_charge_cluster_time);
+      vector<int> PMTKeys;
+      int coveredPMT = 0;
+      for (int i = 0; i < brightestCluster.size(); i++)
+      {
+        int channel_key = brightestCluster.at(i).GetTubeId();
+        PMTKeys.push_back(channel_key);
+        // check if channel_key is in PMT_ChannelKeys
+        for (int j = 0; j < PMT_ChannelKeys.size(); j++)
+        {
+          if (std::find(PMT_ChannelKeys[j].begin(), PMT_ChannelKeys[j].end(), channel_key) != PMT_ChannelKeys[j].end())
+          {
+            coveredPMT += 1;
+            break;
+          }
+        }
+      }
+      if (coveredPMT < 3)
+      {
+        Log("ProcessedLAPPDFilter: The Cherenkov light doesn't cover the center LAPPD!", 2, FilterVerbosity);
+        return true;
+      }
+    }
+
+
+    GotANNIEEventAndSave(FilteredPMTCluster, PMTClusterDataName);
+    passCutEventNumber += 1;
   }
 
   if (filterType == "MRDtrack")
@@ -108,7 +265,7 @@ bool ProcessedLAPPDFilter::Execute()
       return true;
     }
 
-    CurrentExeNumber += 1;
+    
 
     std::map<uint64_t, uint64_t> LAPPDBeamgate_ns;
     m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
@@ -168,7 +325,6 @@ bool ProcessedLAPPDFilter::Execute()
 
   if (filterType == "PMTCluster")
   {
-    CurrentExeNumber += 1;
     std::map<uint64_t, uint64_t> LAPPDBeamgate_ns;
     m_data->Stores["ANNIEEvent"]->Get("LAPPDBeamgate_ns", LAPPDBeamgate_ns);
     PsecDataNumber += LAPPDBeamgate_ns.size();
@@ -249,6 +405,13 @@ bool ProcessedLAPPDFilter::Finalise()
   FilteredAllLAPPD->Delete();
   FilteredPMTCluster->Delete();
 
+  if (filterType == "BeamSelection")
+  {
+    cout << " ProcessedLAPPDFilter: Finalise" << endl;
+    cout << "Current exe number: " << CurrentExeNumber << endl;
+    cout << "Got number of Event: " << passCutEventNumber << endl;
+  }
+
   if (filterType == "MRDtrack")
   {
     cout << "Current Run " << currentRunNumber << endl;
@@ -300,11 +463,13 @@ bool ProcessedLAPPDFilter::GotANNIEEventAndSave(BoostStore *BS, string savePath)
   m_data->Stores["ANNIEEvent"]->Get("Hits", HitsOriginal);
 
   std::map<unsigned long, std::vector<Hit>> *AuxHitsCopy = nullptr;
-  if (!m_data->Stores["ANNIEEvent"]->Get("AuxHits", AuxHitsOriginal) )
+  if (!m_data->Stores["ANNIEEvent"]->Get("AuxHits", AuxHitsOriginal))
   {
     std::cerr << "Warning: Could not retrieve AuxHits from ANNIEEvent or AuxHitsOriginal is nullptr. Creating empty AuxHits map." << std::endl;
     AuxHitsCopy = new std::map<unsigned long, std::vector<Hit>>();
-  }else{
+  }
+  else
+  {
     AuxHitsCopy = new std::map<unsigned long, std::vector<Hit>>(*AuxHitsOriginal);
   }
   std::map<unsigned long, std::vector<Hit>> *HitsCopy = nullptr;
@@ -312,11 +477,12 @@ bool ProcessedLAPPDFilter::GotANNIEEventAndSave(BoostStore *BS, string savePath)
   {
     std::cerr << "Warning: Could not retrieve Hits from ANNIEEvent or HitsOriginal is nullptr. Creating empty Hits map." << std::endl;
     HitsCopy = new std::map<unsigned long, std::vector<Hit>>();
-  }else{
+  }
+  else
+  {
     HitsCopy = new std::map<unsigned long, std::vector<Hit>>(*HitsOriginal);
   }
 
-  
   BS->Set("AuxHits", AuxHitsCopy);
   BS->Set("Hits", HitsCopy);
 
@@ -352,7 +518,7 @@ bool ProcessedLAPPDFilter::GotANNIEEventAndSave(BoostStore *BS, string savePath)
   Log("ProcessedLAPPDFilter: Got EventTimeTank: " + std::to_string(EventTimeTank), 1, FilterVerbosity);
   BS->Set("EventTimeTank", EventTimeTank);
   Log("ProcessedLAPPDFilter: Set EventTimeTank: " + std::to_string(EventTimeTank), 1, FilterVerbosity);
-  
+
   m_data->Stores["ANNIEEvent"]->Get("MRDLoopbackTDC", MRDLoopbackTDC);
   BS->Set("MRDLoopbackTDC", MRDLoopbackTDC);
   m_data->Stores["ANNIEEvent"]->Get("MRDTriggerType", MRDTriggerType);

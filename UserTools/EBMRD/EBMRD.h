@@ -7,14 +7,14 @@
 #include "Tool.h"
 
 /**
- * \class EBMRD
+ * \class EBPMT
  *
- * This is a blank template for a Tool used by the script to generate a new custom tool. Please fill out the description and author information.
+ * $Author: Yue Feng $
+ * $Date: 2024/04 $
+ * Contact: yuef@iaistate.edu
  *
- * $Author: B.Richards $
- * $Date: 2019/05/28 10:44:00 $
- * Contact: b.richards@qmul.ac.uk
  */
+
 class EBMRD : public Tool
 {
 
@@ -42,19 +42,17 @@ private:
 
     std::map<uint64_t, std::vector<std::pair<unsigned long, int>>> MRDEvents; // Key: {MTCTime}, value: "WaveMap" with key (CardID,ChannelID), value FinishedWaveform
     std::map<uint64_t, std::string> MRDEventTriggerTypes;                     // Key: {MTCTime}, value: string noting what type of trigger occured for the event
-    std::map<uint64_t, int> MRDBeamLoopback;                          // Key: {MTCTime}, value: string noting what type of trigger occured for the event
+    std::map<uint64_t, int> MRDBeamLoopback;                                  // Key: {MTCTime}, value: string noting what type of trigger occured for the event
     std::map<uint64_t, int> MRDCosmicLoopback;                                // KEY: {MTCTime}, value: Cosmic loopback TDC value
 
     std::map<uint64_t, std::vector<std::pair<unsigned long, int>>> MRDEventsBuffer;
 
     bool NewMRDDataAvailable;
 
-    std::map<int,vector<uint64_t>> PairedCTCTimeStamps;
-    std::map<int,vector<int>> PairedMRD_TriggerIndex;
-    std::map<int,vector<uint64_t>> PairedMRDTimeStamps;
+    std::map<int, vector<uint64_t>> PairedCTCTimeStamps;
+    std::map<int, vector<int>> PairedMRD_TriggerIndex;
+    std::map<int, vector<uint64_t>> PairedMRDTimeStamps;
     std::map<uint64_t, int> MRDHitMapRunCode; // Key: {MTCTime}, value: RunCode
-
-
 
     bool matchToAllTriggers;
 

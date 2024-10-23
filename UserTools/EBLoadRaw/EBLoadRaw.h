@@ -12,14 +12,14 @@
 #include "Store.h"
 
 /**
- * \class EBLoadRaw
+ * \class EBPMT
  *
- * This is a blank template for a Tool used by the script to generate a new custom tool. Please fill out the description and author information.
+ * $Author: Yue Feng $
+ * $Date: 2024/04 $
+ * Contact: yuef@iaistate.edu
  *
- * $Author: B.Richards $
- * $Date: 2019/05/28 10:44:00 $
- * Contact: b.richards@qmul.ac.uk
  */
+
 class EBLoadRaw : public Tool
 {
 
@@ -74,7 +74,6 @@ private:
     bool LAPPDEntriesCompleted;
     bool CTCEntriesCompleted;
     bool usingTriggerOverlap;
-
 
     int CTCEntryNum;
     int PMTEntryNum;

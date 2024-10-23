@@ -120,19 +120,19 @@ LAPPDPlotsVerbosity 0
 CanvasXSubPlotNumber 2
 CanvasYSubPlotNumber 2
 canvasMargin 0.1
-drawHighThreshold 200
-drawLowThreshold -50
-BinHistMin -30
-BinHistMax  200
+drawHighThreshold 50
+drawLowThreshold -10
+BinHistMin -10
+BinHistMax  50
 BinHistNumber 100
 
 CanvasWidth 1000
 CanvasHeight 500
 
-maxDrawEventNumber 1000
+maxDrawEventNumber 100
 
 DrawBinHist 1
-printEventNumber 1000
+printEventNumber 50
 printLAPPDNumber 1
 printEventWaveform 1
 

@@ -81,8 +81,10 @@ bool EBMRD::Execute()
   m_data->vars.Get("StopLoop", stopLoop);
   int runNum = thisRunNum;
   m_data->vars.Get("RunNumber", thisRunNum);
+  bool ForceMRDMatching = false;
+  m_data->CStore.Get("ForceMRDMatching", ForceMRDMatching);
 
-  if (exeNum % exePerMatch == 0 || runNum != thisRunNum || stopLoop)
+  if (exeNum % exePerMatch == 0 || runNum != thisRunNum || stopLoop || ForceMRDMatching)
   {
     Log("EBMRD: exeNum = " + std::to_string(exeNum) + ". Doing matching now", v_message, verbosityEBMRD);
     if (matchToAllTriggers)

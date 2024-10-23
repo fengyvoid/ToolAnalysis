@@ -74,7 +74,10 @@ bool EBLAPPD::Execute()
   m_data->vars.Get("StopLoop", stopLoop);
   int runNum = thisRunNum;
   m_data->vars.Get("RunNumber", thisRunNum);
-  if (stopLoop || runNum != thisRunNum || exeNum % exePerMatch == 0)
+  bool ForceLAPPDMatching = false;
+  m_data->CStore.Get("ForceLAPPDMatching", ForceLAPPDMatching);
+
+  if (stopLoop || runNum != thisRunNum || exeNum % exePerMatch == 0 || ForceLAPPDMatching)
   {
     Log("EBLAPPD: exeNum = " + std::to_string(exeNum) + ". Doing matching", v_message, verbosityEBLAPPD);
     if (matchToAllTriggers)

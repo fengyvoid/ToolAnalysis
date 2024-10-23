@@ -25,7 +25,6 @@ isData 1
 HasGenie 0
 
 LAPPDData_fill 1
-LAPPDReco_fill 1
-RWMBRF_fill 1
-LAPPD_PPS_fill 1
-LAPPD_Waveform_fill 1
+LAPPDReco_fill 0
+RWMBRF_fill 0
+LAPPD_PPS_fill 0

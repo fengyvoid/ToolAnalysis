@@ -11,12 +11,12 @@
 /**
  * \class EBPMT
  *
- * This is a blank template for a Tool used by the script to generate a new custom tool. Please fill out the description and author information.
+ * $Author: Yue Feng $
+ * $Date: 2024/04 $
+ * Contact: yuef@iaistate.edu
  *
- * $Author: B.Richards $
- * $Date: 2019/05/28 10:44:00 $
- * Contact: b.richards@qmul.ac.uk
  */
+
 class EBPMT : public Tool
 {
 
@@ -36,8 +36,8 @@ private:
     int currentRunCode;
 
     std::map<uint64_t, std::map<unsigned long, std::vector<Hit>> *> *FinishedHits; // Key: {MTCTime}, value: map of  Hit distributions
-    std::map<uint64_t, vector<uint16_t>> *FinishedRWMWaveforms;                       // Key: {MTCTime}, value: RWM waveform
-    std::map<uint64_t, vector<uint16_t>> *FinishedBRFWaveforms;                       // Key: {MTCTime}, value: BRF waveform
+    std::map<uint64_t, vector<uint16_t>> *FinishedRWMWaveforms;                    // Key: {MTCTime}, value: RWM waveform
+    std::map<uint64_t, vector<uint16_t>> *FinishedBRFWaveforms;                    // Key: {MTCTime}, value: BRF waveform
 
     std::map<uint64_t, int> AlmostCompleteWaveforms;
 

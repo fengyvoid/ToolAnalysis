@@ -41,7 +41,7 @@ T0signalmaxOld 50. #Older data uses a positive going signal
 T0signalthresholdOld 80. #Older data uses a positive going signal
 T0offset  0
 FindT0OutputWavLabel AlignedLAPPDData
-GlobalShiftT0 80
+GlobalShiftT0 200
 #Added by Marc
 Triggerdefault 5
 LAPPDOffset 1000

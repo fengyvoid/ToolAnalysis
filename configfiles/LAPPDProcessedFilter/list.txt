@@ -1,2 +1,1 @@
-/exp/annie/app/users/yuefeng/MyForkANNIE/MyForkRewiriting/testPRTA/ToolAnalysis/ProcessedData_PMTMRDLAPPD_R3832S0p131
-/exp/annie/app/users/yuefeng/MyForkANNIE/MyForkRewiriting/testPRTA/ToolAnalysis/ProcessedData_PMTMRDLAPPD_R3832S0p132
+/exp/annie/app/users/yuefeng/MyForkANNIE/MyForkRewiriting/testPRTA/ToolAnalysis/FilteredLAPPD_BeamSelection_Pedestal2023
