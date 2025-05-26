@@ -157,7 +157,6 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
   fANNIETree->Branch("Cluster_HitPMTType", &fCluster_HitPMTType);
 
   // MRD cluster information
-  fANNIETree->Branch("eventTimeMRD", &fEventTimeMRD_Tree);
   fANNIETree->Branch("MRDClusterNumber", &fMRDClusterNumber);
   fANNIETree->Branch("MRDClusterTime", &fMRDClusterTime);
   fANNIETree->Branch("MRDClusterTimeSigma", &fMRDClusterTimeSigma);
@@ -837,7 +836,6 @@ void ANNIEEventTreeMaker::ResetVariables()
   fClusterChargeBalanceV.clear();
 
   // MRD cluster information
-  fEventTimeMRD_Tree = 0;
   fMRDClusterNumber = 0;
   fMRDClusterHitNumber.clear();
   fMRDClusterTime.clear();
