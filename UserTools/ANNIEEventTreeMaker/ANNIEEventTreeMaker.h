@@ -338,7 +338,6 @@ private:
     vector<double> fClusterChargeBalanceV;
 
     // MRD cluster information
-    ULong64_t fEventTimeMRD_Tree;
     int fMRDClusterNumber;
     std::vector<int> fMRDClusterHitNumber;
     std::vector<double> fMRDClusterTime;
