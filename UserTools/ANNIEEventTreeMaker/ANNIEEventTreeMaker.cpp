@@ -193,7 +193,7 @@ bool ANNIEEventTreeMaker::Initialise(std::string configfile, DataModel &data)
   if (LAPPDData_fill)
   {
     fANNIETree->Branch("LAPPD_ID", &fLAPPD_ID);
-    fANNIETree->Branch("fLAPPD_Count", &fLAPPD_Count);
+    fANNIETree->Branch("LAPPD_Count", &fLAPPD_Count);
     fANNIETree->Branch("LAPPD_Beamgate_ns", &fLAPPD_Beamgate_ns);
     fANNIETree->Branch("LAPPD_Timestamp_ns", &fLAPPD_Timestamp_ns);
     fANNIETree->Branch("LAPPD_Beamgate_Raw", &fLAPPD_Beamgate_Raw);
