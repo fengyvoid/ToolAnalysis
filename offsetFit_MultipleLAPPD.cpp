@@ -47,9 +47,12 @@ vector<vector<ULong64_t>> fitInThisReset(
     const int fitTargetTriggerWord,
     const std::vector<ULong64_t> &CTCTrigger,
     const std::vector<ULong64_t> &CTCPPS,
-    const ULong64_t PPSDeltaT)
+    const ULong64_t PPSDeltaT,
+    const int partFileNumber,
+    const int ACDCNumber)
 {
     cout << "***************************************" << endl;
+    cout << "Fitting part file number: " << partFileNumber << ", ACDC number: " << ACDCNumber << endl;
     cout << "Fitting in this reset with:" << endl;
     cout << "LAPPDDataTimeStampUL size: " << LAPPDDataTimeStampUL.size() << endl;
     cout << "LAPPDDataBeamgateUL size: " << LAPPDDataBeamgateUL.size() << endl;
@@ -226,6 +229,7 @@ vector<vector<ULong64_t>> fitInThisReset(
                 if (useValue)
                 {
                     diffSum.push_back(minMatchDiff);
+                    //cout<<"LAPPD PPS "<<i << "= "<<LAPPD_PPS.at(i)<<" ps, CTC PPS "<<j<<" = "<<CTCPPS.at(j)<<"ns , LAPPDDataBeamgateUL["<<lappdb<<"] = "<<LAPPDDataBeamgateUL[lappdb]<<" ps, CTCTrigger["<<minPairIndex<<"] = "<<CTCTrigger[minPairIndex]<<" ns, minMatchDiff = "<<minMatchDiff<<" ns"<<endl;
                     double minAllowedDiff = 0;
                     double maxAllowedDiff = 100E3;
                     if (fitTargetTriggerWord == 14)
@@ -258,14 +262,19 @@ vector<vector<ULong64_t>> fitInThisReset(
             }
             if (diffSum.size() > 0)
                 mean_dev = mean_dev / diffSum.size();
+        
 
             double mean_dev_noOrphan = 0;
+            double pairedCount = 0;
             for (int k = 0; k < notOrphanIndex.size(); k++)
             {
                 if (fitTargetTriggerWord == 14)
                 {
                     if (diffSum.at(k) > 322E3 && diffSum.at(k) < 326E3)
+                        {
                         mean_dev_noOrphan += diffSum[notOrphanIndex[k]];
+                        pairedCount += 1;
+                        }
                 }
                 else
                 {
@@ -285,6 +294,24 @@ vector<vector<ULong64_t>> fitInThisReset(
             int maxAttempts = 1000;
             int attemptCount = 0;
 
+            // the mean_dev can't be larger than 1 s because the beam spill is 15Hz.
+            // so, a good match will give a large number of events in desired range on integer level, minus the mean _dev.
+            // by selecting the largest quality Number, for matchs with the same matched beamgate, smaller mean_dev is better.
+            double qualityNumber = pairedCount*1e9 - mean_dev; 
+            bool debug = false;
+            if (debug)
+            {            
+                cout<<"LAPPD PPS "<<i << "= "<<LAPPD_PPS.at(i)<<" ps, CTC PPS "<<j<<" = "<<CTCPPS.at(j)<<", mean_dev = "<<mean_dev<<endl;
+                cout << "pairedCount = " << pairedCount << ", orphanCount = " << orphanCount << ", qualityNumber = " << qualityNumber << endl;
+                // print all diffSum
+                cout << "diffSum: ";
+                for (const auto &diff : diffSum)
+                {
+                    cout << diff << ", ";
+                }
+                cout << endl;
+            }
+
             if (mean_dev > 0)
             {
                 int increament_dev = 0;
@@ -295,16 +322,25 @@ vector<vector<ULong64_t>> fitInThisReset(
                     if (iter == DerivationMap.end() || iter->second.empty())
                     {
                         vector<int> Info = {i, j, orphanCount, static_cast<int>(mean_dev_noOrphan * 1000), increament_dev};
+                        /*
                         DerivationMap[mean_dev].push_back(Info);
                         DerivationMap[mean_dev].push_back(notOrphanIndex);
                         DerivationMap[mean_dev].push_back(ctcPairedIndex);
                         DerivationMap[mean_dev].push_back(ctcOrphanPairedIndex);
+                        */
+
+                        DerivationMap[qualityNumber].push_back(Info);
+                        DerivationMap[qualityNumber].push_back(notOrphanIndex);
+                        DerivationMap[qualityNumber].push_back(ctcPairedIndex);
+                        DerivationMap[qualityNumber].push_back(ctcOrphanPairedIndex);
+
                         break;
                     }
                     else
                     {
                         increament_dev += 1;
                         mean_dev += 0.001; // if the mean_dev is already in the map, increase it by 1ps
+                        qualityNumber += 1e-6;
                         attemptCount += 1;
                         if (attemptCount > maxAttempts)
                             break;
@@ -315,6 +351,7 @@ vector<vector<ULong64_t>> fitInThisReset(
     }
     // finish matching, found the minimum mean_dev in the map, extract the matching information
     double min_mean_dev = std::numeric_limits<double>::max();
+    double max_qualityNumber = 0;
     int final_i = 0;
     int final_j = 0;
     int gotOrphanCount = 0;
@@ -325,13 +362,17 @@ vector<vector<ULong64_t>> fitInThisReset(
     vector<int> final_ctcOrphanIndex;
     for (const auto &minIter : DerivationMap)
     {
-        if (minIter.first > 10 && minIter.first < min_mean_dev)
+        //if (minIter.first > 10 && minIter.first < min_mean_dev)
+        if (minIter.first > -1 && minIter.first > max_qualityNumber)
         {
-            min_mean_dev = minIter.first;
+            //min_mean_dev = minIter.first;
+            max_qualityNumber = minIter.first;
+            double qnum_ns = minIter.first / 1e9;
+            min_mean_dev = (std::ceil(qnum_ns) - qnum_ns)*1e9;
             final_i = minIter.second[0][0];
             final_j = minIter.second[0][1];
             gotOrphanCount = minIter.second[0][2];
-            gotMin_mean_dev_noOrphan = static_cast<int>(minIter.second[0][3] / 1000);
+            gotMin_mean_dev_noOrphan = static_cast<double>(minIter.second[0][3]) / 1000;
             increament_times = minIter.second[0][4];
             final_notOrphanIndex = minIter.second[1];
             final_ctcPairedIndex = minIter.second[2];
@@ -343,6 +384,7 @@ vector<vector<ULong64_t>> fitInThisReset(
     ULong64_t final_offset_ps_negative = 0;
     if (drift == 0)
     {
+        cout<<"Drift is 0 above ns level." << " Using CTC PPS at index " << final_j <<" = "<<CTCPPS.at(final_j)<<" and LAPPD PPS at index "<<final_i<<" = "<<LAPPD_PPS.at(final_i)/1000<<endl;
         final_offset_ns = CTCPPS.at(final_j) - (LAPPD_PPS.at(final_i) / 1000);
         final_offset_ps_negative = LAPPD_PPS.at(final_i) % 1000;
     }
@@ -371,11 +413,12 @@ vector<vector<ULong64_t>> fitInThisReset(
     */
 
     cout << "\033[1;34m******* Fit Finished *******\033[0m" << endl;
-
+    cout << "\033[1;34m*** Part file number is \033[1;31m" << partFileNumber << "\033[1;34m, ACDC number is \033[1;31m" << ACDCNumber << "\033[0m" << endl;
     cout << "\033[1;34m*** Final offset in is \033[1;31m" << final_offset_ns << "\033[1;34m ns minus \033[1;31m" << final_offset_ps_negative << "\033[1;34m ps\033[0m" << endl;
     cout << "\033[1;34m*** Final orphan count is \033[1;31m" << gotOrphanCount << "\033[0m" << endl;
     cout << "\033[1;34m*** Final mean_dev_noOrphan is \033[1;31m" << gotMin_mean_dev_noOrphan << "\033[1;34m ns\033[0m" << endl;
     cout << "\033[1;34m*** Final increament times in this result is \033[1;31m" << increament_times << "\033[0m" << endl;
+    cout << "\033[1;34m*** Final quality number is \033[1;31m" << max_qualityNumber << "\033[0m" << endl;
     cout << "\033[1;34m*** Final mean deviation is \033[1;31m" << min_mean_dev << "\033[1;34m ns\033[0m" << endl;
     cout << "\033[1;34m*** Final PPS index is \033[1;31m" << final_i << "\033[1;34m, in total of \033[1;31m" << LAPPD_PPS.size() << "\033[0m" << endl;
     cout << "\033[1;34m*** Final CTC PPS index is \033[1;31m" << final_j << "\033[1;34m, in total of \033[1;31m" << CTCPPS.size() << "\033[0m" << endl;
@@ -947,8 +990,8 @@ vector<vector<ULong64_t>> fitInPartFile(TTree *lappdTree, TTree *triggerTree, in
             cout << "Error: PPS0 or PPS1 is empty, return empty result." << endl;
             return ResultTotal;
         }
-        vector<vector<ULong64_t>> ResultACDC0 = fitInThisReset(LAPPDDataTimeStampUL, LAPPDDataBeamgateUL, LAPPD_PPS0, fitTargetTriggerWord, CTCTargetTimeStamp, CTCPPSTimeStamp, intervalInSecond * 1E9 * 1000);
-        vector<vector<ULong64_t>> ResultACDC1 = fitInThisReset(LAPPDDataTimeStampUL, LAPPDDataBeamgateUL, LAPPD_PPS1, fitTargetTriggerWord, CTCTargetTimeStamp, CTCPPSTimeStamp, intervalInSecond * 1E9 * 1000);
+        vector<vector<ULong64_t>> ResultACDC0 = fitInThisReset(LAPPDDataTimeStampUL, LAPPDDataBeamgateUL, LAPPD_PPS0, fitTargetTriggerWord, CTCTargetTimeStamp, CTCPPSTimeStamp, intervalInSecond * 1E9 * 1000, partFileNumber, 0);
+        vector<vector<ULong64_t>> ResultACDC1 = fitInThisReset(LAPPDDataTimeStampUL, LAPPDDataBeamgateUL, LAPPD_PPS1, fitTargetTriggerWord, CTCTargetTimeStamp, CTCPPSTimeStamp, intervalInSecond * 1E9 * 1000, partFileNumber, 1);
 
         // 9. save the offset for this LAPPD ID, run number, part file number, index, reset number.
 
