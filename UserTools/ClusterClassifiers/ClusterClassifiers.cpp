@@ -229,8 +229,8 @@ double ClusterClassifiers::CalculateChargeBalance(std::vector<Hit> cluster_hits)
   found_tube_ids.erase(std::unique(found_tube_ids.begin(), found_tube_ids.end()), found_tube_ids.end());
   int tube_count = found_tube_ids.size();
   //FIXME: Need a method to have the 1/N be equal to the number of operating detectors
-  //double charge_balance  = sqrt((total_QSquared)/(total_Q*total_Q) - (1./121.));
-  double charge_balance  = sqrt((total_QSquared)/(total_Q*total_Q) - (1./static_cast<double>(tube_count)));
+  double charge_balance  = sqrt((total_QSquared)/(total_Q*total_Q) - (1./121.));
+  //double charge_balance  = sqrt((total_QSquared)/(total_Q*total_Q) - (1./static_cast<double>(tube_count)));
   if(verbosity>4) std::cout << "ClusterClassifiers Tool: Calculated charge balance of " << charge_balance << std::endl;
   return charge_balance;
 }
