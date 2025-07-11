@@ -164,6 +164,8 @@ bool ProcessedLAPPDFilter::Execute()
     {
       double cluster_time = it->first;
       double charge_balance = ClusterChargeBalances.at(cluster_time);
+      if (cluster_time > 2000)
+        continue; // only consider clusters in the prompt window
 
       if (it->second > max_charge)
       {
