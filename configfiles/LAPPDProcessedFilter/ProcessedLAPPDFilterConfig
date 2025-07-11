@@ -3,12 +3,15 @@ FilterVerbosity 0
 saveAllLAPPDEvents 1
 savePMTClusterEvents 0
 
-filterType MRDtrack
+#filterType MRDtrack
 
-#filterType BeamSelection
+filterType BeamSelection
+# This need bood_ok, a cluster in prompt window, the brightest cluster in prompt window has cb<0.2, PMTMRDCoinc
+# can select noVeto or CherenkovCover (only coded for the center LAPPD)
 
-RequireNoVeto 1
-RequireCherenkovCover 1
+
+RequireNoVeto 0
+RequireCherenkovCover 0
 
 
 requirePulsedAmp 15
