@@ -22,6 +22,14 @@ using namespace std;
  * Load LAPPD PSEC data and PPS data from BoostStore.
  *
  */
+
+struct IDConfigRecord {
+    int RunNumber;
+    int ACCID;
+    int ManufacturerID;
+    string Position;
+};
+
 class LAPPDLoadStore : public Tool
 {
 
@@ -46,6 +54,8 @@ public:
     void LoadRunInfo();
     void SaveOffsets();
 
+    vector<IDConfigRecord> LoadIDConfig(const string& filename);
+    tuple<int, string> queryNearestID(const vector<IDConfigRecord>& data, int targetRun, int accid);
 private:
     // This tool, control variables (only used in this tool, every thing that is not an data object)
     // Variables that you get from the config file
