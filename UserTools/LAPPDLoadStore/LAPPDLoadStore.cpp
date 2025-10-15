@@ -146,6 +146,38 @@ bool LAPPDLoadStore::Initialise(std::string configfile, DataModel &data)
     if (LAPPDStoreReadInVerbosity > 11)
         debugStoreReadIn.open("debugStoreReadIn.txt");
 
+    string ACCIDConfigFile = "LAPPDIDConfig.csv";
+    m_variables.Get("ACCIDConfigFile", ACCIDConfigFile);
+    vector<IDConfigRecord> idConfigRecords = LoadIDConfig(ACCIDConfigFile);
+
+    if (LAPPDStoreReadInVerbosity > 1)
+    {
+        // print the ACCID config records for debug
+        cout << "Loaded LAPPD ID Config Records from " << ACCIDConfigFile << ":" << endl;
+        for (const auto& record : idConfigRecords) {
+            cout << "RunNumber: " << record.RunNumber
+                 << ", ACCID: " << record.ACCID
+                 << ", ManufacturerID: " << record.ManufacturerID
+                 << ", Position: " << record.Position << endl;
+        }
+
+        int testRunNum = 4950;
+        int testACCID = 1; // example ACCID to query
+        auto result = queryNearestID(idConfigRecords, testRunNum, testACCID);
+        int nearestManuID = std::get<0>(result);
+        std::string position = std::get<1>(result);
+        cout << "Querying nearest ID for RunNumber: " << testRunNum << ", ACCID: " << testACCID << endl;
+        cout << "Nearest ManufacturerID: " << nearestManuID << ", Position: " << position << endl;
+
+        int testRunNum2 = 5000;
+        int testACCID2 = 2; // example ACCID to query
+        auto result2 = queryNearestID(idConfigRecords, testRunNum2, testACCID2);
+        int nearestManuID2 = std::get<0>(result2);
+        std::string position2 = std::get<1>(result2);
+        cout << "Querying nearest ID for RunNumber: " << testRunNum2 << ", ACCID: " << testACCID2 << endl;
+        cout << "Nearest ManufacturerID: " << nearestManuID2 << ", Position: " << position2 << endl;
+    }
+
     return true;
 }
 
@@ -1637,4 +1669,54 @@ void LAPPDLoadStore::LoadRunInfo()
     }
     if (LAPPDStoreReadInVerbosity > 0)
         cout << "LAPPDStoreReadIn, Loaded run info, runNumber: " << runNumber << ", subRunNumber: " << subRunNumber << ", partFileNumber: " << partFileNumber << ", eventNumberInPF: " << eventNumberInPF << endl;
+}
+
+
+
+vector<IDConfigRecord> LAPPDLoadStore::LoadIDConfig(const string& filename) {
+    vector<IDConfigRecord> data;
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cerr << "LAPPDLoadStore::LoadIDConfig: Can't open file: " << filename << endl;
+        return data;
+    }
+
+    string line;
+    getline(file, line); // skip header
+
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+        replace(line.begin(), line.end(), '\t', ','); // support tab or comma
+        stringstream ss(line);
+        string token;
+        IDConfigRecord r;
+        getline(ss, token, ','); r.RunNumber = stoi(token);
+        getline(ss, token, ','); r.ACCID = stoi(token);
+        getline(ss, token, ','); r.ManufacturerID = stoi(token);
+        getline(ss, token, ','); r.Position = token;
+
+        data.push_back(r);
+    }
+
+    return data;
+}
+
+tuple<int, string> LAPPDLoadStore::queryNearestID(const vector<IDConfigRecord>& data, int targetRun, int accid) {
+    int bestRun = -1;
+    int bestManufacturer = -1;
+    string bestPosition;
+
+    for (const auto& r : data) {
+        if (r.ACCID == accid && r.RunNumber <= targetRun) {
+            if (r.RunNumber > bestRun) { // find the nearest run not exceeding targetRun
+                bestRun = r.RunNumber;
+                bestManufacturer = r.ManufacturerID;
+                bestPosition = r.Position;
+            }
+        }
+    }
+
+    if (bestRun == -1)
+        return {-1, ""};
+    return {bestManufacturer, bestPosition};
 }
