@@ -398,7 +398,7 @@ bool LAPPDLoadStore::Execute()
             {
                 tuple<int, string> queryResult = queryNearestACCID(idConfigRecords, runNumber, LAPPD_ID);
                 if (LAPPDStoreReadInVerbosity > 2)
-                    cout << "LAPPDLoadStore: Mapped ManufacturerID  " << LAPPD_ID << " to ACCID " << get<0>(queryResult) << " for run " << runNumber << endl;
+                    cout << "LAPPDLoadStore: Mapped ManufacturerID " << LAPPD_ID << " to ACCID " << get<0>(queryResult) << " for run " << runNumber << endl;
                 LAPPD_ID = get<0>(queryResult);
             }
 
@@ -1703,6 +1703,20 @@ void LAPPDLoadStore::LoadRunInfo()
     }
     if (LAPPDStoreReadInVerbosity > 0)
         cout << "LAPPDStoreReadIn, Loaded run info, runNumber: " << runNumber << ", subRunNumber: " << subRunNumber << ", partFileNumber: " << partFileNumber << ", eventNumberInPF: " << eventNumberInPF << endl;
+
+    if(runNumber<1)
+    {
+        if (LAPPDStoreReadInVerbosity > 1)
+            cout << "LAPPDStoreReadIn, runNumber is "<< runNumber << ", trying to get from ANNIEEvent Store" << endl;
+        m_data->Stores["ANNIEEvent"]->Get("RunNumber", runNumber);
+        m_data->Stores["ANNIEEvent"]->Get("SubRunNumber", subRunNumber);
+        m_data->Stores["ANNIEEvent"]->Get("PartNumber", partFileNumber);
+        if (LAPPDStoreReadInVerbosity > 1)
+            cout << "LAPPDStoreReadIn, Got run info from ANNIEEvent Store, runNumber: " << runNumber << ", subRunNumber: " << subRunNumber << ", partFileNumber: " << partFileNumber << endl;
+    }
+
+
+
 }
 
 
