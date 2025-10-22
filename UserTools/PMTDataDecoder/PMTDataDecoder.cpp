@@ -348,7 +348,7 @@ bool PMTDataDecoder::Execute(){
             }
             
             if(saveRWMRaw){
-            if(uCrateNum == 1 && uSlotNum == 15 && ChannelID == 2)
+            if(uCrateNum == 1 && uSlotNum == 2 && ChannelID == 3)
             {
               std::vector<uint16_t> RWMWaveform = apair.second;
               (*RWMRawWaveforms)[timestamp] = RWMWaveform;
