@@ -23,13 +23,6 @@ using namespace std;
  *
  */
 
-struct IDConfigRecord {
-    int RunNumber;
-    int ACCID;
-    int ManufacturerID;
-    string Position;
-};
-
 class LAPPDLoadStore : public Tool
 {
 
@@ -56,6 +49,8 @@ public:
 
     vector<IDConfigRecord> LoadIDConfig(const string& filename);
     tuple<int, string> queryNearestID(const vector<IDConfigRecord>& data, int targetRun, int accid);
+    tuple<int, string> queryNearestACCID(const vector<IDConfigRecord>& data, int targetRun, int manufacturerID);
+
 private:
     // This tool, control variables (only used in this tool, every thing that is not an data object)
     // Variables that you get from the config file
@@ -153,6 +148,7 @@ private:
     std::vector<int> LAPPDEventIndex_ID; // for each LAPPD ID, count the index of current loaded event
     // For example, this part file may have a ID=0 event, b ID=1 event, while loading data object c and loaded 3 ID=0 and 4 ID=1, I may have 
     // LAPPDEventIndex_ID = {3, 4}
+    vector<IDConfigRecord> idConfigRecords; // save the conversion table between RunNumber, ACCID and ManufacturerID
 
     // save PPS info for the second order correction
     std::map<uint64_t, uint64_t> LAPPDBG_PPSBefore;
