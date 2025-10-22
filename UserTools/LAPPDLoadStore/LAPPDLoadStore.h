@@ -23,13 +23,6 @@ using namespace std;
  *
  */
 
-struct IDConfigRecord {
-    int RunNumber;
-    int ACCID;
-    int ManufacturerID;
-    string Position;
-};
-
 class LAPPDLoadStore : public Tool
 {
 

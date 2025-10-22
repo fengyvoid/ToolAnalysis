@@ -1173,7 +1173,8 @@ bool LAPPDLoadStore::ParsePSECData()
         // insert the data start with channel number 30*ReadBoards[bi]
         // for instance, when bi=0 , LAPPD ID = 2, ReadBoards[bi] = 4, insert to channel number start with 120, to 150
         int channelShift = bi * NUM_CH + LAPPD_ID * NUM_CH * 2;
-        cout<<"bi= "<<bi<<", LAPPD_ID= "<<LAPPD_ID<<", NUM_CH= "<<NUM_CH<<", channelShift= "<<channelShift<<endl;
+        if (LAPPDStoreReadInVerbosity>1)
+            cout<<"bi= "<<bi<<", LAPPD_ID= "<<LAPPD_ID<<", NUM_CH= "<<NUM_CH<<", channelShift= "<<channelShift<<endl;
         retval = getParsedData(Parse_buffer, channelShift); //(because there are only 2 boards, so it's 0*30 or 1*30). Inserting the channel number start from this then ++ to 30
         if (retval == 0)
         {

@@ -1466,10 +1466,10 @@ void ANNIEEventTreeMaker::FillLAPPDInfo()
     {
       LAPPD_IDInit = std::get<0>(config);
     }
-    if (ANNIEEventTreeMakerVerbosity > 3)
+    if (ANNIEEventTreeMakerVerbosity > 1)
       cout << "ANNIEEventTreeMaker: Filling LAPPD Info, Original LAPPD_ID: " << psecData.LAPPD_ID << ", Mapped LAPPD_ID: " << LAPPD_IDInit << ", Position: " << position << ", using run number: " << fRunNumber << endl;
 
-    fLAPPD_ID.push_back(psecData.LAPPD_ID);
+    fLAPPD_ID.push_back(LAPPD_IDInit);
     fLAPPD_Position.push_back(position);
     fLAPPD_Beamgate_ns.push_back(LAPPDBeamgate_ns[key]);
     fLAPPD_Timestamp_ns.push_back(LAPPDTimeStamps_ns[key]);
@@ -1520,7 +1520,13 @@ void ANNIEEventTreeMaker::FillLAPPDPulse()
       {
         fPulseSide.push_back(0);
         LAPPDPulse thisPulse = pulse0.at(i);
-        fLAPPD_IDs.push_back(thisPulse.GetTubeId());
+        int thisPulseID = thisPulse.GetTubeId();
+        // map to incom ID
+        if(thisPulseID < 20){
+        auto config = queryNearestID(idConfigRecords, fRunNumber, thisPulseID);
+        thisPulseID = std::get<0>(config);
+        }
+        fLAPPD_IDs.push_back(thisPulseID);
         fChannelID.push_back(thisPulse.GetChannelID());
         fPulseStripNum.push_back(stripno);
         fPulsePeakTime.push_back(thisPulse.GetTime());
@@ -1538,7 +1544,15 @@ void ANNIEEventTreeMaker::FillLAPPDPulse()
       {
         fPulseSide.push_back(1);
         LAPPDPulse thisPulse = pulse1.at(i);
-        fLAPPD_IDs.push_back(thisPulse.GetTubeId());
+        int thisPulseID = thisPulse.GetTubeId();
+
+        // map to incom ID
+        if(thisPulseID < 20){
+        auto config = queryNearestID(idConfigRecords, fRunNumber, thisPulseID);
+        thisPulseID = std::get<0>(config);
+        }
+
+        fLAPPD_IDs.push_back(thisPulseID);
         fChannelID.push_back(thisPulse.GetChannelID());
         fPulseStripNum.push_back(stripno);
         fPulsePeakTime.push_back(thisPulse.GetTime());
@@ -1572,7 +1586,14 @@ void ANNIEEventTreeMaker::FillLAPPDHit()
         LAPPDHit thisHit = stripHits.at(i);
         LAPPDPulse p1 = thisHit.GetPulse1();
         LAPPDPulse p2 = thisHit.GetPulse2();
-        fLAPPDHit_IDs.push_back(thisHit.GetTubeId());
+        int thisHitID = thisHit.GetTubeId();
+        if(thisHitID < 20){
+          // map to incom ID
+          auto config = queryNearestID(idConfigRecords, fRunNumber, thisHitID);
+          thisHitID = std::get<0>(config);
+        }
+
+        fLAPPDHit_IDs.push_back(thisHitID);
         fLAPPDHitStrip.push_back(stripno);
         fLAPPDHitTime.push_back(thisHit.GetTime());
         fLAPPDHitAmp.push_back(thisHit.GetCharge());
