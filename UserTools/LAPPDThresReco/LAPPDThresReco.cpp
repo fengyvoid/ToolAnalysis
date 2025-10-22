@@ -423,6 +423,10 @@ vector<LAPPDPulse> LAPPDThresReco::FindPulses(vector<double> wave, int LAPPD_ID,
         if (pulseSize > minPulseWidth)
         { // if the pulse is long enough
           double peakBinGaus = GaussianFit(binNumbers, amplitudes);
+          
+          // Log-normal distribution fitting
+          double logNormTime = LogNormalFit(binNumbers, amplitudes);
+          
           // use a linear interpolation to find the half peak time, from wave.at(pulseStart) to wave.at(peakBin), divide each bin 0.1 ns to 100 parts, 1ps per bin,find the bin number that the amplitude is half of the peakAmp
           double startBin = pulseStart;
           if (pulseStart > 10)
@@ -513,10 +517,10 @@ vector<LAPPDPulse> LAPPDThresReco::FindPulses(vector<double> wave, int LAPPD_ID,
           }
 
           if (LAPPDThresRecoVerbosity > 1)
-            cout << "inserting pulse on LAPPD ID =" << LAPPD_ID << " at time: " << peakBin * (25. / 256.) << "(" << peakBinGaus << ") with peakAmp: " << peakAmp << " from " << pulseStart << " to " << pulseStart + pulseSize << endl;
+            cout << "inserting pulse on LAPPD ID =" << LAPPD_ID << " at time: " << logNormTime * (25. / 256.) << "(" << peakBinGaus << ") with peakAmp: " << peakAmp << " from " << pulseStart << " to " << pulseStart + pulseSize << endl;
           if (useMaxTime)
           {
-            LAPPDPulse thisPulse(LAPPD_ID, channel, peakBin * (25. / 256.), Q, peakAmp, pulseStart, pulseStart + pulseSize);
+            LAPPDPulse thisPulse(LAPPD_ID, channel, logNormTime * (25. / 256.), Q, peakAmp, pulseStart, pulseStart + pulseSize);
             thisPulse.SetHalfHeightTime(halfPeakBin * (25. / 256.) + halfPeak_ps * 0.001 * 25 / 25.6);
             thisPulse.SetHalfEndTime(halfEndBin * (25. / 256.) + halfEnd_ps * 0.001 * 25 / 25.6);
             thisPulse.SetBaseline(baselineGet);
@@ -526,7 +530,7 @@ vector<LAPPDPulse> LAPPDThresReco::FindPulses(vector<double> wave, int LAPPD_ID,
           }
           else
           {
-            LAPPDPulse thisPulse(LAPPD_ID, channel, peakBinGaus * (25. / 256.), Q, peakAmp, pulseStart, pulseStart + pulseSize);
+            LAPPDPulse thisPulse(LAPPD_ID, channel, logNormTime * (25. / 256.), Q, peakAmp, pulseStart, pulseStart + pulseSize);
             thisPulse.SetHalfHeightTime(halfPeakBin * (25. / 256.) + halfPeak_ps * 0.001 * 25 / 25.6);
             thisPulse.SetHalfEndTime(halfEndBin * (25. / 256.) + halfEnd_ps * 0.001 * 25 / 25.6);
             thisPulse.SetBaseline(baselineGet);
@@ -558,6 +562,105 @@ vector<LAPPDPulse> LAPPDThresReco::FindPulses(vector<double> wave, int LAPPD_ID,
   }
   return pulses;
 }
+
+// Log-normal distribution fitting function
+double LAPPDThresReco::LogNormalFit(const vector<double>& binNumbers, const vector<double>& amplitudes)
+{
+  if (binNumbers.empty() || amplitudes.empty() || binNumbers.size() != amplitudes.size())
+    return 0.0;
+
+  // Find the maximum amplitude and its corresponding bin
+  double maxAmp = *max_element(amplitudes.begin(), amplitudes.end());
+  int maxIndex = max_element(amplitudes.begin(), amplitudes.end()) - amplitudes.begin();
+  double peakBin = binNumbers[maxIndex];
+
+  // Initial parameter estimates
+  double A = maxAmp;           // Amplitude
+  double t_prime = peakBin - 2; // Shift parameter (slightly before peak)
+  double tau = 2.0;            // Scale parameter
+  double sigma = 0.5;          // Shape parameter
+
+  // Simple iterative fitting using least squares
+  double bestChiSq = 1e10;
+  double bestTPrime = t_prime;
+  double bestTau = tau;
+  double bestSigma = sigma;
+  double bestA = A;
+
+  // Grid search for better parameters
+  for (double test_t_prime = peakBin - 5; test_t_prime <= peakBin; test_t_prime += 0.5)
+  {
+    for (double test_tau = 0.5; test_tau <= 5.0; test_tau += 0.5)
+    {
+      for (double test_sigma = 0.1; test_sigma <= 1.0; test_sigma += 0.1)
+      {
+        // Calculate chi-squared for this parameter set
+        double chiSq = 0.0;
+        double sumAmp = 0.0;
+        
+        for (size_t i = 0; i < binNumbers.size(); i++)
+        {
+          double t = binNumbers[i];
+          if (t > test_t_prime)
+          {
+            double logArg = (t - test_t_prime) / test_tau;
+            if (logArg > 0)
+            {
+              double logNormValue = exp(-0.5 * pow(log(logArg) / test_sigma, 2));
+              sumAmp += amplitudes[i] * logNormValue;
+              chiSq += pow(logNormValue, 2);
+            }
+          }
+        }
+        
+        if (chiSq > 0)
+        {
+          double test_A = sumAmp / chiSq;
+          chiSq = 0.0;
+          
+          for (size_t i = 0; i < binNumbers.size(); i++)
+          {
+            double t = binNumbers[i];
+            double expectedAmp = 0.0;
+            
+            if (t > test_t_prime)
+            {
+              double logArg = (t - test_t_prime) / test_tau;
+              if (logArg > 0)
+              {
+                expectedAmp = test_A * exp(-0.5 * pow(log(logArg) / test_sigma, 2));
+              }
+            }
+            
+            chiSq += pow(amplitudes[i] - expectedAmp, 2);
+          }
+          
+          if (chiSq < bestChiSq)
+          {
+            bestChiSq = chiSq;
+            bestTPrime = test_t_prime;
+            bestTau = test_tau;
+            bestSigma = test_sigma;
+            bestA = test_A;
+          }
+        }
+      }
+    }
+  }
+
+  // Calculate the fitted peak time
+  // For log-normal distribution, the mode (peak) occurs at t' + tau * exp(-sigma^2)
+  double fittedPeakTime = bestTPrime + bestTau * exp(-bestSigma * bestSigma);
+  
+  // Ensure the fitted time is within reasonable bounds
+  if (fittedPeakTime < binNumbers.front() || fittedPeakTime > binNumbers.back())
+  {
+    fittedPeakTime = peakBin; // Fall back to original peak bin if fit is unreasonable
+  }
+
+  return fittedPeakTime;
+}
+
 
 vector<LAPPDHit> LAPPDThresReco::FindHit(vector<vector<LAPPDPulse>> pulses)
 {

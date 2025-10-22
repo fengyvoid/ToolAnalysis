@@ -206,10 +206,12 @@ double ClusterClassifiers::CalculateChargeBalance(std::vector<Hit> cluster_hits)
   double total_Q = 0;
   double total_QSquared = 0;
   std::map<int, double> CBMap;
+  vector<int> found_tube_ids;
   for (int i = 0; i < (int)cluster_hits.size(); i++){
     Hit ahit = cluster_hits.at(i); 
     double hit_charge = ahit.GetCharge();
     int hit_ID = ahit.GetTubeId();
+    found_tube_ids.push_back(hit_ID);
     std::map<int, double>::iterator it = CBMap.find(hit_ID);
     if(it != CBMap.end()){ //A hit from this tube has been seen before
       CBMap.at(hit_ID)+=hit_charge;
@@ -222,8 +224,13 @@ double ClusterClassifiers::CalculateChargeBalance(std::vector<Hit> cluster_hits)
     total_Q+= tube_charge;
     total_QSquared += (tube_charge * tube_charge);
   }
+  //remove duplicate tube IDs in found_tube_ids
+  std::sort(found_tube_ids.begin(), found_tube_ids.end());
+  found_tube_ids.erase(std::unique(found_tube_ids.begin(), found_tube_ids.end()), found_tube_ids.end());
+  int tube_count = found_tube_ids.size();
   //FIXME: Need a method to have the 1/N be equal to the number of operating detectors
   double charge_balance  = sqrt((total_QSquared)/(total_Q*total_Q) - (1./121.));
+  //double charge_balance  = sqrt((total_QSquared)/(total_Q*total_Q) - (1./static_cast<double>(tube_count)));
   if(verbosity>4) std::cout << "ClusterClassifiers Tool: Calculated charge balance of " << charge_balance << std::endl;
   return charge_balance;
 }

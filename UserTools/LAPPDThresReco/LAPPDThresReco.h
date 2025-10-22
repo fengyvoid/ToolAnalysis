@@ -37,6 +37,7 @@ public:
     vector<LAPPDHit> FindHit(vector<vector<LAPPDPulse>> pulses);
     LAPPDHit MakeHit(LAPPDPulse pulse0, LAPPDPulse pulse1);
     double GaussianFit(const vector<double> &xData, const vector<double> &yData);
+    double LogNormalFit(const vector<double>& binNumbers, const vector<double>& amplitudes);
     int LoadMRDTrackReco(int SubEventID);
     void CleanMRDRecoInfo();
     void CleanDataObjects();
