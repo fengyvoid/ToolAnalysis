@@ -243,6 +243,8 @@ void LAPPDThresReco::FillLAPPDPulse()
 
   // loop over the data and fine pulses
   std::map<unsigned long, vector<Waveform<double>>>::iterator it;
+  if (LAPPDThresRecoVerbosity > 0)
+    cout << "LAPPDThresReco: Filling LAPPD Pulses from Waveforms, total channels: " << lappdData.size() << endl;
   for (it = lappdData.begin(); it != lappdData.end(); it++)
   {
 
@@ -275,22 +277,49 @@ void LAPPDThresReco::FillLAPPDPulse()
     // for this channel, find the pulses
     vector<LAPPDPulse> pulses = FindPulses(wave, LAPPD_ID, channel);
 
+    if (LAPPDThresRecoVerbosity > 1)
+      cout << "FillLAPPDPulse: Found " << pulses.size() << " pulses at channel " << channel << " for LAPPD_ID " << LAPPD_ID << endl;
+
     Channel *chan = _geom->GetChannel(channel);
     int stripno = chan->GetStripNum();
     int stripSide = chan->GetStripSide();
 
     // check, in lappdPulses, is there an element with the strip no, if not, create one vector with lenth 2, set the pulses to element with index stripSide
+    /*
     if (lappdPulses.find(stripno) == lappdPulses.end())
     {
       vector<vector<LAPPDPulse>> stripPulses;
       stripPulses.resize(2);
       stripPulses.at(stripSide) = pulses;
       lappdPulses[stripno] = stripPulses;
+      if (LAPPDThresRecoVerbosity > 1)
+        cout << "Create new strip no " << stripno << " side " << stripSide << " with pulse vector size " << pulses.size() << endl;
     }
     else
     {
       lappdPulses[stripno].at(stripSide) = pulses;
+      if (LAPPDThresRecoVerbosity > 1)
+        cout << "Push pulse vector with size " << pulses.size() << " to existing strip no " << stripno << " side " << stripSide << endl;
+    }*/
+
+    if (lappdPulses.find(channel) == lappdPulses.end())
+    {
+      vector<vector<LAPPDPulse>> channelPulses;
+      channelPulses.resize(2);
+      channelPulses.at(stripSide) = pulses;
+      lappdPulses[channel] = channelPulses;
+      if (LAPPDThresRecoVerbosity > 1)
+        cout << "Create new channel " << channel << " side " << stripSide << " with pulse vector size " << pulses.size() << endl;
     }
+    else
+    {
+      lappdPulses[channel].at(stripSide) = pulses;
+      if (LAPPDThresRecoVerbosity > 1)
+        cout << "Push pulse vector with size " << pulses.size() << " to existing channel " << channel << " side " << stripSide << endl;
+    }
+
+
+
   }
 }
 
@@ -300,10 +329,15 @@ void LAPPDThresReco::FillLAPPDHit()
   std::map<unsigned long, vector<vector<LAPPDPulse>>>::iterator it2;
   for (it2 = lappdPulses.begin(); it2 != lappdPulses.end(); it2++)
   {
-    unsigned long stripno = it2->first;
+    //unsigned long stripno = it2->first;
+    unsigned long channel = it2->first;
+    Channel *chan = _geom->GetChannel(channel);
+    int stripno = chan->GetStripNum();
+    int stripSide = chan->GetStripSide();
+
     vector<vector<LAPPDPulse>> pulses = it2->second;
     vector<LAPPDHit> lHits = FindHit(pulses);
-    lappdHits[stripno] = lHits;
+    lappdHits[channel] = lHits;
     numberOfHits += lHits.size();
   }
   if (LAPPDThresRecoVerbosity > 1)

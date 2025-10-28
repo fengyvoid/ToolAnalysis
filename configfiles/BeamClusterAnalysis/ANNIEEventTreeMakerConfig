@@ -23,7 +23,7 @@ RecoDebug_fill 0
 muonTruthRecoDiff_fill 0
 isData 1
 HasGenie 0
-RingCounting_fill 1
+RingCounting_fill 0
 
 LAPPDData_fill 1
 LAPPDReco_fill 1
