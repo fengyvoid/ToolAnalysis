@@ -1462,6 +1462,14 @@ void ANNIEEventTreeMaker::FillLAPPDInfo()
     string position;
     auto config = queryNearestID(idConfigRecords, fRunNumber, LAPPD_IDInit);
     position = std::get<1>(config);
+    //cout << "Position raw: [" << position << "] len=" << position.length() << endl;
+    //for (unsigned char c : position) {
+    //    cout << (int)c << " ";
+    //}
+    //cout << endl;
+
+    //position.erase(0, position.find_first_not_of(" \t\n\r"));
+    //position.erase(position.find_last_not_of(" \t\n\r") + 1);
     if (LAPPD_IDInit < 20)
     {
       LAPPD_IDInit = std::get<0>(config);
@@ -1469,8 +1477,19 @@ void ANNIEEventTreeMaker::FillLAPPDInfo()
     if (ANNIEEventTreeMakerVerbosity > 1)
       cout << "ANNIEEventTreeMaker: Filling LAPPD Info, Original LAPPD_ID: " << psecData.LAPPD_ID << ", Mapped LAPPD_ID: " << LAPPD_IDInit << ", Position: " << position << ", using run number: " << fRunNumber << endl;
 
+    int pos_int = -1;
+    if (position == "Center") {
+        pos_int = 0;
+    } else if (position == "UpperRight") {
+        pos_int = 1;
+    } else if (position == "LowerLeft") {
+        pos_int = 2;
+    } else {
+      cout << "ANNIEEventTreeMaker: Unknown LAPPD position string: " << position << ", LAPPD_ID: " << LAPPD_IDInit << endl;
+    }
+
     fLAPPD_ID.push_back(LAPPD_IDInit);
-    fLAPPD_Position.push_back(position);
+    fLAPPD_Position.push_back(pos_int);
     fLAPPD_Beamgate_ns.push_back(LAPPDBeamgate_ns[key]);
     fLAPPD_Timestamp_ns.push_back(LAPPDTimeStamps_ns[key]);
     fLAPPD_Beamgate_Raw.push_back(LAPPDBeamgatesRaw[key]);
@@ -2802,6 +2821,11 @@ tuple<int, string> ANNIEEventTreeMaker::queryNearestID(const vector<IDConfigReco
         }
     }
 
+    bestPosition.erase(
+    std::remove_if(bestPosition.begin(), bestPosition.end(),
+                   [](unsigned char c){ return !std::isalpha(c); }),
+    bestPosition.end());
+
     if (bestRun == -1)
         return {-1, ""};
     return {bestManufacturer, bestPosition};
@@ -2823,6 +2847,11 @@ tuple<int, string> ANNIEEventTreeMaker::queryNearestACCID(const vector<IDConfigR
             }
         }
     }
+        
+    bestPosition.erase(
+    std::remove_if(bestPosition.begin(), bestPosition.end(),
+                   [](unsigned char c){ return !std::isalpha(c); }),
+    bestPosition.end());
 
     if (bestRun == -1)
         return {-1, ""};

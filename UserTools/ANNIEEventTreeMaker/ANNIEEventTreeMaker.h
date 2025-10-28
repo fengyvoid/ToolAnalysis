@@ -223,7 +223,7 @@ private:
     vector<IDConfigRecord> idConfigRecords; // save the conversion table between RunNumber, ACCID and ManufacturerID
     int fLAPPD_Count;
     vector<int> fLAPPD_ID;
-    vector<string> fLAPPD_Position;
+    vector<int> fLAPPD_Position;
     vector<uint64_t> fLAPPD_Beamgate_ns;
     vector<uint64_t> fLAPPD_Timestamp_ns;
     vector<uint64_t> fLAPPD_Beamgate_Raw;

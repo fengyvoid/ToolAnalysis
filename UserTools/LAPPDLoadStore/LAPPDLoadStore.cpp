@@ -1765,6 +1765,11 @@ tuple<int, string> LAPPDLoadStore::queryNearestID(const vector<IDConfigRecord>& 
         }
     }
 
+    bestPosition.erase(
+    std::remove_if(bestPosition.begin(), bestPosition.end(),
+                   [](unsigned char c){ return !std::isalpha(c); }),
+    bestPosition.end());
+
     if (bestRun == -1)
         return {-1, ""};
     return {bestManufacturer, bestPosition};
@@ -1786,6 +1791,11 @@ tuple<int, string> LAPPDLoadStore::queryNearestACCID(const vector<IDConfigRecord
             }
         }
     }
+
+    bestPosition.erase(
+    std::remove_if(bestPosition.begin(), bestPosition.end(),
+                   [](unsigned char c){ return !std::isalpha(c); }),
+    bestPosition.end());
 
     if (bestRun == -1)
         return {-1, ""};
