@@ -1511,7 +1511,12 @@ void ANNIEEventTreeMaker::FillLAPPDPulse()
     std::map<unsigned long, vector<vector<LAPPDPulse>>>::iterator it;
     for (it = lappdPulses.begin(); it != lappdPulses.end(); it++)
     {
-      int stripno = it->first;
+      //int stripno = it->first;
+      int channelNum = it->first;
+      Channel *chan = geom->GetChannel(channelNum);
+      int stripno = chan->GetStripNum();
+      int stripSide = chan->GetStripSide();
+
       vector<vector<LAPPDPulse>> stripPulses = it->second;
 
       vector<LAPPDPulse> pulse0 = stripPulses.at(0);
@@ -1539,6 +1544,11 @@ void ANNIEEventTreeMaker::FillLAPPDPulse()
         fPulseBaseline.push_back(thisPulse.GetBaseline());
         fPulseFollowTime.push_back(thisPulse.GetPulseFollowTime());
         fPulseFollowCharge.push_back(thisPulse.GetPulseFollowCharge());
+        if (ANNIEEventTreeMakerVerbosity > 2)
+        {
+          cout << "ANNIEEventTreeMaker: Filling LAPPD Pulse Info, LAPPD_ID: " << thisPulseID << ", Strip: " << stripno << ", Side: 0"
+               << ", Peak Time: " << thisPulse.GetTime() << ", Charge: " << thisPulse.GetCharge() << ", Peak Amp: " << thisPulse.GetPeak() << endl;
+        }
       }
       for (int i = 0; i < pulse1.size(); i++)
       {
@@ -1565,6 +1575,11 @@ void ANNIEEventTreeMaker::FillLAPPDPulse()
         fPulseBaseline.push_back(thisPulse.GetBaseline());
         fPulseFollowTime.push_back(thisPulse.GetPulseFollowTime());
         fPulseFollowCharge.push_back(thisPulse.GetPulseFollowCharge());
+        if (ANNIEEventTreeMakerVerbosity > 2)
+        {
+          cout << "ANNIEEventTreeMaker: Filling LAPPD Pulse Info, LAPPD_ID: " << thisPulseID << ", Strip: " << stripno << ", Side: 1"
+               << ", Peak Time: " << thisPulse.GetTime() << ", Charge: " << thisPulse.GetCharge() << ", Peak Amp: " << thisPulse.GetPeak() << endl;
+        }
       }
     }
   }
@@ -1579,7 +1594,11 @@ void ANNIEEventTreeMaker::FillLAPPDHit()
     std::map<unsigned long, vector<LAPPDHit>>::iterator it;
     for (it = lappdHits.begin(); it != lappdHits.end(); it++)
     {
-      int stripno = it->first;
+      //int stripno = it->first;
+      int channelNum = it->first;
+      Channel *chan = geom->GetChannel(channelNum);
+      int stripno = chan->GetStripNum();
+      
       vector<LAPPDHit> stripHits = it->second;
       for (int i = 0; i < stripHits.size(); i++)
       {
