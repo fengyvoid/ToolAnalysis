@@ -1,0 +1,5 @@
+myLoadANNIEEvent LoadANNIEEvent ./configfiles/BRFTimingAnalysis/LoadANNIEEventConfig
+myLoadGeometry LoadGeometry ./configfiles/LoadGeometry/LoadGeometryConfig
+
+BRFSaver BRFSaver ./configfiles/BRFTimingAnalysis/BRFTimingAnalysisConfig
+

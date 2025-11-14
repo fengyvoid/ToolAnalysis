@@ -1,0 +1,5 @@
+verbose 1
+FileForListOfInputs ./configfiles/BRFTimingAnalysis/my_inputs.txt
+EventOffset 0
+GlobalEvNr 1
+
