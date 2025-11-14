@@ -47,7 +47,7 @@ bool BRFSaver::Execute()
   std::vector<uint16_t> waveform_to_save;
   for (int i = 0; i<SaveRange ; i++)
   {
-    if (i <= BRFRawWaveform.size())
+    if (i < BRFRawWaveform.size())
     {
       waveform_to_save.push_back(BRFRawWaveform[i]);
     }else{
@@ -69,16 +69,16 @@ bool BRFSaver::Execute()
 
   for (int i = 2; i < SaveRange - 2; i++)
   {
-    if (BRFRawWaveform[i] < BRFRawWaveform[i - 1] && BRFRawWaveform[i] < BRFRawWaveform[i - 2] && BRFRawWaveform[i] < BRFRawWaveform[i + 1] && BRFRawWaveform[i] < BRFRawWaveform[i + 2])
+    if (waveform_to_save[i] < waveform_to_save[i - 1] && waveform_to_save[i] < waveform_to_save[i - 2] && waveform_to_save[i] < waveform_to_save[i + 1] && waveform_to_save[i] < waveform_to_save[i + 2])
     {
       minima_bins.push_back(i);
-      minima_amplitudes.push_back(BRFRawWaveform[i]);
+      minima_amplitudes.push_back(waveform_to_save[i]);
       minima_times.push_back(i * 2); // 2ns per bin
     }
-    if (BRFRawWaveform[i] > BRFRawWaveform[i - 1] && BRFRawWaveform[i] > BRFRawWaveform[i - 2] && BRFRawWaveform[i] > BRFRawWaveform[i + 1] && BRFRawWaveform[i] > BRFRawWaveform[i + 2])
+    if (waveform_to_save[i] > waveform_to_save[i - 1] && waveform_to_save[i] > waveform_to_save[i - 2] && waveform_to_save[i] > waveform_to_save[i + 1] && waveform_to_save[i] > waveform_to_save[i + 2])
     {
       maxima_bins.push_back(i);
-      maxima_amplitudes.push_back(BRFRawWaveform[i]);
+      maxima_amplitudes.push_back(waveform_to_save[i]);
       maxima_times.push_back(i * 2); // 2ns per bin
     }
   }
@@ -132,7 +132,6 @@ bool BRFSaver::Finalise()
   }
   fOutput_tree->Write();
   fOutput_tfile->Close();
-  delete fOutput_tfile;
 
   Log("FitRWMWaveform: Finalise(): BRF waveform saved to root file", v_debug, verbosityBRFSaver);
 
