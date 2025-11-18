@@ -31,6 +31,7 @@ public:
 
     void FitRWM();
     void FitBRF();
+    void FitBRFv2();
 
 private:
     int verbosityFitRWMWaveform;

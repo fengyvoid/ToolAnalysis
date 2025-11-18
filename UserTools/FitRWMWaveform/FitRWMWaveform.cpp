@@ -56,7 +56,7 @@ bool FitRWMWaveform::Execute()
   // Fit the RWM waveform, find the rising start, rising end and half rising time
   FitRWM();
 
-  FitBRF();
+  FitBRFv2();
 
   m_data->Stores["ANNIEEvent"]->Set("RWMRisingStart", RWMRisingStart);
   m_data->Stores["ANNIEEvent"]->Set("RWMRisingEnd", RWMRisingEnd);
@@ -404,3 +404,106 @@ void FitRWMWaveform::FitBRF()
   double BRFRisingHalfLinearFit = min_difference_bin; // in ps
   BRFFirstPeakFit = BRFRisingHalfLinearFit; 
 }
+
+
+void FitRWMWaveform::FitBRFv2()
+{
+  // The first version not really selects the full range of the BRF minimum.
+  // detailed can be found at https://annie-docdb.fnal.gov/cgi-bin/sso/ShowDocument?docid=6471
+
+  // Select the minimum from BRFRawWaveform
+  // Padding the waveform using it's mean value (usually at the major component)
+  // Find the real minimum by requiring its surrounding 6 bins to be larger than it.
+  // Require to find at least 5 minima in the first 50 bins, or return (because it is very odd that the interval between minima could be up to 13 bins! (~26ns not ~20 ns bunch interval)) 
+  // then select the 3rd minimum as the real minimum 
+  // if the first minimum is too close to the start (less than 4), then select the 4th minimum instead.
+  // Then find the rising edge half maximum point using linear interpolation between this minimum and the next maximum (within 5 bins after the minimum)
+
+
+  double maximum = -9999;
+  if (BRFRawWaveform.size() < 100)
+  {
+    Log("FitRWMWaveform: FitBRFv2(): BRFRawWaveform is empty or less than 100 bins", v_message, verbosityFitRWMWaveform);
+    return;
+  }
+  int max_bin_BRF = BRFRawWaveform.size();
+  // Find the maximum in the first 33 bins
+  double mean_value = std::accumulate(BRFRawWaveform.begin(), BRFRawWaveform.begin() + 100, 0.0) / 100;
+
+  std::vector<int> minima_bins;
+  // Find minima, require it's first 6 bins to be larger than it, and its value less than 2960, and it's later 6 bins to be larger than it.
+  for (int i = 0; i < 50; ++i)
+  {   
+    //if (BRFRawWaveform[i] > 2970) // && BRFRawWaveform[i] < BRFRawWaveform[i - 1] && BRFRawWaveform[i] < BRFRawWaveform[i + 1] && BRFRawWaveform[i] < BRFRawWaveform[i - 2] && BRFRawWaveform[i] < BRFRawWaveform[i + 2])// && BRFRawWaveform[i] < BRFRawWaveform[i - 3] && BRFRawWaveform[i] < BRFRawWaveform[i + 3])
+    //  continue;
+    
+    bool is_minimum = true;
+    for (int j = i-6; j <= i+6; ++j)
+    {
+      if (j == i)
+        continue;
+      double HereValue = (mean_value+50);
+      if (j >= 0)
+        HereValue = BRFRawWaveform[j];
+        
+      if (HereValue <= BRFRawWaveform[i])
+      {
+        is_minimum = false;
+        break;
+      }
+    }
+    if (is_minimum)
+    {
+      minima_bins.push_back(i);
+    }
+    if (minima_bins.size() >= 5)
+      break;
+  }
+  if (minima_bins.size() < 5 )
+  {
+    Log("FitRWMWaveform: FitBRFv2(): Not enough minima found in BRFRawWaveform, only " + std::to_string(minima_bins.size()) + " found", v_message, verbosityFitRWMWaveform);
+    return;
+  }
+
+  int selected_minimum_bin = minima_bins[2];
+  if (minima_bins[0] < 4)
+    {
+      selected_minimum_bin = minima_bins[3];
+    }
+
+  // Now use selected_minimum_bin to find the rising edge half maximum point using linear interpolation
+  // Find the bin with the maximum value between bin selected_minimum_bin and selected_minimum_bin + 4
+  if (selected_minimum_bin + 5 >= BRFRawWaveform.size())
+  {
+    Log("FitRWMWaveform: FitBRFv2(): selected_minimum_bin + 5 exceeds waveform size", v_message, verbosityFitRWMWaveform);
+    return;
+  }
+  auto max_it = std::max_element(BRFRawWaveform.begin() + selected_minimum_bin, BRFRawWaveform.begin() + selected_minimum_bin + 5);
+  int bin_maximum = std::distance(BRFRawWaveform.begin(), max_it);
+  // Calculate the half height
+  double half_height = (BRFRawWaveform[selected_minimum_bin] + BRFRawWaveform[bin_maximum]) / 2.0;
+  // Perform linear interpolation
+  const int intervals_per_bin = 2000; // 2000 ps per bin
+  double min_difference = std::numeric_limits<double>::max();
+  int min_difference_time_ps = -1;
+  for (int bin = selected_minimum_bin; bin < bin_maximum; ++bin)
+  {
+    for (int interval = 0; interval < intervals_per_bin; ++interval)
+    {
+      double fraction = interval / static_cast<double>(intervals_per_bin);
+      double interpolated_value = BRFRawWaveform[bin] + fraction * (BRFRawWaveform[bin + 1] - BRFRawWaveform[bin]);
+      double difference = std::abs(interpolated_value - half_height);
+
+      if (difference < min_difference)
+      {
+        min_difference = difference;
+        min_difference_time_ps = bin * intervals_per_bin + interval;
+      }
+    }
+  }
+
+  double BRFRisingHalfLinearFit = min_difference_time_ps; // in ps
+  BRFFirstPeakFit = BRFRisingHalfLinearFit;
+
+}
+
